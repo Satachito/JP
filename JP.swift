@@ -370,8 +370,8 @@ Center( _ p: CGRect ) -> CGPoint {
 typealias	JSONDict = [ String: Any ]
 
 func
-JSON( _ p: String ) -> Any? {
-	if	let	wURL = URL( string: p ) {
+FetchJSON( _ url: String ) -> Any? {
+	if	let	wURL = URL( string: url ) {
 		return try? DecodeJSON( Data( contentsOf: wURL ) )
 	} else {
 		return nil
@@ -379,13 +379,13 @@ JSON( _ p: String ) -> Any? {
 }
 
 func
-ArrayJSON( _ p: String ) -> [ Any ]? {
-	return JSON( p ) as? [ Any ]
+FetchJArrayJSON( _ url: String ) -> [ Any ]? {
+	return FetchJSON( url ) as? [ Any ]
 }
 
 func
-DictJSON( _ p: String ) -> JSONDict? {
-	return JSON( p ) as? JSONDict
+FetchJDictJSON( _ url: String ) -> JSONDict? {
+	return FetchJSON( url ) as? JSONDict
 }
 
 func
