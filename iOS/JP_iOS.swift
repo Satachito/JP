@@ -264,4 +264,12 @@ ImageV	 : UIImageView {
 	}
 }
 
-
+func
+ARGBColor( _ p: Int ) -> UIColor {
+    return UIColor(
+		red		: CGFloat( ( p >> 16 ) & 0x0ff ) / 255
+	,	green	: CGFloat( ( p >> 8 ) & 0x0ff ) / 255
+	,	blue	: CGFloat( p & 0x0ff ) / 255
+	,	alpha	: CGFloat( p >> 24 ) / 255
+	)
+}
