@@ -523,3 +523,40 @@ Request( _ p: String ) -> URLRequest? {
 	}
 }
 
+func
+LazyUTF8String( _ p: Data ) -> String {
+	var v = ""
+	var	wRemain = 0
+	var	wScalar = 0
+	for w in [UInt8]( p ) {
+		switch w {
+		case 0 ..< 0x80:
+			v += String( UnicodeScalar( w ) )
+			wRemain = 0
+		case 0xc2 ..< 0xe0:
+			wScalar = Int( w ) & 0x1f
+			wRemain = 1
+		case 0xe0 ..< 0xf0:
+			wScalar = Int( w ) & 0x0f
+			wRemain = 2
+		case 0xf0 ..< 0xf8:
+			wScalar = Int( w ) & 0x07
+			wRemain = 3
+		case 0xf8 ..< 0xfc:
+			wScalar = Int( w ) & 0x03
+			wRemain = 4
+		case 0xfc ..< 0xfe:
+			wScalar = Int( w ) & 0x01
+			wRemain = 5
+		case 0x80 ..< 0xc0:
+			if wRemain > 0 {
+				wScalar = ( wScalar << 6 ) | ( Int( w ) & 0x3f )
+				wRemain -= 1
+				if wRemain == 0 { v += String( UnicodeScalar( w ) ) }
+			}
+		default:
+			break
+		}
+	}
+	return v
+}

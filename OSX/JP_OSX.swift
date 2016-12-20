@@ -40,3 +40,28 @@ Input(
 	return w.runModal() == NSAlertFirstButtonReturn ? wTF.stringValue : nil
 }
 
+func
+OKCancel( _ pMessage: String, _ pInfomative: String,_ ed: () -> () ) {
+	let	w = NSAlert()
+	w.messageText = pMessage
+	w.informativeText = pInfomative
+	w.alertStyle = .warning
+	w.addButton( withTitle: "OK" )
+	w.addButton( withTitle: "Cancel" )
+	if w.runModal() == NSAlertFirstButtonReturn { ed() }
+}
+
+func
+YesNo( _ pMessage: String, _ pInfomative: String, _ yesed: () -> (), _ noed: () -> () ) {
+	let	w = NSAlert()
+	w.messageText = pMessage
+	w.informativeText = pInfomative
+	w.alertStyle = .warning
+	w.addButton( withTitle: "OK" )
+	w.addButton( withTitle: "Cancel" )
+	switch w.runModal() {
+	case NSAlertFirstButtonReturn	: yesed()
+	case NSAlertSecondButtonReturn	: noed()
+	default							: break
+	}
+}
