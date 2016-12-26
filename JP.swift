@@ -62,17 +62,17 @@ ToArray<T>( _ start: UnsafePointer<T>, _ count: Int ) -> [ T ] {
 
 func
 UTF8Length( _ p: String ) -> Int {
-	return p.lengthOfBytes( using: String.Encoding.utf8 )
+	return p.lengthOfBytes( using: .utf8 )
 }
 
 func
 UTF8Data( _ p: String ) -> Data? {
-	return p.data( using: String.Encoding.utf8 )
+	return p.data( using: .utf8 )
 }
 
 func
 UTF8String( _ p: Data ) -> String? {
-	return String( data:p, encoding: String.Encoding.utf8 )
+	return String( data:p, encoding: .utf8 )
 }
 
 func
@@ -524,6 +524,54 @@ Request( _ p: String ) -> URLRequest? {
 }
 
 func
+LazyUTF8Data( _ p: Data ) -> Data {
+	var v = Data()
+	var	wIndex = 1
+	var	wRemain = 0
+	var	wBytes = [ UInt8 ]( repeating: 0, count: 4 )
+	for var w in [ UInt8 ]( p ) {
+		switch w {
+		case 0 ..< 0x80:
+ ///   public mutating func append(_ bytes: UnsafePointer<UInt8>, count: Int)
+			v.append( &w, count: 1 )
+			wRemain = 0
+		case 0xc2 ..< 0xe0:
+			wBytes[ 0 ] = w
+			wIndex = 1
+			wRemain = 1
+		case 0xe0 ..< 0xf0:
+			wBytes[ 0 ] = w
+			wIndex = 1
+			wRemain = 2
+		case 0xf0 ..< 0xf8:
+			wBytes[ 0 ] = w
+			wIndex = 1
+			wRemain = 3
+		case 0xf8 ..< 0xfc:
+			wRemain = 0
+//			wBytes[ 0 ] = w
+//			wRemain = 4
+		case 0xfc ..< 0xfe:
+			wRemain = 0
+//			wBytes[ 0 ] = w
+//			wRemain = 5
+		case 0x80 ..< 0xc0:
+			if wRemain > 0 {
+				wBytes[ wIndex ] = w
+				wIndex += 1
+				wRemain -= 1
+				if wRemain == 0 {
+					wBytes.withUnsafeBytes { p in v.append( p ) }
+				}
+			}
+		default:
+			wRemain = 0
+		}
+	}
+	return v
+}
+/*
+func
 LazyUTF8String( _ p: Data ) -> String {
 	var v = ""
 	var	wRemain = 0
@@ -560,3 +608,4 @@ LazyUTF8String( _ p: Data ) -> String {
 	}
 	return v
 }
+*/
