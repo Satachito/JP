@@ -5,7 +5,7 @@ import	CoreGraphics
 
 enum
 JPError	: Error {
-	case E(String)
+	case e(String)
 }
 
 func
@@ -184,14 +184,14 @@ JPTest() {
 
 enum
 ReaderError	: Error {
-case		EOD
+case		eod
 }
 class
 Reader< T > {
 	var
 	_unread : T?
 	func
-	_Read() throws -> T { throw ReaderError.EOD }
+	_Read() throws -> T { throw ReaderError.eod }
 	func
 	Read() throws -> T {
 		if let v = _unread { _unread = nil; return v }
@@ -208,7 +208,7 @@ StdinUnicodeReader: Reader< UnicodeScalar > {
 	override func
 	_Read() throws -> UnicodeScalar {
 		while m.count == 0 {
-			if let w = readLine( strippingNewline: false ) { m = w.unicodeScalars } else { throw ReaderError.EOD }
+			if let w = readLine( strippingNewline: false ) { m = w.unicodeScalars } else { throw ReaderError.eod }
 		}
 		let v = m.first
 		m = m.dropFirst()
@@ -223,7 +223,7 @@ StdinCharacterReader: Reader< Character > {
 	override func
 	_Read() throws -> Character {
 		while m.count == 0 {
-			if let w = readLine( strippingNewline: false ) { m = w.characters } else { throw ReaderError.EOD }
+			if let w = readLine( strippingNewline: false ) { m = w.characters } else { throw ReaderError.eod }
 		}
 		let v = m.first
 		m = m.dropFirst()
@@ -238,7 +238,7 @@ StringUnicodeReader	: Reader< UnicodeScalar > {
 	init( _ a: String ) { m = a.unicodeScalars }
 	override func
 	_Read() throws -> UnicodeScalar {
-		if m.count == 0 { throw ReaderError.EOD }
+		if m.count == 0 { throw ReaderError.eod }
 		let v = m.first
 		m = m.dropFirst()
 		return v!
@@ -252,7 +252,7 @@ StringCharacterReader: Reader< Character > {
 	init( _ a: String ) { m = a.characters }
 	override func
 	_Read() throws -> Character {
-		if m.count == 0 { throw ReaderError.EOD }
+		if m.count == 0 { throw ReaderError.eod }
 		let v = m.first
 		m = m.dropFirst()
 		return v!
@@ -379,12 +379,12 @@ FetchJSON( _ url: String ) -> Any? {
 }
 
 func
-FetchJArrayJSON( _ url: String ) -> [ Any ]? {
+FetchArrayJSON( _ url: String ) -> [ Any ]? {
 	return FetchJSON( url ) as? [ Any ]
 }
 
 func
-FetchJDictJSON( _ url: String ) -> JSONDict? {
+FetchDictJSON( _ url: String ) -> JSONDict? {
 	return FetchJSON( url ) as? JSONDict
 }
 
@@ -560,9 +560,7 @@ LazyUTF8Data( _ p: Data ) -> Data {
 				wBytes[ wIndex ] = w
 				wIndex += 1
 				wRemain -= 1
-				if wRemain == 0 {
-					wBytes.withUnsafeBytes { p in v.append( p ) }
-				}
+				if wRemain == 0 { v.append( wBytes, count: wIndex ) }
 			}
 		default:
 			wRemain = 0
@@ -570,6 +568,7 @@ LazyUTF8Data( _ p: Data ) -> Data {
 	}
 	return v
 }
+
 /*
 func
 LazyUTF8String( _ p: Data ) -> String {

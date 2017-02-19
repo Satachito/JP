@@ -49,7 +49,7 @@ Animate( _ duration: TimeInterval = 0.25, p: @escaping () -> () ) {
 
 func
 SpringAnimate(
-	duration	: TimeInterval					= 0.25
+_	duration	: TimeInterval					= 0.25
 ,	delay		: TimeInterval					= 0
 ,	damping		: CGFloat						= 0.5
 ,	velocity	: CGFloat						= 0.1
@@ -90,7 +90,7 @@ BlockAlert(
 
 func
 Alert(
-  _	title		 : String? = nil
+_	title		 : String? = nil
 , _	message		 : String? = nil
 , _	handler		 : ( ( UIAlertAction ) -> () )? = { _ in }
 ) {
@@ -109,7 +109,7 @@ Alert(
 
 func
 ErrorAlert(
-  _	p			 : Error
+_	p			 : Error
 , _	handler		 : ( ( UIAlertAction ) -> () )? = { _ in }
 ) {
 	Alert( "Error", p.localizedDescription, handler )
@@ -117,7 +117,7 @@ ErrorAlert(
 
 func
 HTMLAlert(
-  _	r			 : HTTPURLResponse
+_	r			 : HTTPURLResponse
 , _	d			 : Data
 ,	handler		 : ( ( UIAlertAction ) -> () )? = { _ in }
  ) {
@@ -126,7 +126,7 @@ HTMLAlert(
 
 func
 Confirmation(
-	title		 : String! = nil
+_	title		 : String! = nil
 , _	message		 : String! = nil
 , _	handler		 : ( ( UIAlertAction ) -> () )? = { _ in }
 ) {
@@ -173,7 +173,7 @@ BoundingRectWithWidth( _ p: NSAttributedString, width: CGFloat ) -> CGRect {
 }
 
 func
-AdjustHeight( p: UITextView ) {
+AdjustHeight( _ p: UITextView ) {
 	var wRect = BoundingRectWithWidth(
 		p.attributedText
 	,	width: p.bounds.size.width - p.textContainerInset.left - p.textContainerInset.right - p.textContainer.lineFragmentPadding * 2

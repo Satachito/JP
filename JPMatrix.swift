@@ -19,31 +19,143 @@ Matrix {
 		self.n = n
 		self.u = u
 	}
+	
+	func
+	Get( _ r: UInt, _ c: UInt ) -> Double {
+		return u[ Int( r * n + c ) ]
+	}
+	
+	func
+	Row( _ p: CountableRange<UInt> ) -> Matrix {
+		let w = Array( u[ Int( p.lowerBound * n ) ..< Int( p.upperBound * n ) ] )
+		return Matrix( UInt( p.count ), n, w )
+	}
+	func
+	Row( _ p: CountableClosedRange<UInt> ) -> Matrix {
+		let w = Array( u[ Int( p.lowerBound * n ) ..< Int( ( p.upperBound + 1 ) * n ) ] )
+		return Matrix( UInt( p.count ), n, w )
+	}
+	func
+	Col( _ p: CountableRange<UInt> ) -> Matrix {
+		var	v = Matrix( m, UInt( p.count ) )
+		for i in 0 ..< Int( m ) {
+			let	wVS = i * p.count
+			let	wSS = i * Int( n )
+			v.u[ wVS ..< ( wVS + p.count ) ] = u[ wSS + Int( p.lowerBound ) ..< wSS + Int( p.upperBound ) ]
+		}
+		return v
+	}
+	func
+	Col( _ p: CountableClosedRange<UInt> ) -> Matrix {
+		var	v = Matrix( m, UInt( p.count ) )
+		for i in 0 ..< Int( m ) {
+			let	wVS = i * p.count
+			let	wSS = i * Int( n )
+			v.u[ wVS ..< ( wVS + p.count ) ] = u[ wSS + Int( p.lowerBound ) ... wSS + Int( p.upperBound ) ]
+		}
+		return v
+	}
 }
 
-func
-+ ( l: Matrix, r: Double ) -> Matrix {
-	var	v = Matrix( l.m, l.n )
-	var	w = r
-	vDSP_vsaddD( l.u, 1, &w, &v.u, 1, vDSP_Length( v.u.count ) )
+prefix func
+~ ( p: Matrix ) -> Matrix {
+	var	v = Matrix( p.n, p.m )
+	vDSP_mtransD( p.u, 1, &v.u, 1, v.m, v.n )
+	return v
+}
+
+prefix func
+! ( p: Matrix ) -> Matrix {
+	var v = p	//	Confirmed that u's entity is copied.
+	var pivot : __CLPK_integer = 0
+	var workspace = 0.0
+	var error : __CLPK_integer = 0
+
+	var N = __CLPK_integer( sqrt( Double( v.u.count ) ) )
+	dgetrf_( &N, &N, &v.u, &N, &pivot, &error )
+	guard error == 0 else { fatalError() }
+
+	dgetri_( &N, &v.u, &N, &pivot, &workspace, &N, &error )
+	guard error == 0 else { fatalError() }
+
 	return v
 }
 
 func
-* ( l: Matrix, r: Double ) -> Matrix {
-	var	v = Matrix( l.m, l.n )
-	var	w = r
-	vDSP_vsmulD( l.u, 1, &w, &v.u, 1, vDSP_Length( v.u.count ) )
+== ( l: Matrix, r: Matrix ) -> Bool {
+	if l.m != r.m { return false }
+	if l.n != r.n { return false }
+	return l.u == r.u
+}
+
+func
++ ( m: Matrix, s: Double ) -> Matrix {
+	var	v = Matrix( m.m, m.n )
+	var	w = s
+	vDSP_vsaddD( m.u, 1, &w, &v.u, 1, vDSP_Length( v.u.count ) )
 	return v
 }
 
 func
-/ ( l: Matrix, r: Double ) -> Matrix {
-	var	v = Matrix( l.m, l.n )
-	var	w = r
-	vDSP_vsdivD( l.u, 1, &w, &v.u, 1, vDSP_Length( v.u.count ) )
+- ( m: Matrix, s: Double ) -> Matrix {
+	var	v = Matrix( m.m, m.n )
+	var	w = -s
+	vDSP_vsaddD( m.u, 1, &w, &v.u, 1, vDSP_Length( v.u.count ) )
 	return v
 }
+
+func
+* ( m: Matrix, s: Double ) -> Matrix {
+	var	v = Matrix( m.m, m.n )
+	var	w = s
+	vDSP_vsmulD( m.u, 1, &w, &v.u, 1, vDSP_Length( v.u.count ) )
+	return v
+}
+
+func
+/ ( m: Matrix, s: Double ) -> Matrix {
+	var	v = Matrix( m.m, m.n )
+	var	w = s
+	vDSP_vsdivD( m.u, 1, &w, &v.u, 1, vDSP_Length( v.u.count ) )
+	return v
+}
+
+func
+^ ( m: Matrix, s: Double ) -> Matrix {
+	var	t = Matrix( m.m, m.n )
+	var	w = s
+	vDSP_vfillD( &w, &t.u, 1, vDSP_Length( t.u.count ) )
+	var	v = Matrix( m.m, m.n )
+	var	wM = m
+	var	wCount = Int32( v.u.count )
+	vvpow( &v.u, &t.u, &wM.u, &wCount )
+	return v
+}
+
+func
++ ( s: Double, m: Matrix ) -> Matrix {
+	var	v = Matrix( m.m, m.n )
+	var	w = s
+	vDSP_vsaddD( m.u, 1, &w, &v.u, 1, vDSP_Length( v.u.count ) )
+	return v
+}
+
+func
+- ( s: Double, m: Matrix ) -> Matrix {
+	var	v = Matrix( m.m, m.n )
+	var	w = -s
+	vDSP_vsaddD( m.u, 1, &w, &v.u, 1, vDSP_Length( v.u.count ) )
+	return v
+}
+
+func
+* ( s: Double, m: Matrix ) -> Matrix {
+	var	v = Matrix( m.m, m.n )
+	var	w = s
+	vDSP_vsmulD( m.u, 1, &w, &v.u, 1, vDSP_Length( v.u.count ) )
+	return v
+}
+
 
 func
 + ( l: Matrix, r: Matrix ) -> Matrix {
@@ -55,17 +167,10 @@ func
 
 func
 * ( l: Matrix, r: Matrix ) -> Matrix {
-	if ( l.m == 1 && r.m == 1 ) || ( l.n == 1 && r.n == 1 ) {
-		guard l.m == r.m && l.n == r.n else { fatalError() }
-		var	v = Matrix( l.m, l.n )
-		vDSP_vmulD( l.u, 1, r.u, 1, &v.u, 1, vDSP_Length( v.u.count ) )
-		return v
-	} else {
-		guard l.m == r.n && l.n == r.m else { fatalError() }
-		var	v = Matrix( l.m, r.n )
-		vDSP_mmulD( l.u, 1, r.u, 1, &v.u, 1, l.m, r.n, l.n )
-		return v
-	}
+	guard l.m == r.m && l.n == r.n else { fatalError() }
+	var	v = Matrix( l.m, l.n )
+	vDSP_vmulD( l.u, 1, r.u, 1, &v.u, 1, vDSP_Length( v.u.count ) )
+	return v
 }
 
 func
@@ -77,52 +182,28 @@ func
 }
 
 func
-DotProduct( l: Matrix, r: Matrix ) -> Double {
-	guard ( l.m == 1 && r.m == 1 ) || ( l.n == 1 && r.n == 1 ) else { fatalError() }
+Mul ( _ l: Matrix, _ r: Matrix ) -> Matrix {
+	guard l.n == r.m else { fatalError() }
+	var	v = Matrix( l.m, r.n )
+	vDSP_mmulD( l.u, 1, r.u, 1, &v.u, 1, l.m, r.n, l.n )
+	return v
+}
+
+func
+DP( _ l: Matrix, _ r: Matrix ) -> Double {
+	guard ( l.m == 1 && r.n == 1 ) || ( l.n == r.m ) else { fatalError() }
 	var	v = 0.0
 	vDSP_dotprD( r.u, 1, l.u, 1, &v, vDSP_Length( l.u.count ) )
 	return v
 }
 
 func
-Transpose( p: Matrix ) -> Matrix {
-	var	v = Matrix( p.n, p.m )
-	vDSP_mtransD( p.u, 1, &v.u, 1, v.m, v.n )
+I( _ p: UInt ) -> Matrix {
+	var	v = Matrix( p, p )
+	let	w = Int( p )
+	for i in 0 ..< w {
+		v.u[ i * w + i ] = 1
+	}
 	return v
 }
 
-prefix func
-! ( p: Matrix ) -> Matrix {
-	var v = p	//	TODO 実態コピーされるか確認
-	var pivot : __CLPK_integer = 0
-	var workspace = 0.0
-	var error : __CLPK_integer = 0
-
-	var N = __CLPK_integer( sqrt( Double( v.u.count ) ) )
-	dgetrf_( &N, &N, &v.u, &N, &pivot, &error )
-
-	guard error == 0 else { fatalError() }
-
-	dgetri_( &N, &v.u, &N, &pivot, &workspace, &N, &error )
-	return v
-}
-/*
-func
-Test() {
-	print( Matrix( 2, 1, [ 1, 2 ] ) + 3 )
-	print( Matrix( 2, 1, [ 1, 2 ] ) * 3 )
-	print( Matrix( 2, 1, [ 1, 2 ] ) / 3 )
-	print( Matrix( 2, 1, [ 2, 5 ] ) + Matrix( 2, 1, [ 3, 4 ] ) )
-	print( Matrix( 2, 1, [ 2, 5 ] ) * Matrix( 2, 1, [ 3, 4 ] ) )
-	print( Matrix( 2, 1, [ 3, 4 ] ) / Matrix( 2, 1, [ 2, 5 ] ) )
-	print(
-		Matrix( 3, 2, [ 3.0, 2.0, 4.0, 5.0, 6.0, 7.0 ] )
-	*	Matrix( 2, 3, [ 10.0, 20.0, 30.0, 30.0, 40.0, 50.0 ] )
-	)
-	print(
-		Matrix( 4, 3, [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ] )
-	*	Matrix( 3, 4, [ 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 ] )
-	)
-	print( !Matrix( 2, 2, [ 1, 2, 3, 4 ] ) )
-}
-*/
