@@ -13,7 +13,7 @@ let	BORDER		= E( 1 << NUM_BITS )
 
 enum
 BigIntegerError	: Error {
-	case			DivideByZero
+	case	divideByZero
 }
 
 class
@@ -160,15 +160,15 @@ Digits( _ a: [ E ], _ radix: Int ) -> String {
 			wBorrow = w % E2( radix )
 		}
 		if wBorrow < 10 {
-			v = "\(UnicodeScalar( Int( wBorrow ) + Int( ( "0" as UnicodeScalar ).value ) ))" + v
+			v = "\(String(describing: UnicodeScalar( Int( wBorrow ) + Int( ( "0" as UnicodeScalar ).value ) )))" + v
 		} else {
-			v = "\(UnicodeScalar( Int( wBorrow ) - 10 + Int( ( "A" as UnicodeScalar ).value ) ))" + v
+			v = "\(String(describing: UnicodeScalar( Int( wBorrow ) - 10 + Int( ( "A" as UnicodeScalar ).value ) )))" + v
 		}
 	}
 	return v
 }
 
-public	class
+open	class
 BigInteger : CustomStringConvertible {
 
 	var	m		: [ E ]
@@ -179,12 +179,12 @@ BigInteger : CustomStringConvertible {
 		self.minus = minus
 	}
 	
-	public	func
+	open	func
 	StringRepresentation( _ radix: Int ) -> String {
 		let	v = Digits( m, radix )
 		return minus ? "-" + v : v
 	}
-	public	var
+	open	var
 	description: String {
 		return StringRepresentation( 10 )
 	}
@@ -400,14 +400,14 @@ public	func
 
 public	func
 /( l: BigInteger, r: BigInteger ) throws -> BigInteger {
-	if r.m.count == 0 { throw BigIntegerError.DivideByZero }
+	if r.m.count == 0 { throw BigIntegerError.divideByZero }
 	if l.m.count == 0 { return l }
 	return BigInteger( QR( l.m, r.m ).0, l.minus != r.minus )
 }
 
 public	func
 %( l: BigInteger, r: BigInteger ) throws -> BigInteger {
-	if r.m.count == 0 { throw BigIntegerError.DivideByZero }
+	if r.m.count == 0 { throw BigIntegerError.divideByZero }
 	if l.m.count == 0 { return l }
 	return BigInteger( QR( l.m, r.m ).1, l.minus != r.minus )
 }
