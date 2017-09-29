@@ -211,7 +211,7 @@ StdinUnicodeReader: Reader< UnicodeScalar > {
 			if let w = readLine( strippingNewline: false ) { m = w.unicodeScalars } else { throw ReaderError.eod }
 		}
 		let v = m.first
-		m = m.dropFirst()
+		m = String.UnicodeScalarView( m.dropFirst() )
 		return v!
 	}
 }
@@ -226,7 +226,7 @@ StdinCharacterReader: Reader< Character > {
 			if let w = readLine( strippingNewline: false ) { m = w.characters } else { throw ReaderError.eod }
 		}
 		let v = m.first
-		m = m.dropFirst()
+		m = String.CharacterView( m.dropFirst() )
 		return v!
 	}
 }
@@ -240,7 +240,7 @@ StringUnicodeReader	: Reader< UnicodeScalar > {
 	_Read() throws -> UnicodeScalar {
 		if m.count == 0 { throw ReaderError.eod }
 		let v = m.first
-		m = m.dropFirst()
+		m = String.UnicodeScalarView( m.dropFirst() )
 		return v!
 	}
 }
