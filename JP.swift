@@ -217,21 +217,6 @@ StdinUnicodeReader: Reader< UnicodeScalar > {
 }
 
 class
-StdinCharacterReader: Reader< Character > {
-	var
-	m	= String.CharacterView()
-	override func
-	_Read() throws -> Character {
-		while m.count == 0 {
-			if let w = readLine( strippingNewline: false ) { m = w.characters } else { throw ReaderError.eod }
-		}
-		let v = m.first
-		m = String.CharacterView( m.dropFirst() )
-		return v!
-	}
-}
-
-class
 StringUnicodeReader	: Reader< UnicodeScalar > {
 	var
 	m	: String.UnicodeScalarView
@@ -241,20 +226,6 @@ StringUnicodeReader	: Reader< UnicodeScalar > {
 		if m.count == 0 { throw ReaderError.eod }
 		let v = m.first
 		m = String.UnicodeScalarView( m.dropFirst() )
-		return v!
-	}
-}
-
-class
-StringCharacterReader: Reader< Character > {
-	var
-	m	: String.CharacterView
-	init( _ a: String ) { m = a.characters }
-	override func
-	_Read() throws -> Character {
-		if m.count == 0 { throw ReaderError.eod }
-		let v = m.first
-		m = m.dropFirst()
 		return v!
 	}
 }
@@ -532,7 +503,6 @@ LazyUTF8Data( _ p: Data ) -> Data {
 	for var w in [ UInt8 ]( p ) {
 		switch w {
 		case 0 ..< 0x80:
- ///   public mutating func append(_ bytes: UnsafePointer<UInt8>, count: Int)
 			v.append( &w, count: 1 )
 			wRemain = 0
 		case 0xc2 ..< 0xe0:
