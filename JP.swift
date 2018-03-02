@@ -100,6 +100,21 @@ DecodeJSON( _ p: Data, _ options: JSONSerialization.ReadingOptions = [] ) throws
 	return try JSONSerialization.jsonObject( with: p, options: options )
 }
 
+func
+JSONString( _ from: Any ) -> String? {
+	if #available(iOS 11.0, *) {
+		if let w = try? EncodeJSON( from, [ .prettyPrinted, .sortedKeys ] ) { return UTF8String( w ) } else { return nil }
+	} else {
+		if let w = try? EncodeJSON( from, [ .prettyPrinted ] ) { return UTF8String( w ) } else { return nil }
+	}
+}
+
+func
+JSONObject( _ from: String ) -> Any? {
+	guard let wJSONData = UTF8Data( from ) else { return nil }
+	guard let v = try? DecodeJSON( wJSONData ) else { return nil }
+	return v
+}
 
 func
 IsNull( _ p: Any? ) -> Bool {
