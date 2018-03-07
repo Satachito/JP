@@ -224,7 +224,7 @@ Image_iOS(
 }
 
 class
-ImageV	 : UIImageView {
+ImageV	: UIImageView {
 	var
 	aiStyle	= UIActivityIndicatorViewStyle.whiteLarge
 	let
@@ -239,7 +239,7 @@ ImageV	 : UIImageView {
 	}
 	
 	var
-	uri		 : String? {
+    uri         : String? {
 		didSet {
 			label.removeFromSuperview()
 			let	wAIV = UIActivityIndicatorView( activityIndicatorStyle: aiStyle )
@@ -275,7 +275,7 @@ ARGBColor( _ p: Int ) -> UIColor {
 }
 
 class
-JPFitLabel: UIView {
+JPFitLabel	: UIView {
 	var
 	text = "" {
 		didSet {
