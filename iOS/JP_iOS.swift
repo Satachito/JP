@@ -273,3 +273,42 @@ ARGBColor( _ p: Int ) -> UIColor {
 	,	alpha	: CGFloat( p >> 24 ) / 255
 	)
 }
+
+class
+JPFitLabel: UIView {
+	var
+	text = "" {
+		didSet {
+			DispatchQueue.main.async{ self.setNeedsDisplay() }
+		}
+	}
+	
+	var
+	font = UIFont.systemFont( ofSize: 17 ) {
+		didSet {
+			DispatchQueue.main.async{ self.setNeedsDisplay() }
+		}
+	}
+
+	override func
+	draw(_ rect: CGRect) {
+		guard let wC = UIGraphicsGetCurrentContext() else { return }
+		
+		wC.stroke( self.bounds )
+		let	wBBox = text.boundingRect( with: CGSize.zero, options: [], attributes: [ .font: font ], context: nil )
+
+		if wBBox.size.width > self.bounds.size.width || wBBox.size.height > self.bounds.size.height {	//	SHRINK
+			wC.scaleBy( x: self.bounds.size.width / wBBox.size.width, y: self.bounds.size.height / wBBox.size.height )
+			text.draw( at: self.bounds.origin, withAttributes: [ .font: font ] )
+		} else {	//	CENTER
+			text.draw(
+				at: CGPoint(
+					x: ( self.bounds.size.width - wBBox.size.width ) / 2
+				,	y: ( self.bounds.size.height - wBBox.size.height ) / 2
+				)
+			,	withAttributes: [ .font: font ]
+			)
+		}
+	}
+}
+
