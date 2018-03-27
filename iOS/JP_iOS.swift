@@ -17,7 +17,8 @@ FrameY( _ p: UIView, _ y: CGFloat ) {
 
 func
 InputBox(
-  _	title		: String
+  _	vc			: UIViewController
+, _	title		: String
 , _	message		: String? = nil
 , _	config		: @escaping ( UITextField ) -> () = { _ in }
 , _	ed			: @escaping ( UITextField ) -> ()
@@ -35,7 +36,7 @@ InputBox(
 	wAC.addAction( UIAlertAction( title: "Cancel", style: .cancel, handler: nil ) )
 	wAC.addAction( UIAlertAction( title: "OK", style: .default ) { _ in ed( wTF ) } )
 	wAC.view.setNeedsLayout()
-	UIApplication.shared.keyWindow!.rootViewController!.present(
+	vc.present(
 		wAC
 	,	animated:true
 	,	completion:nil
@@ -70,8 +71,9 @@ _	duration	: TimeInterval					= 0.25
 
 func
 BlockAlert(
-  _	title	 : String? = nil
-, _	message	 : String? = nil
+  _	vc		: UIViewController
+, _	title	: String? = nil
+, _	message	: String? = nil
 ) -> UIAlertController {
 	let	v = UIAlertController(
 		title			 : title
@@ -79,7 +81,7 @@ BlockAlert(
 	,	preferredStyle	 : .alert
 	)
 
-	UIApplication.shared.keyWindow!.rootViewController!.present(
+	vc.present(
 		v
 	,	animated	 : true
 	,	completion	 : nil
@@ -90,9 +92,10 @@ BlockAlert(
 
 func
 Alert(
-_	title		 : String? = nil
-, _	message		 : String? = nil
-, _	handler		 : ( ( UIAlertAction ) -> () )? = { _ in }
+  _	vc		: UIViewController
+, _	title	: String? = nil
+, _	message	: String? = nil
+, _	handler	: ( ( UIAlertAction ) -> () )? = { _ in }
 ) {
 	let wAC = UIAlertController(
 		title			 : title
@@ -100,7 +103,7 @@ _	title		 : String? = nil
 	,	preferredStyle	 : .alert
 	)
 	wAC.addAction( UIAlertAction( title: "OK", style: .cancel, handler: handler ) )
-	UIApplication.shared.keyWindow!.rootViewController!.present(
+	vc.present(
 		wAC
 	,	animated	 : true
 	,	completion	 : nil
@@ -109,26 +112,29 @@ _	title		 : String? = nil
 
 func
 ErrorAlert(
-_	p			 : Error
-, _	handler		 : ( ( UIAlertAction ) -> () )? = { _ in }
+  _	vc		: UIViewController
+, _	p		: Error
+, _	handler	: ( ( UIAlertAction ) -> () )? = { _ in }
 ) {
-	Alert( "Error", p.localizedDescription, handler )
+	Alert( vc, "Error", p.localizedDescription, handler )
 }
 
 func
 HTMLAlert(
-_	r			 : HTTPURLResponse
-, _	d			 : Data
-,	handler		 : ( ( UIAlertAction ) -> () )? = { _ in }
+  _	vc		: UIViewController
+, _	r		: HTTPURLResponse
+, _	d		: Data
+,	handler	: ( ( UIAlertAction ) -> () )? = { _ in }
  ) {
-	Alert( r.description, nil, handler )
+	Alert( vc, r.description, nil, handler )
 }
 
 func
 Confirmation(
-_	title		 : String! = nil
-, _	message		 : String! = nil
-, _	handler		 : ( ( UIAlertAction ) -> () )? = { _ in }
+  _	vc		: UIViewController
+, _	title	: String! = nil
+, _	message	: String! = nil
+, _	handler	: ( ( UIAlertAction ) -> () )? = { _ in }
 ) {
 	let wAC = UIAlertController(
 		title			 : title
@@ -136,8 +142,8 @@ _	title		 : String! = nil
 	,	preferredStyle	 : .alert
 	)
 	wAC.addAction( UIAlertAction( title: "OK", style: .default, handler: handler ) )
-	wAC.addAction( UIAlertAction( title: "Cancel", style: .cancel, handler: nil ) )
-	UIApplication.shared.keyWindow!.rootViewController!.present(
+	wAC.addAction( UIAlertAction( title: "Cancel", style: .cancel, handler: handler ) )
+	vc.present(
 		wAC
 	,	animated	: true
 	,	completion	: nil
@@ -188,8 +194,8 @@ HTML_iOS(
   _	uri		: String
 , _	method	: String
 , _	body	: Data? = nil
-, _	er		: @escaping ( Error ) -> () = { e in ErrorAlert( e as NSError ) }
-, _	ex		: @escaping ( HTTPURLResponse, Data ) -> () = { r, d in HTMLAlert( r, d ) }
+, _	er		: @escaping ( Error ) -> () = { e in }
+, _	ex		: @escaping ( HTTPURLResponse, Data ) -> () = { r, d in }
 ,	ed		: @escaping ( Data ) -> () = { p in }
 ) {
 	OnHTML( uri, method, body, er, ex, ed )
@@ -200,8 +206,8 @@ JSON_iOS(
   _	uri		: String
 , _	method	: String
 , _	json	: AnyObject? = nil
-, _	er		: @escaping ( Error ) -> () = { e in ErrorAlert( e ) }
-, _	ex		: @escaping ( HTTPURLResponse, Data ) -> () = { r, d in HTMLAlert( r, d ) }
+, _	er		: @escaping ( Error ) -> () = { e in }
+, _	ex		: @escaping ( HTTPURLResponse, Data ) -> () = { r, d in }
 ,	ed		: @escaping ( Any ) -> ()
 ) {
 	OnJSON( uri, method, json, er, ex, ed )
@@ -210,8 +216,8 @@ JSON_iOS(
 func
 Image_iOS(
   _	uri	: String
-, _	er	: @escaping ( Error ) -> () = { e in ErrorAlert( e ) }
-, _	ex	: @escaping ( HTTPURLResponse, Data ) -> () = { r, d in HTMLAlert( r, d ) }
+, _	er	: @escaping ( Error ) -> () = { e in }
+, _	ex	: @escaping ( HTTPURLResponse, Data ) -> () = { r, d in }
 ,	ed	: @escaping ( UIImage ) -> ()
 ) {
 	OnHTML( uri, "GET", nil, er, ex ) { p in
@@ -239,7 +245,7 @@ ImageV	: UIImageView {
 	}
 	
 	var
-    uri         : String? {
+	uri	: String? {
 		didSet {
 			label.removeFromSuperview()
 			let	wAIV = UIActivityIndicatorView( activityIndicatorStyle: aiStyle )
@@ -289,24 +295,34 @@ JPFitLabel	: UIView {
 			DispatchQueue.main.async{ self.setNeedsDisplay() }
 		}
 	}
+	
+	private	var
+	attributes	: [ NSAttributedStringKey: Any ] {
+		get { return [ .font: font, .foregroundColor: tintColor ] }
+	}
 
 	override func
 	draw(_ rect: CGRect) {
 		guard let wC = UIGraphicsGetCurrentContext() else { return }
 		
-		wC.stroke( self.bounds )
-		let	wBBox = text.boundingRect( with: CGSize.zero, options: [], attributes: [ .font: font ], context: nil )
+		let	wBBox = text.boundingRect( with: CGSize.zero, options: [], attributes: attributes, context: nil )
 
-		if wBBox.size.width > self.bounds.size.width || wBBox.size.height > self.bounds.size.height {	//	SHRINK
-			wC.scaleBy( x: self.bounds.size.width / wBBox.size.width, y: self.bounds.size.height / wBBox.size.height )
-			text.draw( at: self.bounds.origin, withAttributes: [ .font: font ] )
+		if wBBox.size.width > self.bounds.size.width {	//	SHRINK
+			wC.scaleBy( x: self.bounds.size.width / wBBox.size.width, y: 1 )
+			text.draw(
+				at: CGPoint(
+					x: self.bounds.origin.x
+				,	y: ( self.bounds.size.height - wBBox.size.height ) / 2
+				)
+			,	withAttributes: attributes
+			)
 		} else {	//	CENTER
 			text.draw(
 				at: CGPoint(
 					x: ( self.bounds.size.width - wBBox.size.width ) / 2
 				,	y: ( self.bounds.size.height - wBBox.size.height ) / 2
 				)
-			,	withAttributes: [ .font: font ]
+			,	withAttributes: attributes
 			)
 		}
 	}
