@@ -16,34 +16,6 @@ FrameY( _ p: UIView, _ y: CGFloat ) {
 
 
 func
-InputBox(
-  _	vc			: UIViewController
-, _	title		: String
-, _	message		: String? = nil
-, _	config		: @escaping ( UITextField ) -> () = { _ in }
-, _	ed			: @escaping ( UITextField ) -> ()
-) {
-	let wAC = UIAlertController(
-		title			: title
-	,	message			: message
-	,	preferredStyle	: .alert
-	)
-	var wTF : UITextField!
-	wAC.addTextField { p in
-		config( p )
-		wTF = p
-	}
-	wAC.addAction( UIAlertAction( title: "Cancel", style: .cancel, handler: nil ) )
-	wAC.addAction( UIAlertAction( title: "OK", style: .default ) { _ in ed( wTF ) } )
-	wAC.view.setNeedsLayout()
-	vc.present(
-		wAC
-	,	animated:true
-	,	completion:nil
-	)
-}
-	
-func
 Animate( _ duration: TimeInterval = 0.25, p: @escaping () -> () ) {
 	UIView.animate( withDuration: duration, animations: p )
 }
@@ -69,85 +41,102 @@ _	duration	: TimeInterval					= 0.25
 	)
 }
 
-func
-BlockAlert(
-  _	vc		: UIViewController
-, _	title	: String? = nil
-, _	message	: String? = nil
-) -> UIAlertController {
-	let	v = UIAlertController(
-		title			 : title
-	,	message			 : message
-	,	preferredStyle	 : .alert
-	)
+extension
+UIViewController {
+	func
+	BlockAlert(
+	  _	title	: String? = nil
+	, _	message	: String? = nil
+	) {
+		present(
+			UIAlertController(
+				title			 : title
+			,	message			 : message
+			,	preferredStyle	 : .alert
+			)
+		,	animated	 : true
+		,	completion	 : nil
+		)
+	}
 
-	vc.present(
-		v
-	,	animated	 : true
-	,	completion	 : nil
-	)
+	func
+	Alert(
+	  _	title	: String? = nil
+	, _	message	: String? = nil
+	, _	handler	: ( ( UIAlertAction ) -> () )? = nil
+	) {
+		let wAC = UIAlertController(
+			title			 : title
+		,	message			 : message
+		,	preferredStyle	 : .alert
+		)
+		wAC.addAction( UIAlertAction( title: "OK", style: .cancel, handler: handler ) )
+		present(
+			wAC
+		,	animated	 : true
+		,	completion	 : nil
+		)
+	}
 
-	return v
-}
+	func
+	ErrorAlert(
+	  _	p		: Error
+	, _	handler	: ( ( UIAlertAction ) -> () )? = nil
+	) {
+		Alert( "Error", p.localizedDescription, handler )
+	}
 
-func
-Alert(
-  _	vc		: UIViewController
-, _	title	: String? = nil
-, _	message	: String? = nil
-, _	handler	: ( ( UIAlertAction ) -> () )? = { _ in }
-) {
-	let wAC = UIAlertController(
-		title			 : title
-	,	message			 : message
-	,	preferredStyle	 : .alert
-	)
-	wAC.addAction( UIAlertAction( title: "OK", style: .cancel, handler: handler ) )
-	vc.present(
-		wAC
-	,	animated	 : true
-	,	completion	 : nil
-	)
-}
+	func
+	HTMLAlert(
+	  _	r		: HTTPURLResponse
+	, _	d		: Data
+	, _	handler	: ( ( UIAlertAction ) -> () )? = nil
+	 ) {
+		Alert( r.description, nil, handler )
+	}
 
-func
-ErrorAlert(
-  _	vc		: UIViewController
-, _	p		: Error
-, _	handler	: ( ( UIAlertAction ) -> () )? = { _ in }
-) {
-	Alert( vc, "Error", p.localizedDescription, handler )
-}
+	func
+	Confirmation(
+	  _	title	: String? = nil
+	, _	message	: String? = nil
+	, _	handler	: ( ( UIAlertAction ) -> () )? = nil
+	) {
+		let wAC = UIAlertController(
+			title			 : title
+		,	message			 : message
+		,	preferredStyle	 : .alert
+		)
+		wAC.addAction( UIAlertAction( title: "OK", style: .default, handler: handler ) )
+		wAC.addAction( UIAlertAction( title: "Cancel", style: .cancel, handler: handler ) )
+		present(
+			wAC
+		,	animated	: true
+		,	completion	: nil
+		)
+	}
 
-func
-HTMLAlert(
-  _	vc		: UIViewController
-, _	r		: HTTPURLResponse
-, _	d		: Data
-,	handler	: ( ( UIAlertAction ) -> () )? = { _ in }
- ) {
-	Alert( vc, r.description, nil, handler )
-}
-
-func
-Confirmation(
-  _	vc		: UIViewController
-, _	title	: String! = nil
-, _	message	: String! = nil
-, _	handler	: ( ( UIAlertAction ) -> () )? = { _ in }
-) {
-	let wAC = UIAlertController(
-		title			 : title
-	,	message			 : message
-	,	preferredStyle	 : .alert
-	)
-	wAC.addAction( UIAlertAction( title: "OK", style: .default, handler: handler ) )
-	wAC.addAction( UIAlertAction( title: "Cancel", style: .cancel, handler: handler ) )
-	vc.present(
-		wAC
-	,	animated	: true
-	,	completion	: nil
-	)
+	func
+	Input1Box(
+	  _	title	: String? = nil
+	, _	message	: String? = nil
+	, _	config	: @escaping ( UITextField ) -> () = { _ in }
+	, _	handler	: ( ( UIAlertAction ) -> () )? = nil
+	) {
+		let wAC = UIAlertController(
+			title			: title
+		,	message			: message
+		,	preferredStyle	: .alert
+		)
+		wAC.addTextField { p in config( p ) }
+		wAC.addAction( UIAlertAction( title: "Cancel", style: .cancel, handler: handler ) )
+		wAC.addAction( UIAlertAction( title: "OK", style: .default, handler: handler ) )
+		wAC.view.setNeedsLayout()
+		present(
+			wAC
+		,	animated:true
+		,	completion:nil
+		)
+	}
 }
 
 func
