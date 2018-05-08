@@ -160,9 +160,9 @@ Digits( _ a: [ E ], _ radix: Int ) -> String {
 			wBorrow = w % E2( radix )
 		}
 		if wBorrow < 10 {
-			v = "\(String(describing: UnicodeScalar( Int( wBorrow ) + Int( ( "0" as UnicodeScalar ).value ) )))" + v
+			v = "\(String(describing: UnicodeScalar( Int( wBorrow ) + Int( ( "0" as UnicodeScalar ).value ) )!))" + v
 		} else {
-			v = "\(String(describing: UnicodeScalar( Int( wBorrow ) - 10 + Int( ( "A" as UnicodeScalar ).value ) )))" + v
+			v = "\(String(describing: UnicodeScalar( Int( wBorrow ) - 10 + Int( ( "A" as UnicodeScalar ).value ) )!))" + v
 		}
 	}
 	return v

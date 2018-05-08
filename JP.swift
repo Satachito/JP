@@ -59,7 +59,6 @@ ToArray<T>( _ start: UnsafePointer<T>, _ count: Int ) -> [ T ] {
 }
 //	USAGE: let wArray : [ Int16 ] = ToArray( data.bytes, data.length / sizeof( Int16 ) )
 
-
 func
 UTF8Length( _ p: String ) -> Int {
 	return p.lengthOfBytes( using: .utf8 )
@@ -114,6 +113,15 @@ JSONObject( _ from: String ) -> Any? {
 	guard let wJSONData = UTF8Data( from ) else { return nil }
 	guard let v = try? DecodeJSON( wJSONData ) else { return nil }
 	return v
+}
+
+class
+Cell<T>	{
+	var
+	m			: T
+	let
+	next		: Cell?
+	init(	_ a	: T, _ pNext: Cell? = nil ) { m = a; next = pNext }
 }
 
 func
@@ -195,25 +203,24 @@ JPTest() {
 	print( "RandomData, HexString, HexChar, ToArray<T>, UTF8String, UTF8Data, Base64Data, Base64String, IsNull, AsInt" );
 }
 
-
-
 enum
 ReaderError	: Error {
 case		eod
 }
+
 class
 Reader< T > {
 	var
-	_unread : T?
+	_unread : Cell< T >?
 	func
 	_Read() throws -> T { throw ReaderError.eod }
 	func
 	Read() throws -> T {
-		if let v = _unread { _unread = nil; return v }
+		if let v = _unread { _unread = v.next ; return v.m }
 		return try _Read()
 	}
 	func
-	Unread( _ p: T ) { _unread = p; }
+	Unread( _ p: T ) { _unread = Cell< T >( p, _unread ) }
 }
 
 class
@@ -225,9 +232,9 @@ StdinUnicodeReader: Reader< UnicodeScalar > {
 		while m.count == 0 {
 			if let w = readLine( strippingNewline: false ) { m = w.unicodeScalars } else { throw ReaderError.eod }
 		}
-		let v = m.first
+		let v = m.first!
 		m = String.UnicodeScalarView( m.dropFirst() )
-		return v!
+		return v
 	}
 }
 
@@ -239,9 +246,9 @@ StringUnicodeReader	: Reader< UnicodeScalar > {
 	override func
 	_Read() throws -> UnicodeScalar {
 		if m.count == 0 { throw ReaderError.eod }
-		let v = m.first
+		let v = m.first!
 		m = String.UnicodeScalarView( m.dropFirst() )
-		return v!
+		return v
 	}
 }
 
@@ -254,15 +261,6 @@ SkipWhite( _ r: Reader< UnicodeScalar > ) throws {
 			break
 		}
 	}
-}
-
-class
-Cell<T>	{
-	var
-	m			: T
-	let
-	next		: Cell?
-	init(	_ a	: T, _ pNext: Cell? = nil ) { m = a; next = pNext }
 }
 
 func
