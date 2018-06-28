@@ -19,8 +19,10 @@ BigIntegerError	: Error {
 class
 EsUtil {
 	var	m		: [ E ]
-	init( _ a	: [ E ] ) { m = a }
-	
+	init()							{ m = [ E ]() }
+	init( _ a	: ArraySlice< E > )	{ m = Array( a ) }
+	init( _ a	: Int )				{ m = Array( repeating: 0, count: a ) }
+
 	func
 	AddDigit( _ a: Int, _ radix: Int ) {
 		var	wCarry = E2( a )
@@ -124,10 +126,10 @@ EsUtil {
 }
 
 func
-NumBits( _ a: [ E ] ) -> Int {
+NumBits( _ a: ArraySlice< E > ) -> Int {
 	if a.count == 0 { return 0 }
 	var v = a.count * NUM_BITS
-	var	w = a[ a.count - 1 ]
+	var	w = a[ a.startIndex + a.count - 1 ]
 	for _ in 0 ..< NUM_BITS {
 		w <<= E( 1 )
 		if w & BORDER > 0 { break }
@@ -137,16 +139,16 @@ NumBits( _ a: [ E ] ) -> Int {
 }
 
 func
-FloatValue( _ a: [ E ] ) -> Float64 {
+FloatValue( _ a: ArraySlice< E > ) -> Float64 {
 	var	v = 0 as Float64
 	for w in a.reversed() { v = v * Float64( BORDER ) + Float64( w ) }
 	return v
 }
 
 func
-Digits( _ a: [ E ], _ radix: Int ) -> String {
+Digits( _ a: ArraySlice< E >, _ radix: Int ) -> String {
 	if a.count == 0 { return "0" }
-	var wEs = a
+	var wEs = Array( a )
 	var	v = ""
 	while wEs.count > 0 {
 		var i = wEs.count - 1
@@ -169,7 +171,7 @@ Digits( _ a: [ E ], _ radix: Int ) -> String {
 }
 
 open	class
-BigInteger : CustomStringConvertible {
+BigInteger : CustomStringConvertible, CustomDebugStringConvertible {
 
 	var	m		: [ E ]
 	let	minus	: Bool
@@ -181,20 +183,24 @@ BigInteger : CustomStringConvertible {
 	
 	open	func
 	StringRepresentation( _ radix: Int ) -> String {
-		let	v = Digits( m, radix )
+		let	v = Digits( ArraySlice( m ), radix )
 		return minus ? "-" + v : v
 	}
 	open	var
-	description: String {
+	description		: String {
 		return StringRepresentation( 10 )
 	}
-	func
-	Float() -> Float64 {
-		let	v = FloatValue( m )
+	open	var
+	debugDescription: String {
+		return StringRepresentation( 10 )
+	}
+	var
+	NativeFloat		: Float64 {
+		let	v = FloatValue( ArraySlice( m ) )
 		return minus ? -v : v
 	}
-	func
-	RemainderE() -> Int {
+	var
+	NativeInt		: Int {
 		let	v = m.count == 0 ? 0 : Int( m[ 0 ] )
 		return minus ? -v : v
 	}
@@ -202,7 +208,7 @@ BigInteger : CustomStringConvertible {
 
 func
 MakeBigInteger( _ a: String, _ radix: Int = 10, _ minus: Bool = false ) -> BigInteger {
-	let	w = EsUtil( [ E ]() );
+	let	w = EsUtil();
 	for u in a.unicodeScalars {
 		switch u {
 		case "0" ... "9":
@@ -227,7 +233,7 @@ MakeBigInteger( _ a: Int ) -> BigInteger {
 		wMinus = true
 	}
 
-	let	v = EsUtil( [ E ]() );
+	let	v = EsUtil();
 	while w > 0 {
 		v.m.append( E( w % Int( BORDER ) ) )
 		w /= Int( BORDER )
@@ -236,11 +242,11 @@ MakeBigInteger( _ a: Int ) -> BigInteger {
 }
 
 func
-_Compare( _ l: [ E ], _ r: [ E ] ) -> Int {
+_Compare( _ l: ArraySlice< E >, _ r: ArraySlice< E > ) -> Int {
 	if l.count == r.count {
 		for i in ( 0 ..< l.count ).reversed() {
-			if l[ i ] > r[ i ] { return  1 }
-			if l[ i ] < r[ i ] { return -1 }
+			if l[ l.startIndex + i ] > r[ r.startIndex + i ] { return  1 }
+			if l[ l.startIndex + i ] < r[ r.startIndex + i ] { return -1 }
 		}
 		return 0
 	} else {
@@ -248,17 +254,22 @@ _Compare( _ l: [ E ], _ r: [ E ] ) -> Int {
 	}
 }
 
-func
+public	func
 Compare( _ l: BigInteger, _ r: BigInteger ) -> Int {
 	if l.m.count == 0 && r.m.count == 0 { return 0 }
 	return l.minus
-	?	r.minus ? -_Compare( l.m, r.m ) : -1
-	:	r.minus ?  1 :  _Compare( l.m, r.m )
+	?	r.minus ? -_Compare( ArraySlice( l.m ) , ArraySlice( r.m )  ) : -1
+	:	r.minus ?  1 :  _Compare( ArraySlice( l.m ) , ArraySlice( r.m )  )
+}
+
+func
+_IsZero( _ p: ArraySlice< E > ) -> Bool {
+	return p.count == 0
 }
 
 public	func
-IsZero( _ l: BigInteger ) -> Bool {
-	return l.m.count == 0
+IsZero( _ p: BigInteger ) -> Bool {
+	return _IsZero( ArraySlice( p.m ) )
 }
 
 public	func
@@ -280,7 +291,7 @@ public	func
 <=( l: BigInteger, r: BigInteger ) -> Bool { return Compare( l, r ) != 1 }
 
 func
-_Plus( _ b: [ E ], _ s: [ E ] ) -> [ E ] {
+_Plus( _ b: ArraySlice< E >, _ s: ArraySlice< E > ) -> [ E ] {
 	let	v = EsUtil( b )
 	for ( i, w ) in s.enumerated() { v.m[ i ] += w }
 	v.CarryAll()
@@ -288,12 +299,12 @@ _Plus( _ b: [ E ], _ s: [ E ] ) -> [ E ] {
 }
 
 func
-Plus( _ l: [ E ], _ r: [ E ] ) -> [ E ] {
+Plus( _ l: ArraySlice< E >, _ r: ArraySlice< E > ) -> [ E ] {
 	return l.count >= r.count ? _Plus( l, r ) : _Plus( r, l )
 }
 
 func
-_Minus( _ b: [ E ], _ s: [ E ] ) -> [ E ] {
+_Minus( _ b: ArraySlice< E >, _ s: ArraySlice< E > ) -> [ E ] {
 	let	v = EsUtil( b )
 	for ( i, w ) in s.enumerated() {
 		if v.m[ i ] >= w {
@@ -306,18 +317,18 @@ _Minus( _ b: [ E ], _ s: [ E ] ) -> [ E ] {
 	return v.m
 }
 func
-Minus( _ l: [ E ], _ r: [ E ] ) -> ( reverse: Bool, [ E ] ) {
+Minus( _ l: ArraySlice< E >, _ r: ArraySlice< E > ) -> ( reverse: Bool, [ E ] ) {
 	return _Compare( l, r ) >= 0
 	?	( false, _Minus( l, r ) )
 	:	(  true, _Minus( r, l ) )
 }
 
 func
-Mul( _ l: [ E ], _ r: [ E ] ) -> [ E ] {
-	let v = EsUtil( [ E ]( repeating: 0, count: l.count + r.count ) )
+Mul( _ l: ArraySlice< E >, _ r: ArraySlice< E > ) -> [ E ] {
+	let v = EsUtil( l.count + r.count )
 	for il in 0 ..< l.count {
 		for ir in 0 ..< r.count {
-			let w = E2( l[ il ] ) * E2( r[ ir ] )
+			let w = E2( l[ l.startIndex + il ] ) * E2( r[ r.startIndex + ir ] )
 			v.Add( E( w % E2( BORDER ) ), il + ir )
 			v.Add( E( w >> E2( NUM_BITS ) ), il + ir + 1 )
 		}
@@ -327,30 +338,30 @@ Mul( _ l: [ E ], _ r: [ E ] ) -> [ E ] {
 }
 
 func
-QR( _ l: [ E ], _ r: [ E ] ) -> ( [ E ], [ E ] ) {
+QR( _ l: ArraySlice< E >, _ r: ArraySlice< E > ) -> ( [ E ], [ E ] ) {
 
-	let vQuotient = EsUtil( [ E ]() )
+	let vQuotient = EsUtil()
 	let	vRemainder = EsUtil( l )
 	let wRNB = NumBits( r )
 	
 	while true {
-		let	wLNB = NumBits( vRemainder.m )
+		let	wLNB = NumBits( ArraySlice( vRemainder.m ) )
 		if wLNB > wRNB {
 			let	wR = EsUtil( r )
 			let	wNB = wLNB - wRNB
 			wR.Mul2N( wNB )
-			if _Compare( vRemainder.m, wR.m ) == -1 {
+			if _Compare( ArraySlice( vRemainder.m ), ArraySlice( wR.m ) ) == -1 {
 				vQuotient.Add2N( wNB - 1 )
 				wR.Div2N( 1 )
 			} else {
 				vQuotient.Add2N( wNB )
 			}
-			vRemainder.m = _Minus( vRemainder.m, wR.m )
+			vRemainder.m = _Minus( ArraySlice( vRemainder.m ), ArraySlice( wR.m ) )
 		} else { break }
 	}
-	if _Compare( vRemainder.m, r ) != -1 {
+	if _Compare( ArraySlice( vRemainder.m ), r ) != -1 {
 		vQuotient.Add( 1 )
-		vRemainder.m = _Minus( vRemainder.m, r )
+		vRemainder.m = _Minus( ArraySlice( vRemainder.m ), r )
 	}
 	return ( vQuotient.m, vRemainder.m )
 }
@@ -361,15 +372,15 @@ public	func
 	if l.m.count == 0 { return r }
 	switch ( l.minus, r.minus ) {
 	case ( false, false ):	//	+	+
-		return BigInteger( Plus( l.m, r.m ), false )
+		return BigInteger( Plus( ArraySlice( l.m ), ArraySlice( r.m ) ), false )
 	case ( false, true ):	//	+	-
-		let ( wRev, wEs ) = Minus( l.m, r.m )
+		let ( wRev, wEs ) = Minus( ArraySlice( l.m ), ArraySlice( r.m ) )
 		return BigInteger( wEs, wRev )
 	case ( true, false ):	//	-	+
-		let ( wRev, wEs ) = Minus( l.m, r.m )
+		let ( wRev, wEs ) = Minus( ArraySlice( l.m ), ArraySlice( r.m ) )
 		return BigInteger( wEs, !wRev )
 	case ( true, true ):	//	-	-
-		return BigInteger( Plus( l.m, r.m ), true )
+		return BigInteger( Plus( ArraySlice( l.m ), ArraySlice( r.m ) ), true )
 	}
 }
 
@@ -379,14 +390,14 @@ public	func
 	if l.m.count == 0 { return BigInteger( r.m, !r.minus ) }
 	switch ( l.minus, r.minus ) {
 	case ( false, false ):	//	+	+
-		let ( wRev, wEs ) = Minus( l.m, r.m )
+		let ( wRev, wEs ) = Minus( ArraySlice( l.m ), ArraySlice( r.m ) )
 		return BigInteger( wEs, wRev )
 	case ( false, true ):	//	+	-
-		return BigInteger( Plus( l.m, r.m ), false )
+		return BigInteger( Plus( ArraySlice( l.m ), ArraySlice( r.m ) ), false )
 	case ( true, false ):	//	-	+
-		return BigInteger( Plus( l.m, r.m ), true )
+		return BigInteger( Plus( ArraySlice( l.m ), ArraySlice( r.m ) ), true )
 	case ( true, true ):	//	-	-
-		let ( wRev, wEs ) = Minus( l.m, r.m )
+		let ( wRev, wEs ) = Minus( ArraySlice( l.m ), ArraySlice( r.m ) )
 		return BigInteger( wEs, !wRev )
 	}
 }
@@ -395,60 +406,57 @@ public	func
 *( l: BigInteger, r: BigInteger ) -> BigInteger {
 	if r.m.count == 0 { return r }
 	if l.m.count == 0 { return l }
-	return BigInteger( Mul( l.m, r.m ), l.minus != r.minus )
+	return BigInteger( Mul( ArraySlice( l.m ), ArraySlice( r.m ) ), l.minus != r.minus )
 }
 
 public	func
 /( l: BigInteger, r: BigInteger ) throws -> BigInteger {
 	if r.m.count == 0 { throw BigIntegerError.divideByZero }
 	if l.m.count == 0 { return l }
-	return BigInteger( QR( l.m, r.m ).0, l.minus != r.minus )
+	return BigInteger( QR( ArraySlice( l.m ), ArraySlice( r.m ) ).0, l.minus != r.minus )
 }
 
 public	func
 %( l: BigInteger, r: BigInteger ) throws -> BigInteger {
 	if r.m.count == 0 { throw BigIntegerError.divideByZero }
 	if l.m.count == 0 { return l }
-	return BigInteger( QR( l.m, r.m ).1, l.minus != r.minus )
+	return BigInteger( QR( ArraySlice( l.m ), ArraySlice( r.m ) ).1, l.minus != r.minus )
 }
 
 func
-And( _ b: [ E ], _ s: [ E ] ) -> [ E ] {
-	let v = EsUtil( [ E ]( repeating: 0, count: s.count ) )
-	var	i = 0
-	while i < s.count {
-		v.m[ i ] = ( b[ i ] & s[ i ] ) % BORDER
-		i += 1
-	}
+And( _ b: ArraySlice< E >, _ s: ArraySlice< E > ) -> [ E ] {
+	let	v = EsUtil( b )
+	for i in 0 ..< s.count { v.m[ i ] &= s[ s.startIndex + i ] }
 	v.Normalize()
 	return v.m
 }
 public	func
 &( l: BigInteger, r: BigInteger ) -> BigInteger {
-	let	v = l.m.count >= r.m.count ? And( l.m, r.m ) : And( r.m, l.m )
+	let	v = l.m.count >= r.m.count ? And( ArraySlice( l.m ), ArraySlice( r.m ) ) : And( ArraySlice( r.m ), ArraySlice( l.m ) )
 	return BigInteger( v, l.minus && r.minus )
 }
 
 func
-Or( _ b: [ E ], _ s: [ E ] ) -> [ E ] {
-	var	v = b
-	for i in 0 ..< s.count { v[ i ] = b[ i ] | s[ i ] }
+Or( _ b: ArraySlice< E >, _ s: ArraySlice< E > ) -> [ E ] {
+	var	v = Array( b )
+	for i in 0 ..< s.count { v[ i ] |= s[ s.startIndex + i ] }
 	return v
 }
 public	func
 |( l: BigInteger, r: BigInteger ) -> BigInteger {
-	let	v = l.m.count >= r.m.count ? Or( l.m, r.m ) : Or( r.m, l.m )
+	let	v = l.m.count >= r.m.count ? Or( ArraySlice( l.m ), ArraySlice( r.m ) ) : Or( ArraySlice( r.m ), ArraySlice( l.m ) )
 	return BigInteger( v, l.minus || r.minus )
 }
 
 func
-XOr( _ b: [ E ], _ s: [ E ] ) -> [ E ] {
-	var	v = b
-	for i in 0 ..< s.count { v[ i ] = b[ i ] ^ s[ i ] }
-	return v
+XOr( _ b: ArraySlice< E >, _ s: ArraySlice< E > ) -> [ E ] {
+	let	v = EsUtil( b )
+	for i in 0 ..< s.count { v.m[ i ] ^= s[ s.startIndex + i ] }
+	v.Normalize()
+	return v.m
 }
 public	func
 ^( l: BigInteger, r: BigInteger ) -> BigInteger {
-	let	v = l.m.count >= r.m.count ? XOr( l.m, r.m ) : XOr( r.m, l.m )
+	let	v = l.m.count >= r.m.count ? XOr( ArraySlice( l.m ), ArraySlice( r.m ) ) : XOr( ArraySlice( r.m ), ArraySlice( l.m ) )
 	return BigInteger( v, l.minus != r.minus )
 }
