@@ -13,6 +13,7 @@ let	BORDER		= E( 1 << NUM_BITS )
 
 enum
 BigIntegerError	: Error {
+	case	numberFormat( String )
 	case	divideByZero
 }
 
@@ -207,24 +208,6 @@ BigInteger : CustomStringConvertible, CustomDebugStringConvertible {
 }
 
 func
-MakeBigInteger( _ a: String, _ radix: Int = 10, _ minus: Bool = false ) -> BigInteger {
-	let	w = EsUtil();
-	for u in a.unicodeScalars {
-		switch u {
-		case "0" ... "9":
-			w.AddDigit( Int( u.value ) - Int( ( "0" as UnicodeScalar ).value ), radix )
-		case "A" ... "Z":
-			w.AddDigit( Int( u.value ) - Int( ( "A" as UnicodeScalar ).value ) + 10, radix )
-		case "a" ... "z":
-			w.AddDigit( Int( u.value ) - Int( ( "a" as UnicodeScalar ).value ) + 10, radix )
-		default:
-			break
-		}
-	}
-	return BigInteger( w.m, minus )
-}
-
-func
 MakeBigInteger( _ a: Int ) -> BigInteger {
 	var	w		= a
 	var	wMinus	= false
@@ -239,6 +222,47 @@ MakeBigInteger( _ a: Int ) -> BigInteger {
 		w /= Int( BORDER )
 	}
 	return BigInteger( v.m, wMinus )
+}
+
+func
+MakeBigInteger( _ a: String, _ radix: Int = 10 ) -> BigInteger? {
+
+	var	wMinus = false
+
+	let	wR = StringUnicodeReader( a )
+
+	do {
+		try SkipWhite( wR )
+		let u = try wR.Read()
+		switch ( u ) {
+		case "+":	break
+		case "-":	wMinus = true
+		default:	wR.Unread( u )
+		}
+	} catch {
+		return MakeBigInteger( 0 )
+	}
+
+	let	wEU = EsUtil();
+	for u in a.unicodeScalars {
+		switch u {
+		case "0" ... "9":
+			wEU.AddDigit( Int( u.value ) - Int( ( "0" as UnicodeScalar ).value ), radix )
+		case "A" ... "Z":
+			let	w = Int( u.value ) - Int( ( "A" as UnicodeScalar ).value ) + 10
+			guard w < radix else { return nil }
+			wEU.AddDigit( w, radix )
+		case "a" ... "z":
+			let	w = Int( u.value ) - Int( ( "a" as UnicodeScalar ).value ) + 10
+			guard w < radix else { return nil }
+			wEU.AddDigit( w, radix )
+		case ",":
+			break
+		default:
+			return nil
+		}
+	}
+	return BigInteger( wEU.m, wMinus )
 }
 
 func

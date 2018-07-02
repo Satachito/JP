@@ -223,6 +223,7 @@ Reader< T > {
 	Unread( _ p: T ) { _unread = Cell< T >( p, _unread ) }
 }
 
+/*
 class
 StdinUnicodeReader: Reader< UnicodeScalar > {
 	var
@@ -237,17 +238,37 @@ StdinUnicodeReader: Reader< UnicodeScalar > {
 		return v
 	}
 }
+*/
 
 class
-StringUnicodeReader	: Reader< UnicodeScalar > {
+StdinUnicodeReader: Reader< UnicodeScalar > {
 	var
-	m	: String.UnicodeScalarView
-	init( _ a: String ) { m = a.unicodeScalars }
+	m		: String.UnicodeScalarView.Iterator?
 	override func
 	_Read() throws -> UnicodeScalar {
-		if m.count == 0 { throw ReaderError.eod }
-		let v = m.first!
-		m = String.UnicodeScalarView( m.dropFirst() )
+		repeat {
+			if m == nil {
+				guard let w = readLine( strippingNewline: false ) else { throw ReaderError.eod }
+				m = w.unicodeScalars.makeIterator()
+			}
+			if let v = m!.next() { return v }
+			m = nil
+		} while true
+	}
+}
+
+class
+StringUnicodeReader: Reader< UnicodeScalar > {
+	var
+	m		: String.UnicodeScalarView.Iterator
+
+	init( _ p: String ) {
+		m = p.unicodeScalars.makeIterator()
+	}
+
+	override func
+	_Read() throws -> UnicodeScalar {
+		guard let v = m.next() else { throw ReaderError.eod }
 		return v
 	}
 }
