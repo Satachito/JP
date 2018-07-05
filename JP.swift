@@ -4,7 +4,7 @@ import	Foundation
 import	CoreGraphics
 
 enum
-JPError	: Error {
+JPError: Error {
 	case e(String)
 }
 
@@ -116,12 +116,12 @@ JSONObject( _ from: String ) -> Any? {
 }
 
 class
-Cell<T>	{
+Chain<T> {
 	var
 	m			: T
 	let
-	next		: Cell?
-	init(	_ a	: T, _ pNext: Cell? = nil ) { m = a; next = pNext }
+	next		: Chain?
+	init(	_ p	: T, _ pNext: Chain? = nil ) { m = p; next = pNext }
 }
 
 func
@@ -211,7 +211,7 @@ case		eod
 class
 Reader< T > {
 	var
-	_unread : Cell< T >?
+	_unread : Chain< T >?
 	func
 	_Read() throws -> T { throw ReaderError.eod }
 	func
@@ -220,28 +220,25 @@ Reader< T > {
 		return try _Read()
 	}
 	func
-	Unread( _ p: T ) { _unread = Cell< T >( p, _unread ) }
+	Unread( _ p: T ) { _unread = Chain< T >( p, _unread ) }
 }
 
-/*
 class
-StdinUnicodeReader: Reader< UnicodeScalar > {
-	var
-	m	= String.UnicodeScalarView()
-	override func
-	_Read() throws -> UnicodeScalar {
-		while m.count == 0 {
-			if let w = readLine( strippingNewline: false ) { m = w.unicodeScalars } else { throw ReaderError.eod }
+UnicodeReader: Reader< UnicodeScalar > {
+	func
+	SkipWhite() throws {
+		while true {
+			let w = try Read()
+			if !CharacterSet.whitespacesAndNewlines.contains( w ) {
+				Unread( w )
+				break
+			}
 		}
-		let v = m.first!
-		m = String.UnicodeScalarView( m.dropFirst() )
-		return v
 	}
 }
-*/
 
 class
-StdinUnicodeReader: Reader< UnicodeScalar > {
+StdinUnicodeReader: UnicodeReader {
 	var
 	m		: String.UnicodeScalarView.Iterator?
 	override func
@@ -258,7 +255,7 @@ StdinUnicodeReader: Reader< UnicodeScalar > {
 }
 
 class
-StringUnicodeReader: Reader< UnicodeScalar > {
+StringUnicodeReader: UnicodeReader {
 	var
 	m		: String.UnicodeScalarView.Iterator
 
@@ -273,16 +270,65 @@ StringUnicodeReader: Reader< UnicodeScalar > {
 	}
 }
 
-func
-SkipWhite( _ r: Reader< UnicodeScalar > ) throws {
-	while true {
-		let u = try r.Read()
-		if !CharacterSet.whitespacesAndNewlines.contains( u ) {
-			r.Unread( u )
-			break
+extension CharacterSet {
+	func
+	contains( _ p: Character ) -> Bool {
+		var	wI = String( p ).unicodeScalars.makeIterator()
+		while let w = wI.next() {
+			if contains( w ) { return true }
+		}
+		return false
+	}
+}
+
+class
+CharacterReader: Reader< Character > {
+	func
+	SkipWhite() throws {
+		while true {
+			let w = try Read()
+			if !CharacterSet.whitespacesAndNewlines.contains( w ) {
+				Unread( w )
+				break
+			}
 		}
 	}
 }
+
+class
+StdinCharacterReader: CharacterReader {
+	var
+	m		: IndexingIterator< [ Character ] >?
+	override func
+	_Read() throws -> Character {
+		repeat {
+			if m == nil {
+				guard let w = readLine( strippingNewline: false ) else { throw ReaderError.eod }
+				m = [ Character ]( w ).makeIterator()
+			}
+			if let v = m!.next() { return v }
+			m = nil
+		} while true
+	}
+}
+
+class
+StringCharacterReader: CharacterReader {
+	var
+	m		: IndexingIterator< [ Character ] >
+
+	init( _ p: String ) {
+		m = [ Character ]( p ).makeIterator()
+	}
+
+	override func
+	_Read() throws -> Character {
+		guard let v = m.next() else { throw ReaderError.eod }
+		return v
+	}
+}
+
+
 
 func
 Notify( _ name: String, _ p: @escaping ( Notification ) -> () ) -> NSObjectProtocol {
