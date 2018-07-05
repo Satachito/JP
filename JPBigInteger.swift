@@ -21,12 +21,12 @@ class
 EsUtil {
 	var	m		: [ E ]
 	init()							{ m = [ E ]() }
-	init( _ a	: ArraySlice< E > )	{ m = Array( a ) }
-	init( _ a	: Int )				{ m = Array( repeating: 0, count: a ) }
+	init( _ p	: ArraySlice< E > )	{ m = Array( p ) }
+	init( _ p	: Int )				{ m = Array( repeating: 0, count: p ) }
 
 	func
-	AddDigit( _ a: Int, _ radix: Int ) {
-		var	wCarry = E2( a )
+	AddDigit( _ p: Int, _ radix: Int ) {
+		var	wCarry = E2( p )
 		for i in 0 ..< m.count {
 			let w = E2( m[ i ] ) * E2( radix ) + wCarry
 			m[ i ] = E( w % E2( BORDER ) )
@@ -64,8 +64,8 @@ EsUtil {
 		Normalize()
 	}
 	func
-	Add( _ a: E, _ at: Int = 0 ) {
-		var	wCarry = a
+	Add( _ p: E, _ at: Int = 0 ) {
+		var	wCarry = p
 		for i in at ..< m.count {
 			m[ i ] += wCarry
 			wCarry = m[ i ] >> E( NUM_BITS )
@@ -74,15 +74,15 @@ EsUtil {
 		if wCarry > 0 { m.append( E( wCarry ) ) }
 	}
 	func
-	Add2N( _ a: Int ) {
-		let	wAt = a / NUM_BITS
+	Add2N( _ p: Int ) {
+		let	wAt = p / NUM_BITS
 		while m.count <= wAt { m.append( 0 ) }
-		Add( 1 << E( a - wAt * NUM_BITS ), wAt )
+		Add( 1 << E( p - wAt * NUM_BITS ), wAt )
 	}
 
 	func
-	Minus( _ a: E, _ at: Int = 0 ) {
-		if m[ at ] >= a { m[ at ] -= a } else { m[ at ] = m[ at ] + BORDER - a + BORDER }
+	Minus( _ p: E, _ at: Int = 0 ) {
+		if m[ at ] >= p { m[ at ] -= p } else { m[ at ] = m[ at ] + BORDER - p + BORDER }
 		var	i = at + 1
 		while i < m.count {
 			if m[ i - 1 ] >= BORDER {
@@ -99,9 +99,9 @@ EsUtil {
 		}
 	}
 	func
-	Div2N( _ a: Int ) {
-		for _ in 0 ..< a / NUM_BITS { m.removeFirst() }
-		let wNumBits = E( a % NUM_BITS )
+	Div2N( _ p: Int ) {
+		for _ in 0 ..< p / NUM_BITS { m.removeFirst() }
+		let wNumBits = E( p % NUM_BITS )
 		if wNumBits > 0 {
 			m[ 0 ] >>= wNumBits
 			for i in 1 ..< m.count {
@@ -112,8 +112,8 @@ EsUtil {
 		}
 	}
 	func
-	Mul2N( _ a: Int ) {
-		let wNumBits = E( a % NUM_BITS )
+	Mul2N( _ p: Int ) {
+		let wNumBits = E( p % NUM_BITS )
 		if wNumBits > 0 {
 			m.append( 0 )
 			for i in ( 1 ..< m.count ).reversed() {
@@ -122,15 +122,15 @@ EsUtil {
 			}
 			Normalize()
 		}
-		for _ in 0 ..< Int( a ) / NUM_BITS { m.insert( 0, at:0 ) }
+		for _ in 0 ..< Int( p ) / NUM_BITS { m.insert( 0, at:0 ) }
 	}
 }
 
 func
-NumBits( _ a: ArraySlice< E > ) -> Int {
-	if a.count == 0 { return 0 }
-	var v = a.count * NUM_BITS
-	var	w = a[ a.startIndex + a.count - 1 ]
+NumBits( _ p: ArraySlice< E > ) -> Int {
+	if p.count == 0 { return 0 }
+	var v = p.count * NUM_BITS
+	var	w = p[ p.startIndex + p.count - 1 ]
 	for _ in 0 ..< NUM_BITS {
 		w <<= E( 1 )
 		if w & BORDER > 0 { break }
@@ -140,16 +140,16 @@ NumBits( _ a: ArraySlice< E > ) -> Int {
 }
 
 func
-FloatValue( _ a: ArraySlice< E > ) -> Float64 {
+FloatValue( _ p: ArraySlice< E > ) -> Float64 {
 	var	v = 0 as Float64
-	for w in a.reversed() { v = v * Float64( BORDER ) + Float64( w ) }
+	for w in p.reversed() { v = v * Float64( BORDER ) + Float64( w ) }
 	return v
 }
 
 func
-Digits( _ a: ArraySlice< E >, _ radix: Int ) -> String {
-	if a.count == 0 { return "0" }
-	var wEs = Array( a )
+Digits( _ p: ArraySlice< E >, _ radix: Int ) -> String {
+	if p.count == 0 { return "0" }
+	var wEs = Array( p )
 	var	v = ""
 	while wEs.count > 0 {
 		var i = wEs.count - 1
@@ -177,8 +177,8 @@ BigInteger : CustomStringConvertible, CustomDebugStringConvertible {
 	var	m		: [ E ]
 	let	minus	: Bool
 
-	init( _ a: [ E ] = [ E ](), _ minus: Bool = false ) {
-		m = a;
+	init( _ p: [ E ] = [ E ](), _ minus: Bool = false ) {
+		m = p
 		self.minus = minus
 	}
 	
@@ -208,8 +208,8 @@ BigInteger : CustomStringConvertible, CustomDebugStringConvertible {
 }
 
 func
-MakeBigInteger( _ a: Int ) -> BigInteger {
-	var	w		= a
+MakeBigInteger( _ p: Int ) -> BigInteger {
+	var	w		= p
 	var	wMinus	= false
 	if w < 0 {
 		w = -w
@@ -225,44 +225,49 @@ MakeBigInteger( _ a: Int ) -> BigInteger {
 }
 
 func
-MakeBigInteger( _ a: String, _ radix: Int = 10 ) -> BigInteger? {
+MakeBigInteger( _ p: String, _ radix: Int = 10 ) -> BigInteger? {
+
+	let	wR = StringUnicodeReader( p )
 
 	var	wMinus = false
-
-	let	wR = StringUnicodeReader( a )
-
 	do {
-		try SkipWhite( wR )
-		let u = try wR.Read()
-		switch ( u ) {
-		case "+":	break
-		case "-":	wMinus = true
-		default:	wR.Unread( u )
+		let w = try wR.Read()
+		switch w {
+		case "0" ... "9"	: wR.Unread( w )
+		case "+"			: break
+		case "-"			: wMinus = true
+		default				: return nil
 		}
 	} catch {
-		return MakeBigInteger( 0 )
+		return nil
 	}
 
 	let	wEU = EsUtil();
-	for u in a.unicodeScalars {
-		switch u {
-		case "0" ... "9":
-			wEU.AddDigit( Int( u.value ) - Int( ( "0" as UnicodeScalar ).value ), radix )
-		case "A" ... "Z":
-			let	w = Int( u.value ) - Int( ( "A" as UnicodeScalar ).value ) + 10
-			guard w < radix else { return nil }
-			wEU.AddDigit( w, radix )
-		case "a" ... "z":
-			let	w = Int( u.value ) - Int( ( "a" as UnicodeScalar ).value ) + 10
-			guard w < radix else { return nil }
-			wEU.AddDigit( w, radix )
-		case ",":
-			break
-		default:
+	repeat {
+		do {
+			let w = try wR.Read()
+			switch w {
+			case "0" ... "9":
+				let	w = Int( w.value ) - Int( ( "0" as UnicodeScalar ).value )
+				guard w < radix else { return nil }
+				wEU.AddDigit( w, radix )
+			case "A" ... "Z":
+				let	w = Int( w.value ) - Int( ( "A" as UnicodeScalar ).value ) + 10
+				guard w < radix else { return nil }
+				wEU.AddDigit( w, radix )
+			case "a" ... "z":
+				let	w = Int( w.value ) - Int( ( "a" as UnicodeScalar ).value ) + 10
+				guard w < radix else { return nil }
+				wEU.AddDigit( w, radix )
+			default:
+				return nil
+			}
+		} catch ReaderError.eod {
+			return BigInteger( wEU.m, wMinus )
+		} catch {
 			return nil
 		}
-	}
-	return BigInteger( wEU.m, wMinus )
+	} while true
 }
 
 func
