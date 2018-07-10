@@ -270,65 +270,6 @@ StringUnicodeReader: UnicodeReader {
 	}
 }
 
-extension CharacterSet {
-	func
-	contains( _ p: Character ) -> Bool {
-		var	wI = String( p ).unicodeScalars.makeIterator()
-		while let w = wI.next() {
-			if contains( w ) { return true }
-		}
-		return false
-	}
-}
-
-class
-CharacterReader: Reader< Character > {
-	func
-	SkipWhite() throws {
-		while true {
-			let w = try Read()
-			if !CharacterSet.whitespacesAndNewlines.contains( w ) {
-				Unread( w )
-				break
-			}
-		}
-	}
-}
-
-class
-StdinCharacterReader: CharacterReader {
-	var
-	m		: IndexingIterator< [ Character ] >?
-	override func
-	_Read() throws -> Character {
-		repeat {
-			if m == nil {
-				guard let w = readLine( strippingNewline: false ) else { throw ReaderError.eod }
-				m = [ Character ]( w ).makeIterator()
-			}
-			if let v = m!.next() { return v }
-			m = nil
-		} while true
-	}
-}
-
-class
-StringCharacterReader: CharacterReader {
-	var
-	m		: IndexingIterator< [ Character ] >
-
-	init( _ p: String ) {
-		m = [ Character ]( p ).makeIterator()
-	}
-
-	override func
-	_Read() throws -> Character {
-		guard let v = m.next() else { throw ReaderError.eod }
-		return v
-	}
-}
-
-
 
 func
 Notify( _ name: String, _ p: @escaping ( Notification ) -> () ) -> NSObjectProtocol {
