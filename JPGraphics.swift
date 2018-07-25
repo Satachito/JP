@@ -187,36 +187,64 @@ ColorWheelImage( _ pW: size_t, _ pH: size_t ) -> CGImage {
 	return v
 }
 
-/*	Sample:
-
-shapeMask.path = Dashed(
+/*
+	Sample:
+Dashed(
 	outerPath.cgPath
 ,	size_t( bounds.width )
 ,	size_t( bounds.height )
 ,	10
 ,	( 0, [ 10, 10 ] )
 )
-
 */
 
 func
 Dashed(
-	_ p				: CGPath
-,	_ pW			: size_t
-,	_ pH			: size_t
-,	_ pLineWidth	: CGFloat
-,	_ pLineDash		: ( CGFloat, [ CGFloat ] )
-,	_ pCap			: CGLineCap = .butt
-,	_ pJoin			: CGLineJoin = .bevel
-,	_ pMiterLimit	: CGFloat = 0
+	_ p					: CGPath
+,	_ pW				: size_t
+,	_ pH				: size_t
+,	_ pLineWidth		: CGFloat
+,	_ pLineDashPattern	: [ CGFloat ]
+,	_ pLineDashPhase	: CGFloat = 0
+,	_ pCap				: CGLineCap = .butt
+,	_ pJoin				: CGLineJoin = .bevel
+,	_ pMiterLimit		: CGFloat = 0
 ) -> CGPath {
 	guard let v = ARGBContext( pW, pH ) else { fatalError() }
 	v.addPath( p )
 	v.setLineWidth( pLineWidth )
-	v.setLineDash( phase: pLineDash.0, lengths: pLineDash.1 )
+	v.setLineDash( phase: pLineDashPhase, lengths: pLineDashPattern )
 	v.setLineCap( pCap )
 	v.setLineJoin( pJoin )
 	v.setMiterLimit( pMiterLimit )
 	v.replacePathWithStrokedPath()
 	return v.path!
 }
+
+func
+DashedLineLayer(
+	_ p					: CGPath
+,	_ pLineWidth		: CGFloat
+,	_ pLineDashPattern	: [ NSNumber ]
+,	_ pLineDashPhase	: CGFloat = 0
+,	_ pLineCap			: CAShapeLayerLineCap = .butt
+,	_ pLineJoin			: CAShapeLayerLineJoin = .bevel
+,	_ pMiterLimit		: CGFloat = 0
+) -> CAShapeLayer {
+
+	let v = CAShapeLayer()
+
+	v.path = p
+	
+	v.lineWidth = pLineWidth
+	v.lineDashPattern = pLineDashPattern
+	v.lineDashPhase = pLineDashPhase
+	v.lineCap = pLineCap
+	v.lineJoin = pLineJoin
+	v.miterLimit = pMiterLimit
+	v.strokeColor = CGColor( colorSpace: CGColorSpaceCreateDeviceGray(), components: [ 0, 1 ] )//	Any colorred: 0, green: 0, blue: 0, alpha: 1
+	v.fillColor = nil
+	
+	return v
+}
+
