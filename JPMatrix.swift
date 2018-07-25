@@ -1,6 +1,5 @@
 //  Written by Satoru Ogura, Tokyo on 2016/12/26.
 
-import Cocoa
 import Accelerate
 
 struct
