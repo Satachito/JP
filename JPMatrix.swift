@@ -2,6 +2,91 @@
 
 import Accelerate
 
+//
+//	VECTOR - SCALAR
+//
+
+infix operator ++: AdditionPrecedence
+infix operator --: AdditionPrecedence
+
+func ++( _ p: [ Double ], _ s: Double ) -> [ Double ] {
+	var	v = [ Double ]( repeating: 0, count: p.count )
+	var	w = s
+	vDSP_vsaddD( p, 1, &w, &v, 1, vDSP_Length( v.count ) )
+	return v
+}
+func ++( _ s: Double, _ p: [ Double ] ) -> [ Double ] { return p ++ s }
+
+func --( _ p: [ Double ], _ s: Double ) -> [ Double ] { return p ++ -s }
+func --( _ s: Double, _ p: [ Double ] ) -> [ Double ] {
+	var	v = [ Double ]( repeating: 0, count: p.count )
+	var	w = s
+	vDSP_vfillD( &w, &v, 1, vDSP_Length( v.count ) )
+	vDSP_vsubD( p, 1, v, 1, &v, 1, vDSP_Length( v.count ) )
+	return v
+}
+
+func * ( _ p: [ Double ], _ s: Double ) -> [ Double ] {
+	var	v = [ Double ]( repeating: 0, count: p.count )
+	var	w = s
+	vDSP_vsmulD( p, 1, &w, &v, 1, vDSP_Length( v.count ) )
+	return v
+}
+func * ( _ s: Double, _ p: [ Double ] ) -> [ Double ] { return p * s }
+
+func / ( _ p: [ Double ], _ s: Double ) -> [ Double ] {
+	var	v = [ Double ]( repeating: 0, count: p.count )
+	var	w = s
+	vDSP_vsdivD( p, 1, &w, &v, 1, vDSP_Length( v.count ) )
+	return v
+}
+func / ( _ s: Double, _ p: [ Double ] ) -> [ Double ] {
+	var	v = [ Double ]( repeating: 0, count: p.count )
+	var	w = s
+	vDSP_vfillD( &w, &v, 1, vDSP_Length( v.count ) )
+	vDSP_vdivD( p, 1, v, 1, &v, 1, vDSP_Length( v.count ) )	//	Note. In vDSP_vdivD, order of A and B is different from other vDSP_XX
+	return v
+}
+
+//
+//	VECTOR - VECTOR
+//
+func ++( _ l: [ Double ], _ r: [ Double ] ) -> [ Double ] {
+	guard l.count == r.count else { fatalError() }
+	var	v = [ Double ]( repeating: 0, count: l.count )
+	vDSP_vaddD( l, 1, r, 1, &v, 1, vDSP_Length( v.count ) )
+	return v
+}
+
+func --( _ l: [ Double ], _ r: [ Double ] ) -> [ Double ] {
+	guard l.count == r.count else { fatalError() }
+	var	v = [ Double ]( repeating: 0, count: l.count )
+	vDSP_vsubD( r, 1, l, 1, &v, 1, vDSP_Length( v.count ) )
+	return v
+}
+
+func * ( _ l: [ Double ], _ r: [ Double ] ) -> [ Double ] {
+	guard l.count == r.count else { fatalError() }
+	var	v = [ Double ]( repeating: 0, count: l.count )
+	vDSP_vmulD( l, 1, r, 1, &v, 1, vDSP_Length( v.count ) )
+	return v
+}
+
+func / ( _ l: [ Double ], _ r: [ Double ] ) -> [ Double ] {
+	guard l.count == r.count else { fatalError() }
+	var	v = [ Double ]( repeating: 0, count: l.count )
+	vDSP_vdivD( r, 1, l, 1, &v, 1, vDSP_Length( v.count ) )	//	Note. In vDSP_vdivD, order of A and B is different from other vDSP_XX
+	return v
+}
+
+func
+DotProduct( _ l: [ Double ], _ r: [ Double ] ) -> Double {
+	guard l.count == r.count else { fatalError() }
+	var	v = 0.0
+	vDSP_dotprD( r, 1, l, 1, &v, vDSP_Length( l.count ) )
+	return v
+}
+
 struct
 Matrix {
 	var	m	:	UInt
@@ -62,7 +147,7 @@ prefix func
 	vDSP_mtransD( p.u, 1, &v.u, 1, v.m, v.n )
 	return v
 }
-
+/*
 prefix func
 ! ( p: Matrix ) -> Matrix {
 	var v = p	//	Confirmed that u's entity is copied.
@@ -79,7 +164,7 @@ prefix func
 
 	return v
 }
-
+*/
 func
 == ( l: Matrix, r: Matrix ) -> Bool {
 	if l.m != r.m { return false }
@@ -87,112 +172,58 @@ func
 	return l.u == r.u
 }
 
-func
-+ ( m: Matrix, s: Double ) -> Matrix {
-	var	v = Matrix( m.m, m.n )
-	var	w = s
-	vDSP_vsaddD( m.u, 1, &w, &v.u, 1, vDSP_Length( v.u.count ) )
-	return v
-}
+func ++( p: Matrix, s: Double ) -> Matrix { return Matrix( p.m, p.n, p.u ++ s ) }
+func ++( s: Double, p: Matrix ) -> Matrix { return Matrix( p.m, p.n, s ++ p.u ) }
 
-func
-- ( m: Matrix, s: Double ) -> Matrix {
-	var	v = Matrix( m.m, m.n )
-	var	w = -s
-	vDSP_vsaddD( m.u, 1, &w, &v.u, 1, vDSP_Length( v.u.count ) )
-	return v
-}
+func --( p: Matrix, s: Double ) -> Matrix { return Matrix( p.m, p.n, p.u -- s ) }
+func --( s: Double, p: Matrix ) -> Matrix { return Matrix( p.m, p.n, s -- p.u ) }
 
-func
-* ( m: Matrix, s: Double ) -> Matrix {
-	var	v = Matrix( m.m, m.n )
-	var	w = s
-	vDSP_vsmulD( m.u, 1, &w, &v.u, 1, vDSP_Length( v.u.count ) )
-	return v
-}
+func * ( p: Matrix, s: Double ) -> Matrix { return Matrix( p.m, p.n, p.u * s ) }
+func * ( s: Double, p: Matrix ) -> Matrix { return Matrix( p.m, p.n, s * p.u ) }
 
-func
-/ ( m: Matrix, s: Double ) -> Matrix {
-	var	v = Matrix( m.m, m.n )
-	var	w = s
-	vDSP_vsdivD( m.u, 1, &w, &v.u, 1, vDSP_Length( v.u.count ) )
-	return v
-}
+func / ( p: Matrix, s: Double ) -> Matrix { return Matrix( p.m, p.n, p.u / s ) }
+func / ( s: Double, p: Matrix ) -> Matrix { return Matrix( p.m, p.n, s / p.u ) }
 
-func
-^ ( m: Matrix, s: Double ) -> Matrix {
-	var	t = Matrix( m.m, m.n )
+func ^ ( p: Matrix, s: Double ) -> Matrix {
+	var	t = Matrix( p.m, p.n )
 	var	w = s
 	vDSP_vfillD( &w, &t.u, 1, vDSP_Length( t.u.count ) )
-	var	v = Matrix( m.m, m.n )
-	var	wM = m
+	var	v = Matrix( p.m, p.n )
+	var	wM = p
 	var	wCount = Int32( v.u.count )
 	vvpow( &v.u, &t.u, &wM.u, &wCount )
 	return v
 }
 
 func
-+ ( s: Double, m: Matrix ) -> Matrix {
-	var	v = Matrix( m.m, m.n )
-	var	w = s
-	vDSP_vsaddD( m.u, 1, &w, &v.u, 1, vDSP_Length( v.u.count ) )
-	return v
-}
-
-func
-- ( s: Double, m: Matrix ) -> Matrix {
-	var	v = Matrix( m.m, m.n )
-	var	w = -s
-	vDSP_vsaddD( m.u, 1, &w, &v.u, 1, vDSP_Length( v.u.count ) )
-	return v
-}
-
-func
-* ( s: Double, m: Matrix ) -> Matrix {
-	var	v = Matrix( m.m, m.n )
-	var	w = s
-	vDSP_vsmulD( m.u, 1, &w, &v.u, 1, vDSP_Length( v.u.count ) )
-	return v
-}
-
-
-func
-+ ( l: Matrix, r: Matrix ) -> Matrix {
+++( _ l: Matrix, _ r: Matrix ) -> Matrix {
 	guard l.m == r.m && l.n == r.n else { fatalError() }
-	var	v = Matrix( l.m, l.n )
-	vDSP_vaddD( l.u, 1, r.u, 1, &v.u, 1, vDSP_Length( v.u.count ) )
-	return v
+	return Matrix( l.m, l.n, l.u ++ r.u )
 }
 
 func
-* ( l: Matrix, r: Matrix ) -> Matrix {
+--( _ l: Matrix, _ r: Matrix ) -> Matrix {
 	guard l.m == r.m && l.n == r.n else { fatalError() }
-	var	v = Matrix( l.m, l.n )
-	vDSP_vmulD( l.u, 1, r.u, 1, &v.u, 1, vDSP_Length( v.u.count ) )
-	return v
+	return Matrix( l.m, l.n, l.u -- r.u )
 }
 
 func
-/ ( l: Matrix, r: Matrix ) -> Matrix {
+* ( _ l: Matrix, _ r: Matrix ) -> Matrix {
 	guard l.m == r.m && l.n == r.n else { fatalError() }
-	var	v = Matrix( l.m, l.n )
-	vDSP_vdivD( r.u, 1, l.u, 1, &v.u, 1, vDSP_Length( v.u.count ) )	//	Note. In vDSP_vdivD, order of A and B is different from other vDSP_XX
-	return v
+	return Matrix( l.m, l.n, l.u * r.u )
 }
 
 func
-Mul ( _ l: Matrix, _ r: Matrix ) -> Matrix {
+/ ( _ l: Matrix, _ r: Matrix ) -> Matrix {
+	guard l.m == r.m && l.n == r.n else { fatalError() }
+	return Matrix( l.m, l.n, l.u / r.u )
+}
+
+func
+OutOfPlace( _ l: Matrix, _ r: Matrix ) -> Matrix {
 	guard l.n == r.m else { fatalError() }
 	var	v = Matrix( l.m, r.n )
 	vDSP_mmulD( l.u, 1, r.u, 1, &v.u, 1, l.m, r.n, l.n )
-	return v
-}
-
-func
-DP( _ l: Matrix, _ r: Matrix ) -> Double {
-	guard ( l.m == 1 && r.n == 1 ) || ( l.n == r.m ) else { fatalError() }
-	var	v = 0.0
-	vDSP_dotprD( r.u, 1, l.u, 1, &v, vDSP_Length( l.u.count ) )
 	return v
 }
 
@@ -205,4 +236,57 @@ I( _ p: UInt ) -> Matrix {
 	}
 	return v
 }
+
+func
+JPMatrixTest() {
+
+	let	w22 = [ 2.0, -2.0 ];
+
+	guard w22 ++ 2 == [ 4,  0 ] else { fatalError() }
+	guard w22 -- 2 == [ 0, -4 ] else { fatalError() }
+	guard w22 *  2 == [ 4, -4 ] else { fatalError() }
+	guard w22 /  2 == [ 1, -1 ] else { fatalError() }
+
+	guard 2 ++ w22 == [ 4,  0 ] else { fatalError() }
+	guard 2 -- w22 == [ 0,  4 ] else { fatalError() }
+	guard 2 *  w22 == [ 4, -4 ] else { fatalError() }
+	guard 2 /  w22 == [ 1, -1 ] else { fatalError() }
+
+	guard w22 ++ w22 == [ 4, -4 ] else { fatalError() }
+	guard w22 -- w22 == [ 0,  0 ] else { fatalError() }
+	guard w22 *  w22 == [ 4,  4 ] else { fatalError() }
+	guard w22 /  w22 == [ 1,  1 ] else { fatalError() }
+	
+	guard DotProduct( [ -4, -9 ], [ -1, 2 ] ) == -14 else { fatalError() }
+	
+	let	wM = Matrix( 2, 3, [ 1, 2, 3, 4, 5, 6 ] )
+	guard wM ++ 2 == Matrix( 2, 3, [  3,  4,  5,  6,  7,  8 ] ) else { fatalError() }
+	guard wM -- 2 == Matrix( 2, 3, [ -1,  0,  1,  2,  3,  4 ] ) else { fatalError() }
+	guard wM *  2 == Matrix( 2, 3, [  2,  4,  6,  8, 10, 12 ] ) else { fatalError() }
+	guard wM /  2 == Matrix( 2, 3, [  0.5,  1,  1.5,  2, 2.5, 3 ] ) else { fatalError() }
+	guard 2 ++ wM == Matrix( 2, 3, [  3,  4,  5,  6,  7,  8 ] ) else { fatalError() }
+	guard 2 -- wM == Matrix( 2, 3, [  1,  0, -1, -2, -3, -4 ] ) else { fatalError() }
+	guard 2 *  wM == Matrix( 2, 3, [  2,  4,  6,  8, 10, 12 ] ) else { fatalError() }
+	guard 2 /  wM == Matrix( 2, 3, [  2,  1,  2.0/3.0,  0.5, 0.4, 2.0/6.0 ] ) else { fatalError() }
+	guard wM ++ wM == Matrix( 2, 3, [  2,  4,  6,  8, 10, 12 ] ) else { fatalError() }
+	guard wM -- wM == Matrix( 2, 3, [  0,  0,  0,  0,  0,  0 ] ) else { fatalError() }
+	guard wM *  wM == Matrix( 2, 3, [  1,  4,  9, 16, 25, 36 ] ) else { fatalError() }
+	guard wM /  wM == Matrix( 2, 3, [  1,  1,  1,  1,  1,  1 ] ) else { fatalError() }
+	
+	guard OutOfPlace(
+		wM
+	,	Matrix( 3, 2, [ 1, 2, 3, 4, 5, 6 ] )
+	) == Matrix( 2, 2, [ 22, 28, 49, 64 ] ) else {
+		fatalError()
+	}
+	
+}
+
+/*
+		1 2
+1 2 3			1 +  6 + 15		2 +  8 + 18
+		3 4
+4 5 6			4 + 15 + 30		8 + 20 + 36
+		5 6
+*/
 

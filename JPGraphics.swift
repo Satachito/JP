@@ -6,6 +6,11 @@ import	QuartzCore
 import	Accelerate
 
 func
+Mid( _ p: CGRect ) -> CGPoint {
+	return CGPoint( x: p.midX, y: p.midY )
+}
+
+func
 ARGBContext( _ pW: size_t, _ pH: size_t ) -> CGContext? {
 	return CGContext(
 		data			: nil
@@ -15,6 +20,19 @@ ARGBContext( _ pW: size_t, _ pH: size_t ) -> CGContext? {
 	,	bytesPerRow		: 0
 	,	space			: CGColorSpaceCreateDeviceRGB()
 	,	bitmapInfo		: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
+	)
+}
+
+func
+RGBAContext( _ pW: size_t, _ pH: size_t ) -> CGContext? {
+	return CGContext(
+		data			: nil
+	,	width			: pW
+	,	height			: pH
+	,	bitsPerComponent: 8
+	,	bytesPerRow		: 0
+	,	space			: CGColorSpaceCreateDeviceRGB()
+	,	bitmapInfo		: CGImageAlphaInfo.premultipliedLast.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
 	)
 }
 
@@ -32,10 +50,14 @@ GrayContext( _ pW: size_t, _ pH: size_t ) -> CGContext? {
 }
 
 class
-ARGBBitmap {
+RGBBitmap {
 	let	m: CGContext
-	init( _ pW: size_t, _ pH: size_t ) {
-		m = ARGBContext( pW, pH )!
+	init( _ p: CGContext ) {
+		m = p
+		guard
+			m.bitmapInfo.rawValue & CGBitmapInfo.byteOrder32Little.rawValue == CGBitmapInfo.byteOrder32Little.rawValue
+		||	m.bitmapInfo.rawValue & CGBitmapInfo.byteOrder32Big.rawValue == CGBitmapInfo.byteOrder32Big.rawValue
+		else { fatalError() }
 	}
 	func
 	Clear() {
@@ -129,8 +151,8 @@ ARGBBitmap {
 	}
 }
 
-/*
-	sample:
+/*	ColorWheelImage Sample:
+
 	ColorWheelImage(
 		size_t( bounds.width * UIScreen.main.scale )
 	,	size_t( bounds.height * UIScreen.main.scale )
@@ -152,44 +174,44 @@ ColorWheelImage( _ pW: size_t, _ pH: size_t ) -> CGImage {
 	}
 	func
 	R( _ p: Double ) -> UInt32 {
-		return X( p ) << 16
+		return X( p ) << 24
 	}
 	func
 	G( _ p: Double ) -> UInt32 {
 		var	w = p - .pi * 2 / 3
 		if w < -.pi { w += 2 * .pi }
-		return X( w ) << 8
+		return X( w ) << 16
 	}
 	func
 	B( _ p: Double ) -> UInt32 {
 		var	w = p + .pi * 2 / 3
 		if w > .pi { w -= 2 * .pi }
-		return X( w )
+		return X( w ) << 8
 	}
 
-	guard let wARGBC = ARGBContext( pW, pH ) else { fatalError() }
-	guard let w = wARGBC.data else { fatalError() }
+	guard let wC = RGBAContext( pW, pH ) else { fatalError() }
+	guard let w = wC.data else { fatalError() }
 	let	wPtr = UnsafeMutablePointer<UInt32>( OpaquePointer( w ) )
 	let	wOX = Double( pW ) / 2
 	let	wOY = Double( pH ) / 2
 
 	for y in 0 ..< pH {
-		let	wLinePtr = wPtr + y * wARGBC.bytesPerRow / 4
+		let	wLinePtr = wPtr + y * wC.bytesPerRow / 4
 		let	wY = ( Double( y ) - wOY ) / wOY
 		for x in 0 ..< pW {
 			let	wX = ( Double( x ) - wOX ) / wOX
 			let	w = atan2( wX, wY )
-			wLinePtr[ x ] = 0xff000000 + R( w ) + G( w ) + B( w )
+			wLinePtr[ x ] = R( w ) + G( w ) + B( w ) + 0x00ff
 		}
 	}
 
-	guard let v = wARGBC.makeImage() else { fatalError() }
+	guard let v = wC.makeImage() else { fatalError() }
 	return v
 }
 
-/*
-	Sample:
-Dashed(
+/*	DashedPath Sample:
+
+DashedPath(
 	outerPath.cgPath
 ,	size_t( bounds.width )
 ,	size_t( bounds.height )
@@ -197,9 +219,8 @@ Dashed(
 ,	( 0, [ 10, 10 ] )
 )
 */
-
 func
-Dashed(
+DashedPath(
 	_ p					: CGPath
 ,	_ pW				: size_t
 ,	_ pH				: size_t
@@ -210,7 +231,8 @@ Dashed(
 ,	_ pJoin				: CGLineJoin = .bevel
 ,	_ pMiterLimit		: CGFloat = 0
 ) -> CGPath {
-	guard let v = ARGBContext( pW, pH ) else { fatalError() }
+
+	guard let v = RGBAContext( pW, pH ) else { fatalError() }
 	v.addPath( p )
 	v.setLineWidth( pLineWidth )
 	v.setLineDash( phase: pLineDashPhase, lengths: pLineDashPattern )
@@ -221,6 +243,53 @@ Dashed(
 	return v.path!
 }
 
+
+/*	DashedLineLayer Sample:
+
+class
+TheView: UIView {
+
+	required init?( coder aDecoder: NSCoder ) {
+		super.init( coder: aDecoder )
+
+		layer.contents = ColorWheelImage(
+			size_t( bounds.width * UIScreen.main.scale )
+		,	size_t( bounds.height * UIScreen.main.scale )
+		)
+
+		layer.mask = DashedLineLayer(
+			UIBezierPath( ovalIn: bounds.insetBy( dx: 20, dy: 20 ) ).cgPath
+		,	8
+		,	[ 8, 8 ]
+		)
+	}
+}
+
+class
+ViewController: UIViewController {
+
+	@IBOutlet	weak	var	theView	: TheView!
+	@IBOutlet	weak	var	oIV		: UIImageView!
+
+	override func
+	viewDidLoad() {
+		super.viewDidLoad()
+
+		oIV.image = UIImage(
+			cgImage: ColorWheelImage(
+				size_t( oIV.bounds.width * UIScreen.main.scale )
+			,	size_t( oIV.bounds.height * UIScreen.main.scale )
+			)
+		)
+
+		oIV.layer.mask = DashedLineLayer(
+			UIBezierPath( ovalIn: oIV.bounds.insetBy( dx: 20, dy: 20 ) ).cgPath
+		,	8
+		,	[ 8, 8 ]
+		)
+	}
+}
+*/
 func
 DashedLineLayer(
 	_ p					: CGPath
@@ -242,9 +311,8 @@ DashedLineLayer(
 	v.lineCap = pLineCap
 	v.lineJoin = pLineJoin
 	v.miterLimit = pMiterLimit
-	v.strokeColor = CGColor( colorSpace: CGColorSpaceCreateDeviceGray(), components: [ 0, 1 ] )//	Any colorred: 0, green: 0, blue: 0, alpha: 1
+	v.strokeColor = CGColor( colorSpace: CGColorSpaceCreateDeviceGray(), components: [ 0, 1 ] )//	Any color
 	v.fillColor = nil
 	
 	return v
 }
-
