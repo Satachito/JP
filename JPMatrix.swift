@@ -3,6 +3,17 @@
 import Accelerate
 
 //
+//	VECTOR
+//
+
+func
+Arange( _ p: Int ) -> [ Double ] {
+	var	v = [ Double ]( repeating: 0, count: p )
+	for i in 0 ..< p { v[ i ] = Double( i ) }
+	return v
+}
+
+//
 //	VECTOR - SCALAR
 //
 
@@ -89,62 +100,120 @@ DotProduct( _ l: [ Double ], _ r: [ Double ] ) -> Double {
 
 struct
 Matrix {
-	var	m	:	UInt
-	var	n	:	UInt
-	var	u	:	[ Double ]
-	init( _ m: UInt, _ n: UInt ) {
-		self.m = m
-		self.n = n
-		u = [ Double ]( repeating: 0, count: Int( m * n ) )
+	var	numR	:	UInt
+	var	numC	:	UInt
+	var	u		:	[ Double ]
+	init( _ pNumR: UInt, _ pNumC: UInt ) {
+		self.numR = pNumR
+		self.numC = pNumC
+		u = [ Double ]( repeating: 0, count: Int( pNumR * pNumC ) )
 	}
-	init( _ m: UInt, _ n: UInt, _ u: [ Double ] ) {
-		guard Int( m * n ) == u.count else { fatalError() }
-		self.m = m
-		self.n = n
+	init( _ pNumR: UInt, _ pNumC: UInt, _ u: [ Double ] ) {
+		guard Int( pNumR * pNumC ) == u.count else { fatalError() }
+		self.numR = pNumR
+		self.numC = pNumC
 		self.u = u
 	}
-	
-	func
-	Get( _ r: UInt, _ c: UInt ) -> Double {
-		return u[ Int( r * n + c ) ]
+
+	subscript( _ r: UInt, _ c: UInt ) -> Double {
+		get {
+			guard r < numR && c < numR else { fatalError() }
+			return u[ Int( r * numC + c ) ]
+		}
+		set {
+			guard r < numR && c < numR else { fatalError() }
+			u[ Int( r * numC + c ) ] = newValue
+		}
 	}
 	
 	func
 	Row( _ p: CountableRange<UInt> ) -> Matrix {
-		let w = Array( u[ Int( p.lowerBound * n ) ..< Int( p.upperBound * n ) ] )
-		return Matrix( UInt( p.count ), n, w )
+		let w = Array( u[ Int( p.lowerBound * numC ) ..< Int( p.upperBound * numC ) ] )
+		return Matrix( UInt( p.count ), numC, w )
 	}
 	func
 	Row( _ p: CountableClosedRange<UInt> ) -> Matrix {
-		let w = Array( u[ Int( p.lowerBound * n ) ..< Int( ( p.upperBound + 1 ) * n ) ] )
-		return Matrix( UInt( p.count ), n, w )
+		let w = Array( u[ Int( p.lowerBound * numC ) ... Int( p.upperBound * numC ) ] )
+		return Matrix( UInt( p.count ), numC, w )
 	}
 	func
 	Col( _ p: CountableRange<UInt> ) -> Matrix {
-		var	v = Matrix( m, UInt( p.count ) )
-		for i in 0 ..< Int( m ) {
+		var	v = Matrix( numR, UInt( p.count ) )
+		for i in 0 ..< Int( numR ) {
 			let	wVS = i * p.count
-			let	wSS = i * Int( n )
-			v.u[ wVS ..< ( wVS + p.count ) ] = u[ wSS + Int( p.lowerBound ) ..< wSS + Int( p.upperBound ) ]
+			let	wSS = i * Int( numC )
+			v.u[ wVS ..< wVS + p.count ] = u[ wSS + Int( p.lowerBound ) ..< wSS + Int( p.upperBound ) ]
 		}
 		return v
 	}
 	func
 	Col( _ p: CountableClosedRange<UInt> ) -> Matrix {
-		var	v = Matrix( m, UInt( p.count ) )
-		for i in 0 ..< Int( m ) {
+		var	v = Matrix( numR, UInt( p.count ) )
+		for i in 0 ..< Int( numR ) {
 			let	wVS = i * p.count
-			let	wSS = i * Int( n )
-			v.u[ wVS ..< ( wVS + p.count ) ] = u[ wSS + Int( p.lowerBound ) ... wSS + Int( p.upperBound ) ]
+			let	wSS = i * Int( numC )
+			v.u[ wVS ... wVS + p.count ] = u[ wSS + Int( p.lowerBound ) ... wSS + Int( p.upperBound ) ]
 		}
 		return v
 	}
 }
 
+func
+RandomMatrix( _ numR: UInt, _ numC: UInt ) -> Matrix {
+	var	v = [ Double ]( repeating: 0, count: Int( numR * numC ) )
+	for i in 0 ..< v.count { v[ i ] = Double.random( in: 0 ..< 1 ) }
+	return Matrix( numR, numC, v )
+}
+
+func
+Reshape( _ p: [ Double ], _ numR: UInt, _ numC: UInt ) -> Matrix {
+	guard numR * numC == p.count else { fatalError() }
+	return Matrix( numR, numC, p )
+}
+
+func
+HStack( _ p: [ Matrix ] ) -> Matrix {
+	guard p.count > 0 else { fatalError() }
+	var	wNumC = p[ 0 ].numC
+	for i in 1 ..< p.count {
+		guard p[ 0 ].numR == p[ i ].numR else { fatalError() }
+		wNumC += p[ i ].numC
+	}
+	var	v = Matrix( p[ 0 ].numR, wNumC )
+	for i in 0 ..< Int( v.numR ) {
+		var	wVS = i * Int( v.numC )
+		for j in 0 ..< p.count {
+			let	wSpan = Int( p[ j ].numC )
+			let	wPS = i * wSpan
+			v.u[ wVS ..< wVS + wSpan ] = p[ j ].u[ wPS ..< wPS + wSpan ]
+			wVS += wSpan
+		}
+	}
+	return v
+}
+
+func
+VStack( _ p: [ Matrix ] ) -> Matrix {
+	guard p.count > 0 else { fatalError() }
+	var	wNumR = p[ 0 ].numR
+	for i in 1 ..< p.count {
+		guard p[ 0 ].numC == p[ i ].numC else { fatalError() }
+		wNumR += p[ i ].numR
+	}
+	var	v = Matrix( wNumR, p[ 0 ].numC )
+	var	wVS = 0
+	for i in 0 ..< p.count {
+		let	wSize = Int( p[ i ].numR * p[ i ].numC )
+		v.u[ wVS ..< wVS + wSize ] = ArraySlice( p[ i ].u )
+		wVS += wSize
+	}
+	return v
+}
+
 prefix func
 ~ ( p: Matrix ) -> Matrix {
-	var	v = Matrix( p.n, p.m )
-	vDSP_mtransD( p.u, 1, &v.u, 1, v.m, v.n )
+	var	v = Matrix( p.numC, p.numR )
+	vDSP_mtransD( p.u, 1, &v.u, 1, v.numC, v.numR )
 	return v
 }
 /*
@@ -167,28 +236,28 @@ prefix func
 */
 func
 == ( l: Matrix, r: Matrix ) -> Bool {
-	if l.m != r.m { return false }
-	if l.n != r.n { return false }
+	if l.numR != r.numR { return false }
+	if l.numC != r.numC { return false }
 	return l.u == r.u
 }
 
-func ++( p: Matrix, s: Double ) -> Matrix { return Matrix( p.m, p.n, p.u ++ s ) }
-func ++( s: Double, p: Matrix ) -> Matrix { return Matrix( p.m, p.n, s ++ p.u ) }
+func ++( p: Matrix, s: Double ) -> Matrix { return Matrix( p.numR, p.numC, p.u ++ s ) }
+func ++( s: Double, p: Matrix ) -> Matrix { return Matrix( p.numR, p.numC, s ++ p.u ) }
 
-func --( p: Matrix, s: Double ) -> Matrix { return Matrix( p.m, p.n, p.u -- s ) }
-func --( s: Double, p: Matrix ) -> Matrix { return Matrix( p.m, p.n, s -- p.u ) }
+func --( p: Matrix, s: Double ) -> Matrix { return Matrix( p.numR, p.numC, p.u -- s ) }
+func --( s: Double, p: Matrix ) -> Matrix { return Matrix( p.numR, p.numC, s -- p.u ) }
 
-func * ( p: Matrix, s: Double ) -> Matrix { return Matrix( p.m, p.n, p.u * s ) }
-func * ( s: Double, p: Matrix ) -> Matrix { return Matrix( p.m, p.n, s * p.u ) }
+func * ( p: Matrix, s: Double ) -> Matrix { return Matrix( p.numR, p.numC, p.u * s ) }
+func * ( s: Double, p: Matrix ) -> Matrix { return Matrix( p.numR, p.numC, s * p.u ) }
 
-func / ( p: Matrix, s: Double ) -> Matrix { return Matrix( p.m, p.n, p.u / s ) }
-func / ( s: Double, p: Matrix ) -> Matrix { return Matrix( p.m, p.n, s / p.u ) }
+func / ( p: Matrix, s: Double ) -> Matrix { return Matrix( p.numR, p.numC, p.u / s ) }
+func / ( s: Double, p: Matrix ) -> Matrix { return Matrix( p.numR, p.numC, s / p.u ) }
 
 func ^ ( p: Matrix, s: Double ) -> Matrix {
-	var	t = Matrix( p.m, p.n )
+	var	t = Matrix( p.numR, p.numC )
 	var	w = s
 	vDSP_vfillD( &w, &t.u, 1, vDSP_Length( t.u.count ) )
-	var	v = Matrix( p.m, p.n )
+	var	v = Matrix( p.numR, p.numC )
 	var	wM = p
 	var	wCount = Int32( v.u.count )
 	vvpow( &v.u, &t.u, &wM.u, &wCount )
@@ -197,33 +266,33 @@ func ^ ( p: Matrix, s: Double ) -> Matrix {
 
 func
 ++( _ l: Matrix, _ r: Matrix ) -> Matrix {
-	guard l.m == r.m && l.n == r.n else { fatalError() }
-	return Matrix( l.m, l.n, l.u ++ r.u )
+	guard l.numR == r.numR && l.numC == r.numC else { fatalError() }
+	return Matrix( l.numR, l.numC, l.u ++ r.u )
 }
 
 func
 --( _ l: Matrix, _ r: Matrix ) -> Matrix {
-	guard l.m == r.m && l.n == r.n else { fatalError() }
-	return Matrix( l.m, l.n, l.u -- r.u )
+	guard l.numR == r.numR && l.numC == r.numC else { fatalError() }
+	return Matrix( l.numR, l.numC, l.u -- r.u )
 }
 
 func
 * ( _ l: Matrix, _ r: Matrix ) -> Matrix {
-	guard l.m == r.m && l.n == r.n else { fatalError() }
-	return Matrix( l.m, l.n, l.u * r.u )
+	guard l.numR == r.numR && l.numC == r.numC else { fatalError() }
+	return Matrix( l.numR, l.numC, l.u * r.u )
 }
 
 func
 / ( _ l: Matrix, _ r: Matrix ) -> Matrix {
-	guard l.m == r.m && l.n == r.n else { fatalError() }
-	return Matrix( l.m, l.n, l.u / r.u )
+	guard l.numR == r.numR && l.numC == r.numC else { fatalError() }
+	return Matrix( l.numR, l.numC, l.u / r.u )
 }
 
 func
 OutOfPlace( _ l: Matrix, _ r: Matrix ) -> Matrix {
-	guard l.n == r.m else { fatalError() }
-	var	v = Matrix( l.m, r.n )
-	vDSP_mmulD( l.u, 1, r.u, 1, &v.u, 1, l.m, r.n, l.n )
+	guard l.numC == r.numR else { fatalError() }
+	var	v = Matrix( l.numR, r.numC )
+	vDSP_mmulD( l.u, 1, r.u, 1, &v.u, 1, l.numR, r.numC, l.numC )
 	return v
 }
 

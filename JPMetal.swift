@@ -5,18 +5,18 @@ import Cocoa
 class
 TGAFile {
 
-	let	data	: Data
+	let	rawData	: Data
 
 	func
 	UI8( _ i: Int ) -> UInt8 {
 		var	v: UInt8 = 0
-		data.withUnsafeBytes { p -> Void in v = p[ i ] }
+		rawData.withUnsafeBytes { p -> Void in v = p[ i ] }
 		return v
 	}
 	func
 	I16( _ i: Int ) -> Int16 {
 		var	v: Int16 = 0
-		data.withUnsafeBytes { p -> Void in
+		rawData.withUnsafeBytes { p -> Void in
 			v = UnsafeMutablePointer< Int16 >( OpaquePointer( p + i ) )[ 0 ]
 		}
 		return v
@@ -24,7 +24,7 @@ TGAFile {
 	func
 	UI16( _ i: Int ) -> UInt16 {
 		var	v: UInt16 = 0
-		data.withUnsafeBytes { p -> Void in
+		rawData.withUnsafeBytes { p -> Void in
 			v = UnsafeMutablePointer< UInt16 >( OpaquePointer( p + i ) )[ 0 ]
 		}
 		return v
@@ -49,7 +49,7 @@ TGAFile {
 	Image() -> [ UInt32 ] {
 		let	wNumPixels = Int( width() ) * Int( height() )
 		var	v = [ UInt32 ]( repeating: 0, count: wNumPixels )
-		data.withUnsafeBytes { ( p: UnsafePointer< UInt8 > ) -> Void in
+		rawData.withUnsafeBytes { ( p: UnsafePointer< UInt8 > ) -> Void in
 			switch bitsPerPixel() {
 			case 24:
 				for i in 0 ..< wNumPixels {
@@ -68,6 +68,6 @@ TGAFile {
 	}
 
 	init( url: URL ) {
-		data = try! Data( contentsOf: url )
+		rawData = try! Data( contentsOf: url )
 	}
 }
