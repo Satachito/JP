@@ -1,98 +1,98 @@
-//	To use those functions below
-//	You need to import CommonCrypto.h in your bridging header.
-//		#import <CommonCrypto/CommonCrypto.h>
-
+//	Written by Satoru Ogura, Tokyo.
+//
 import	Foundation
 
 func
-SHA1( _ p: Data ) -> Data {
+SHA1( _ p: [ UInt8 ] ) -> [ UInt8 ] {
 	var v = [ UInt8 ]( repeating: 0, count: Int( CC_SHA1_DIGEST_LENGTH ) )
-	p.withUnsafeBytes { ( q: UnsafePointer<UInt8> ) -> Void in
-		CC_SHA1( q, CC_LONG( p.count ), &v )
-	}
-	return Data( bytes: v )
+	CC_SHA1( p, CC_LONG( p.count ), &v )
+	return v
 }
 
-
 func
-DataCryptedByAES( _ operation: CCOperation, _ p: Data, _ key: Data, _ options: CCOptions = CCOptions( kCCOptionPKCS7Padding ), _ iv: Data? = nil ) -> ( CCCryptorStatus, Data ) {
+Crypt(
+	_ p			: [ UInt8 ]
+,	_ key		: [ UInt8 ]
+,	_ operation	: CCOperation
+,	_ alg		: CCAlgorithm
+,	_ blockSize	: Int
+,	_ options	: CCOptions = CCOptions( kCCOptionPKCS7Padding )
+,	_ iv		: [ UInt8 ]? = nil
+) -> [ UInt8 ] {
 
-	assert ( key.count == kCCKeySizeAES128 || key.count == kCCKeySizeAES192 || key.count == kCCKeySizeAES256 )
-
-	if iv != nil { assert( iv!.count == kCCBlockSizeAES128 ) }
-	
-	var	wBytes		: UnsafePointer<UInt8>
-	p.withUnsafeBytes { ( q: UnsafePointer<UInt8> ) -> Void in wBytes = q }
-	var	wKeyBytes	: UnsafePointer<UInt8>
-	key.withUnsafeBytes { ( q: UnsafePointer<UInt8> ) -> Void in wKeyBytes = q }
-	var	wIVBytes	: UnsafePointer<UInt8>
-	if let wIV = iv { wIV.withUnsafeBytes { ( q: UnsafePointer<UInt8> ) -> Void in wIVBytes = q } }
-	
-	var	wLength = size_t( ( ( p.count + kCCBlockSizeAES128 - 1 ) / kCCBlockSizeAES128 ) * kCCBlockSizeAES128 )
+	var	wLength = size_t( ( ( p.count + blockSize - 1 ) / blockSize ) * blockSize )
 	let v = [ UInt8 ]( repeating: 0, count: Int( wLength ) )
-	let	s = CCCrypt(
+	guard CCCrypt(
 		operation
 	,	CCAlgorithm( kCCAlgorithmAES )
 	,	options
-	,	wKeyBytes
+	,	key
 	,	key.count
-	,	wIVBytes
-	,	wBytes
+	,	iv
+	,	p
 	,	size_t( p.count )
 	,	UnsafeMutableRawPointer( mutating: v )
 	,	wLength
 	,	&wLength
-	)
-	return ( s, Data( bytes: v ) )
+	) == kCCSuccess else { fatalError() }
+	return v
 }
 
 func
-DataEncryptedByAES( _ p: Data, _ key: Data, _ options: CCOptions = CCOptions( kCCOptionPKCS7Padding ), _ iv: Data? = nil ) -> ( CCCryptorStatus, Data ) {
-	return DataCryptedByAES( CCOperation( kCCEncrypt ), p, key, options, iv )
-}
-
-func
-DataDecryptedByAES( _ p: Data, _ key: Data, _ options: CCOptions = CCOptions( kCCOptionPKCS7Padding ), _ iv: Data? = nil ) -> ( CCCryptorStatus, Data ) {
-	return DataCryptedByAES( CCOperation( kCCDecrypt ), p, key, options, iv )
-}
-
-func
-DataCryptedByBlowfish( _ operation: CCOperation, _ p: Data, _ key: Data, _ options: CCOptions = CCOptions( kCCOptionPKCS7Padding ), _ iv: Data? = nil ) -> ( CCCryptorStatus, Data ) {
-
-	if iv != nil { assert( iv!.count == kCCBlockSizeBlowfish ) }
-
-	var	wBytes		: UnsafePointer<UInt8>
-	p.withUnsafeBytes { ( q: UnsafePointer<UInt8> ) -> Void in wBytes = q }
-	var	wKeyBytes	: UnsafePointer<UInt8>
-	key.withUnsafeBytes { ( q: UnsafePointer<UInt8> ) -> Void in wKeyBytes = q }
-	var	wIVBytes	: UnsafePointer<UInt8>
-	if let wIV = iv { wIV.withUnsafeBytes { ( q: UnsafePointer<UInt8> ) -> Void in wIVBytes = q } }
-	
-	var	wLength = size_t( ( ( p.count + kCCBlockSizeBlowfish - 1 ) / kCCBlockSizeBlowfish ) * kCCBlockSizeBlowfish )
-	let v = [ UInt8 ]( repeating: 0, count: Int( wLength ) )
-	let	s = CCCrypt(
-		operation
-	,	CCAlgorithm( kCCAlgorithmBlowfish )
+AESCrypt(
+	_ p			: [ UInt8 ]
+,	_ key		: [ UInt8 ]
+,	_ operation	: CCOperation
+,	_ options	: CCOptions = CCOptions( kCCOptionPKCS7Padding )
+,	_ iv		: [ UInt8 ]? = nil
+) -> [ UInt8 ] {
+	guard key.count == kCCKeySizeAES128 || key.count == kCCKeySizeAES192 || key.count == kCCKeySizeAES256 else { fatalError() }
+	return Crypt(
+		p
+	,	key
+	,	operation
+	,	CCAlgorithm( kCCAlgorithmAES )
+	,	kCCBlockSizeAES128
 	,	options
-	,	wKeyBytes
-	,	key.count
-	,	wIVBytes
-	,	wBytes
-	,	size_t( p.count )
-	,	UnsafeMutableRawPointer( mutating: v )
-	,	wLength
-	,	&wLength
+	,	iv
 	)
-	return ( s, Data( bytes: v ) )
 }
 
 func
-DataEncryptedByBlowfish( _ p: Data, _ key: Data, _ options: CCOptions = CCOptions( kCCOptionPKCS7Padding ), _ iv: Data? = nil ) -> ( CCCryptorStatus, Data ) {
-	return DataCryptedByBlowfish( CCOperation( kCCEncrypt ), p, key, options, iv )
+AESEncrypt( _ p: [ UInt8 ], _ key: [ UInt8 ], _ options: CCOptions = CCOptions( kCCOptionPKCS7Padding ), _ iv: [ UInt8 ]? = nil ) -> [ UInt8 ] {
+	return AESCrypt( p, key, CCOperation( kCCEncrypt ), options, iv )
 }
 
 func
-DataDecryptedByBlowfish( _ p: Data, _ key: Data, _ options: CCOptions = CCOptions( kCCOptionPKCS7Padding ), _ iv: Data? = nil ) -> ( CCCryptorStatus, Data ) {
-	return DataCryptedByBlowfish( CCOperation( kCCDecrypt ), p, key, options, iv )
+AESDecrypt( _ p: [ UInt8 ], _ key: [ UInt8 ], _ options: CCOptions = CCOptions( kCCOptionPKCS7Padding ), _ iv: [ UInt8 ]? = nil ) -> [ UInt8 ] {
+	return AESCrypt( p, key, CCOperation( kCCDecrypt ), options, iv )
 }
 
+func
+BlowfishCrypt(
+	_ p			: [ UInt8 ]
+,	_ key		: [ UInt8 ]
+,	_ operation	: CCOperation
+,	_ options	: CCOptions = CCOptions( kCCOptionPKCS7Padding )
+,	_ iv		: [ UInt8 ]? = nil
+) -> [ UInt8 ] {
+	return Crypt(
+		p
+	,	key
+	,	operation
+	,	CCAlgorithm( kCCAlgorithmBlowfish )
+	,	kCCBlockSizeBlowfish
+	,	options
+	,	iv
+	)
+}
+
+func
+BlowfishEncrypt( _ p: [ UInt8 ], _ key: [ UInt8 ], _ options: CCOptions = CCOptions( kCCOptionPKCS7Padding ), _ iv: [ UInt8 ]? = nil ) -> [ UInt8 ] {
+	return BlowfishCrypt( p, key, CCOperation( kCCEncrypt ), options, iv )
+}
+
+func
+BlowfishDecrypt( _ p: [ UInt8 ], _ key: [ UInt8 ], _ options: CCOptions = CCOptions( kCCOptionPKCS7Padding ), _ iv: [ UInt8 ]? = nil ) -> [ UInt8 ] {
+	return BlowfishCrypt( p, key, CCOperation( kCCDecrypt ), options, iv )
+}

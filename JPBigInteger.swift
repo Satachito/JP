@@ -1,6 +1,6 @@
 //	Written by Satoru Ogura, Tokyo.
 //
-import Foundation
+import	Foundation
 
 typealias	E	= UInt32
 typealias	E2	= UInt64

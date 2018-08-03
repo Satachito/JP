@@ -1,4 +1,6 @@
-import Foundation
+//	Written by Satoru Ogura, Tokyo.
+//
+import	Foundation
 
 enum
 TLSMode: Int {

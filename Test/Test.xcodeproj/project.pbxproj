@@ -14,8 +14,8 @@
 		5E09D1F21D63FF71008CF141 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 5E09D1F01D63FF71008CF141 /* LaunchScreen.storyboard */; };
 		5E09D1FC1D63FF8C008CF141 /* JP.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E09D1F71D63FF8C008CF141 /* JP.swift */; };
 		5E09D1FD1D63FF8C008CF141 /* JPBigInteger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E09D1F81D63FF8C008CF141 /* JPBigInteger.swift */; };
-		5E09D2021D63FF94008CF141 /* JP_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E09D2011D63FF94008CF141 /* JP_iOS.swift */; };
 		5E3B468B1D7295BC00825FC4 /* JPSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E3B468A1D7295BC00825FC4 /* JPSession.swift */; };
+		5E6BD62A2114002B005442D9 /* JPCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E09D1F91D63FF8C008CF141 /* JPCrypto.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,7 +29,6 @@
 		5E09D1F71D63FF8C008CF141 /* JP.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = JP.swift; path = ../JP.swift; sourceTree = "<group>"; };
 		5E09D1F81D63FF8C008CF141 /* JPBigInteger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = JPBigInteger.swift; path = ../JPBigInteger.swift; sourceTree = "<group>"; };
 		5E09D1F91D63FF8C008CF141 /* JPCrypto.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = JPCrypto.swift; path = ../JPCrypto.swift; sourceTree = "<group>"; };
-		5E09D2011D63FF94008CF141 /* JP_iOS.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = JP_iOS.swift; path = ../../iOS/JP_iOS.swift; sourceTree = "<group>"; };
 		5E3B468A1D7295BC00825FC4 /* JPSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = JPSession.swift; path = ../JPSession.swift; sourceTree = "<group>"; };
 		5E7A86581D6E1A5E00AD71AA /* iOS-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iOS-Bridging-Header.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -68,7 +67,6 @@
 		5E09D1E61D63FF71008CF141 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
-				5E09D2011D63FF94008CF141 /* JP_iOS.swift */,
 				5E09D1E71D63FF71008CF141 /* AppDelegate.swift */,
 				5E09D1E91D63FF71008CF141 /* ViewController.swift */,
 				5E09D1EB1D63FF71008CF141 /* Main.storyboard */,
@@ -153,8 +151,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5E6BD62A2114002B005442D9 /* JPCrypto.swift in Sources */,
 				5E09D1EA1D63FF71008CF141 /* ViewController.swift in Sources */,
-				5E09D2021D63FF94008CF141 /* JP_iOS.swift in Sources */,
 				5E09D1E81D63FF71008CF141 /* AppDelegate.swift in Sources */,
 				5E09D1FC1D63FF8C008CF141 /* JP.swift in Sources */,
 				5E09D1FD1D63FF8C008CF141 /* JPBigInteger.swift in Sources */,
