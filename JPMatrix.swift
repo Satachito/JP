@@ -13,6 +13,25 @@ Arange( _ p: Int ) -> [ Double ] {
 	return v
 }
 
+func
+L1Norm( _ p: [ Double ] ) -> Double {
+	var	v = Double( 0 )
+	for w in p { v += w }
+	return v
+}
+
+func
+L2NormP2( _ p: [ Double ] ) -> Double {
+	var	v = Double( 0 )
+	for w in p { v += w * w }
+	return v
+}
+
+func
+L2Norm( _ p: [ Double ] ) -> Double {
+	return sqrt( L2NormP2( p ) )
+}
+
 //
 //	VECTOR - SCALAR
 //
