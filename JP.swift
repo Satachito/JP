@@ -100,12 +100,9 @@ DecodeJSON( _ p: Data, _ options: JSONSerialization.ReadingOptions = [] ) throws
 }
 
 func
-JSONString( _ from: Any ) -> String? {
-	if #available(iOS 11.0, *) {
-		if let w = try? EncodeJSON( from, [ .prettyPrinted, .sortedKeys ] ) { return UTF8String( w ) } else { return nil }
-	} else {
-		if let w = try? EncodeJSON( from, [ .prettyPrinted ] ) { return UTF8String( w ) } else { return nil }
-	}
+JSONString( _ p: Any, _ options: JSONSerialization.WritingOptions = [ .prettyPrinted, .sortedKeys ]  ) -> String? {
+	guard let v = try? EncodeJSON( p, options ) else { return nil }
+	return UTF8String( v )
 }
 
 func
@@ -599,3 +596,19 @@ LazyUTF8String( _ p: Data ) -> String {
 	return v
 }
 */
+func
+Uniform() -> ( x: Double, y: Double ) {
+	while true {
+		let w = Double.random( in: 0 ... 1 )
+		if w == 0 { continue }
+		let w1 = sqrt( -2 * log( w ) )
+		let w2 = 2 * .pi * Double.random( in: 0 ..< 1 )
+		return ( w1 * cos( w2 ), w1 * sin( w2 ) )
+	}
+}
+
+func
+Square( _ p: Double ) -> Double {
+	return p * p
+}
+

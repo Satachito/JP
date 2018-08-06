@@ -7,29 +7,31 @@ import Accelerate
 //
 
 func
-Arange( _ p: Int ) -> [ Double ] {
+Ramp( _ p: Int, _ pInit: Double = 0, _ pStep: Double = 1 ) -> [ Double ] {
 	var	v = [ Double ]( repeating: 0, count: p )
-	for i in 0 ..< p { v[ i ] = Double( i ) }
+	var	wInit = pInit
+	var	wStep = pStep
+	vDSP_vrampD( &wInit, &wStep, &v, 1, vDSP_Length( p ) )
 	return v
 }
 
 func
 L1Norm( _ p: [ Double ] ) -> Double {
-	var	v = Double( 0 )
-	for w in p { v += w }
+	var	v = 0.0
+	vDSP_sveD( p, 1, &v, vDSP_Length( p.count ) )
 	return v
 }
 
 func
-L2NormP2( _ p: [ Double ] ) -> Double {
-	var	v = Double( 0 )
-	for w in p { v += w * w }
+L2NormSquare( _ p: [ Double ] ) -> Double {
+	var	v = 0.0
+	vDSP_svesqD( p, 1, &v, vDSP_Length( p.count ) )
 	return v
 }
 
 func
 L2Norm( _ p: [ Double ] ) -> Double {
-	return sqrt( L2NormP2( p ) )
+	return sqrt( L2NormSquare( p ) )
 }
 
 //
