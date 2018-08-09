@@ -279,8 +279,8 @@ Notify( _ name: String, _ p: @escaping ( Notification ) -> () ) -> NSObjectProto
 }
 
 func
-Main( _ d: @escaping () -> () ) {
-	DispatchQueue.main.async( execute: d )
+Main( _ d: () -> () ) {
+	DispatchQueue.main.sync( execute: d )
 }
 
 func
@@ -596,17 +596,6 @@ LazyUTF8String( _ p: Data ) -> String {
 	return v
 }
 */
-func
-Uniform() -> ( x: Double, y: Double ) {
-	while true {
-		let w = Double.random( in: 0 ... 1 )
-		if w == 0 { continue }
-		let w1 = sqrt( -2 * log( w ) )
-		let w2 = 2 * .pi * Double.random( in: 0 ..< 1 )
-		return ( w1 * cos( w2 ), w1 * sin( w2 ) )
-	}
-}
-
 func
 Square( _ p: Double ) -> Double {
 	return p * p
