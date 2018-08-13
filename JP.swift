@@ -596,8 +596,3 @@ LazyUTF8String( _ p: Data ) -> String {
 	return v
 }
 */
-func
-Square( _ p: Double ) -> Double {
-	return p * p
-}
-
