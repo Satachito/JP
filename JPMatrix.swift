@@ -1,4 +1,5 @@
 //  Written by Satoru Ogura, Tokyo on 2016/12/26.
+//
 
 import Accelerate
 
@@ -7,48 +8,51 @@ import Accelerate
 //
 
 func
-Arange( _ p: Int ) -> [ Double ] {
+Ramp( _ p: Int, _ pInit: Double = 0, _ pStep: Double = 1 ) -> [ Double ] {
 	var	v = [ Double ]( repeating: 0, count: p )
-	for i in 0 ..< p { v[ i ] = Double( i ) }
+	var	wInit = pInit
+	var	wStep = pStep
+	vDSP_vrampD( &wInit, &wStep, &v, 1, vDSP_Length( p ) )
 	return v
 }
 
 func
 L1Norm( _ p: [ Double ] ) -> Double {
-	var	v = Double( 0 )
-	for w in p { v += w }
+	var	v = 0.0
+	vDSP_sveD( p, 1, &v, vDSP_Length( p.count ) )
 	return v
 }
 
 func
-L2NormP2( _ p: [ Double ] ) -> Double {
-	var	v = Double( 0 )
-	for w in p { v += w * w }
+L2NormSquare( _ p: [ Double ] ) -> Double {
+	var	v = 0.0
+	vDSP_svesqD( p, 1, &v, vDSP_Length( p.count ) )
 	return v
 }
 
 func
 L2Norm( _ p: [ Double ] ) -> Double {
-	return sqrt( L2NormP2( p ) )
+	return sqrt( L2NormSquare( p ) )
 }
-
-//
-//	VECTOR - SCALAR
-//
 
 infix operator ++: AdditionPrecedence
 infix operator --: AdditionPrecedence
 
-func ++( _ p: [ Double ], _ s: Double ) -> [ Double ] {
+//
+//	VECTOR - SCALAR
+//	SCALAR - VECTOR
+//
+
+func +( _ p: [ Double ], _ s: Double ) -> [ Double ] {
 	var	v = [ Double ]( repeating: 0, count: p.count )
 	var	w = s
 	vDSP_vsaddD( p, 1, &w, &v, 1, vDSP_Length( v.count ) )
 	return v
 }
-func ++( _ s: Double, _ p: [ Double ] ) -> [ Double ] { return p ++ s }
+func +( _ s: Double, _ p: [ Double ] ) -> [ Double ] { return p + s }
 
-func --( _ p: [ Double ], _ s: Double ) -> [ Double ] { return p ++ -s }
-func --( _ s: Double, _ p: [ Double ] ) -> [ Double ] {
+func -( _ p: [ Double ], _ s: Double ) -> [ Double ] { return p + -s }
+func -( _ s: Double, _ p: [ Double ] ) -> [ Double ] {
 	var	v = [ Double ]( repeating: 0, count: p.count )
 	var	w = s
 	vDSP_vfillD( &w, &v, 1, vDSP_Length( v.count ) )
@@ -56,21 +60,21 @@ func --( _ s: Double, _ p: [ Double ] ) -> [ Double ] {
 	return v
 }
 
-func * ( _ p: [ Double ], _ s: Double ) -> [ Double ] {
+func *( _ p: [ Double ], _ s: Double ) -> [ Double ] {
 	var	v = [ Double ]( repeating: 0, count: p.count )
 	var	w = s
 	vDSP_vsmulD( p, 1, &w, &v, 1, vDSP_Length( v.count ) )
 	return v
 }
-func * ( _ s: Double, _ p: [ Double ] ) -> [ Double ] { return p * s }
+func *( _ s: Double, _ p: [ Double ] ) -> [ Double ] { return p * s }
 
-func / ( _ p: [ Double ], _ s: Double ) -> [ Double ] {
+func /( _ p: [ Double ], _ s: Double ) -> [ Double ] {
 	var	v = [ Double ]( repeating: 0, count: p.count )
 	var	w = s
 	vDSP_vsdivD( p, 1, &w, &v, 1, vDSP_Length( v.count ) )
 	return v
 }
-func / ( _ s: Double, _ p: [ Double ] ) -> [ Double ] {
+func /( _ s: Double, _ p: [ Double ] ) -> [ Double ] {
 	var	v = [ Double ]( repeating: 0, count: p.count )
 	var	w = s
 	vDSP_vfillD( &w, &v, 1, vDSP_Length( v.count ) )
@@ -81,28 +85,28 @@ func / ( _ s: Double, _ p: [ Double ] ) -> [ Double ] {
 //
 //	VECTOR - VECTOR
 //
-func ++( _ l: [ Double ], _ r: [ Double ] ) -> [ Double ] {
+func +( _ l: [ Double ], _ r: [ Double ] ) -> [ Double ] {
 	guard l.count == r.count else { fatalError() }
 	var	v = [ Double ]( repeating: 0, count: l.count )
-	vDSP_vaddD( l, 1, r, 1, &v, 1, vDSP_Length( v.count ) )
+	vDSP_vaddD( r, 1, l, 1, &v, 1, vDSP_Length( v.count ) )
 	return v
 }
 
-func --( _ l: [ Double ], _ r: [ Double ] ) -> [ Double ] {
+func -( _ l: [ Double ], _ r: [ Double ] ) -> [ Double ] {
 	guard l.count == r.count else { fatalError() }
 	var	v = [ Double ]( repeating: 0, count: l.count )
 	vDSP_vsubD( r, 1, l, 1, &v, 1, vDSP_Length( v.count ) )
 	return v
 }
 
-func * ( _ l: [ Double ], _ r: [ Double ] ) -> [ Double ] {
+func *( _ l: [ Double ], _ r: [ Double ] ) -> [ Double ] {
 	guard l.count == r.count else { fatalError() }
 	var	v = [ Double ]( repeating: 0, count: l.count )
-	vDSP_vmulD( l, 1, r, 1, &v, 1, vDSP_Length( v.count ) )
+	vDSP_vmulD( r, 1, l, 1, &v, 1, vDSP_Length( v.count ) )
 	return v
 }
 
-func / ( _ l: [ Double ], _ r: [ Double ] ) -> [ Double ] {
+func /( _ l: [ Double ], _ r: [ Double ] ) -> [ Double ] {
 	guard l.count == r.count else { fatalError() }
 	var	v = [ Double ]( repeating: 0, count: l.count )
 	vDSP_vdivD( r, 1, l, 1, &v, 1, vDSP_Length( v.count ) )	//	Note. In vDSP_vdivD, order of A and B is different from other vDSP_XX
@@ -117,30 +121,175 @@ DotProduct( _ l: [ Double ], _ r: [ Double ] ) -> Double {
 	return v
 }
 
-struct
-Matrix {
+@objc class
+Mat: NSObject {
+
+	var	u		: [ Double ]
+	var	degrees	: [ Int ]
+
+	init( _ p: [ Double ], _ pDegrees: [ Int ] ) {
+		u = p
+		degrees = pDegrees
+	}
+	init( _ p: [ [ Double ] ] ) {
+		var	wNumAll = 0
+		degrees = [ Int ]( repeating: 0, count: p.count + 1 )
+		for i in 0 ..< p.count {
+			wNumAll += p[ i ].count
+			degrees[ i + 1 ] = wNumAll
+		}
+		u = [ Double ]( repeating: 0, count: wNumAll )
+		for i in 0 ..< p.count {
+			u[ degrees[ i ] ..< degrees[ i + 1 ] ] = p[ i ][ 0 ..< degrees[ i + 1 ] - degrees[ i ] ]
+		}
+	}
+
+	subscript( _ r: Int ) -> [ Double ] {
+		get {
+			guard r < numR else { fatalError() }
+			return Array( u[ degrees[ r ] ..< degrees[ r + 1 ] ] )
+		}
+		set {
+			guard r < numR else { fatalError() }
+			u[ degrees[ r ] ..< degrees[ r + 1 ] ] = newValue[ 0 ..< degrees[ r + 1 ] - degrees[ r ] ]
+		}
+	}
+	
+/*
+	func
+	CountAll() -> Int {
+		return degrees.last!
+	}
+*/
+	lazy var
+	count: Int = {
+		return degrees.last!
+	}()
+	
+	lazy var
+	numR: Int = {
+		return degrees.count - 1
+	}()
+}
+
+func
+== ( l: Mat, r: Mat ) -> Bool {
+	if l.degrees != r.degrees { return false }
+	return l.u == r.u
+}
+
+//
+//	MAT - SCALAR
+//	SCALAR - MAT
+//
+
+func +( _ p: Mat, _ s: Double ) -> Mat {
+	var	v = [ Double ]( repeating: 0, count: p.count )
+	var	w = s
+	vDSP_vsaddD( p.u, 1, &w, &v, 1, vDSP_Length( v.count ) )
+	return Mat( v, p.degrees )
+}
+func +( _ s: Double, _ p: Mat ) -> Mat { return p + s }
+
+func -( _ p: Mat, _ s: Double ) -> Mat { return p + -s }
+func -( _ s: Double, _ p: Mat ) -> Mat {
+	var	v = [ Double ]( repeating: 0, count: p.count )
+	var	w = s
+	vDSP_vfillD( &w, &v, 1, vDSP_Length( v.count ) )
+	vDSP_vsubD( p.u, 1, v, 1, &v, 1, vDSP_Length( v.count ) )
+	return Mat( v, p.degrees )
+}
+
+func *( _ p: Mat, _ s: Double ) -> Mat {
+	var	v = [ Double ]( repeating: 0, count: p.count )
+	var	w = s
+	vDSP_vsmulD( p.u, 1, &w, &v, 1, vDSP_Length( v.count ) )
+	return Mat( v, p.degrees )
+}
+func *( _ s: Double, _ p: Mat ) -> Mat { return p * s }
+
+func /( _ p: Mat, _ s: Double ) -> Mat {
+	var	v = [ Double ]( repeating: 0, count: p.count )
+	var	w = s
+	vDSP_vsdivD( p.u, 1, &w, &v, 1, vDSP_Length( v.count ) )
+	return Mat( v, p.degrees )
+}
+func /( _ s: Double, _ p: Mat ) -> Mat {
+	var	v = [ Double ]( repeating: 0, count: p.count )
+	var	w = s
+	vDSP_vfillD( &w, &v, 1, vDSP_Length( v.count ) )
+	vDSP_vdivD( p.u, 1, v, 1, &v, 1, vDSP_Length( v.count ) )	//	Note. In vDSP_vdivD, order of A and B is different from other vDSP_XX
+	return Mat( v, p.degrees )
+}
+
+
+//
+//	MAT - MAT
+//
+func +( _ l: Mat, _ r: Mat ) -> Mat {
+	guard l.degrees == r.degrees else { fatalError() }
+	var	v = [ Double ]( repeating: 0, count: l.count )
+	vDSP_vaddD( r.u, 1, l.u, 1, &v, 1, vDSP_Length( v.count ) )
+	return Mat( v, l.degrees )
+}
+
+func -( _ l: Mat, _ r: Mat ) -> Mat {
+	guard l.degrees == r.degrees else { fatalError() }
+	var	v = [ Double ]( repeating: 0, count: l.count )
+	vDSP_vsubD( r.u, 1, l.u, 1, &v, 1, vDSP_Length( v.count ) )
+	return Mat( v, l.degrees )
+}
+
+func *( _ l: Mat, _ r: Mat ) -> Mat {
+	guard l.degrees == r.degrees else { fatalError() }
+	var	v = [ Double ]( repeating: 0, count: l.count )
+	vDSP_vmulD( r.u, 1, l.u, 1, &v, 1, vDSP_Length( v.count ) )
+	return Mat( v, l.degrees )
+}
+
+func /( _ l: Mat, _ r: Mat ) -> Mat {
+	guard l.degrees == r.degrees else { fatalError() }
+	var	v = [ Double ]( repeating: 0, count: l.count )
+	vDSP_vdivD( r.u, 1, l.u, 1, &v, 1, vDSP_Length( v.count ) )	//	Note. In vDSP_vdivD, order of A and B is different from other vDSP_XX
+	return Mat( v, l.degrees )
+}
+
+
+func
+GradientDescent(
+	_ pDerivative	: ( Mat ) -> Mat
+,	_ pInitialValue	: Mat
+,	_ pLearningRate	: Mat
+,	_ pCB			: ( Mat ) -> Bool
+) {
+	var	x = pInitialValue
+	repeat { x = x - pLearningRate * pDerivative( x ) } while pCB( x )
+}
+
+@objc class
+Matrix: NSObject {
 	var	numR	:	UInt
 	var	numC	:	UInt
 	var	u		:	[ Double ]
 	init( _ pNumR: UInt, _ pNumC: UInt ) {
-		self.numR = pNumR
-		self.numC = pNumC
+		numR = pNumR
+		numC = pNumC
 		u = [ Double ]( repeating: 0, count: Int( pNumR * pNumC ) )
 	}
-	init( _ pNumR: UInt, _ pNumC: UInt, _ u: [ Double ] ) {
-		guard Int( pNumR * pNumC ) == u.count else { fatalError() }
-		self.numR = pNumR
-		self.numC = pNumC
-		self.u = u
+	init( _ pNumR: UInt, _ pNumC: UInt, _ p: [ Double ] ) {
+		guard Int( pNumR * pNumC ) == p.count else { fatalError() }
+		numR = pNumR
+		numC = pNumC
+		u = p
 	}
 
 	subscript( _ r: UInt, _ c: UInt ) -> Double {
 		get {
-			guard r < numR && c < numR else { fatalError() }
+			guard r < numR && c < numC else { fatalError() }
 			return u[ Int( r * numC + c ) ]
 		}
 		set {
-			guard r < numR && c < numR else { fatalError() }
+			guard r < numR && c < numC else { fatalError() }
 			u[ Int( r * numC + c ) ] = newValue
 		}
 	}
@@ -157,7 +306,7 @@ Matrix {
 	}
 	func
 	Col( _ p: CountableRange<UInt> ) -> Matrix {
-		var	v = Matrix( numR, UInt( p.count ) )
+		let	v = Matrix( numR, UInt( p.count ) )
 		for i in 0 ..< Int( numR ) {
 			let	wVS = i * p.count
 			let	wSS = i * Int( numC )
@@ -167,7 +316,7 @@ Matrix {
 	}
 	func
 	Col( _ p: CountableClosedRange<UInt> ) -> Matrix {
-		var	v = Matrix( numR, UInt( p.count ) )
+		let	v = Matrix( numR, UInt( p.count ) )
 		for i in 0 ..< Int( numR ) {
 			let	wVS = i * p.count
 			let	wSS = i * Int( numC )
@@ -198,7 +347,7 @@ HStack( _ p: [ Matrix ] ) -> Matrix {
 		guard p[ 0 ].numR == p[ i ].numR else { fatalError() }
 		wNumC += p[ i ].numC
 	}
-	var	v = Matrix( p[ 0 ].numR, wNumC )
+	let	v = Matrix( p[ 0 ].numR, wNumC )
 	for i in 0 ..< Int( v.numR ) {
 		var	wVS = i * Int( v.numC )
 		for j in 0 ..< p.count {
@@ -219,7 +368,7 @@ VStack( _ p: [ Matrix ] ) -> Matrix {
 		guard p[ 0 ].numC == p[ i ].numC else { fatalError() }
 		wNumR += p[ i ].numR
 	}
-	var	v = Matrix( wNumR, p[ 0 ].numC )
+	let	v = Matrix( wNumR, p[ 0 ].numC )
 	var	wVS = 0
 	for i in 0 ..< p.count {
 		let	wSize = Int( p[ i ].numR * p[ i ].numC )
@@ -231,7 +380,7 @@ VStack( _ p: [ Matrix ] ) -> Matrix {
 
 prefix func
 ~ ( p: Matrix ) -> Matrix {
-	var	v = Matrix( p.numC, p.numR )
+	let	v = Matrix( p.numC, p.numR )
 	vDSP_mtransD( p.u, 1, &v.u, 1, v.numC, v.numR )
 	return v
 }
@@ -260,49 +409,49 @@ func
 	return l.u == r.u
 }
 
-func ++( p: Matrix, s: Double ) -> Matrix { return Matrix( p.numR, p.numC, p.u ++ s ) }
-func ++( s: Double, p: Matrix ) -> Matrix { return Matrix( p.numR, p.numC, s ++ p.u ) }
+func +( p: Matrix, s: Double ) -> Matrix { return Matrix( p.numR, p.numC, p.u + s ) }
+func +( s: Double, p: Matrix ) -> Matrix { return Matrix( p.numR, p.numC, s + p.u ) }
 
-func --( p: Matrix, s: Double ) -> Matrix { return Matrix( p.numR, p.numC, p.u -- s ) }
-func --( s: Double, p: Matrix ) -> Matrix { return Matrix( p.numR, p.numC, s -- p.u ) }
+func -( p: Matrix, s: Double ) -> Matrix { return Matrix( p.numR, p.numC, p.u - s ) }
+func -( s: Double, p: Matrix ) -> Matrix { return Matrix( p.numR, p.numC, s - p.u ) }
 
-func * ( p: Matrix, s: Double ) -> Matrix { return Matrix( p.numR, p.numC, p.u * s ) }
-func * ( s: Double, p: Matrix ) -> Matrix { return Matrix( p.numR, p.numC, s * p.u ) }
+func *( p: Matrix, s: Double ) -> Matrix { return Matrix( p.numR, p.numC, p.u * s ) }
+func *( s: Double, p: Matrix ) -> Matrix { return Matrix( p.numR, p.numC, s * p.u ) }
 
-func / ( p: Matrix, s: Double ) -> Matrix { return Matrix( p.numR, p.numC, p.u / s ) }
-func / ( s: Double, p: Matrix ) -> Matrix { return Matrix( p.numR, p.numC, s / p.u ) }
+func /( p: Matrix, s: Double ) -> Matrix { return Matrix( p.numR, p.numC, p.u / s ) }
+func /( s: Double, p: Matrix ) -> Matrix { return Matrix( p.numR, p.numC, s / p.u ) }
 
 func ^ ( p: Matrix, s: Double ) -> Matrix {
-	var	t = Matrix( p.numR, p.numC )
+	let	t = Matrix( p.numR, p.numC )
 	var	w = s
 	vDSP_vfillD( &w, &t.u, 1, vDSP_Length( t.u.count ) )
-	var	v = Matrix( p.numR, p.numC )
-	var	wM = p
+	let	v = Matrix( p.numR, p.numC )
+	let	wM = p
 	var	wCount = Int32( v.u.count )
 	vvpow( &v.u, &t.u, &wM.u, &wCount )
 	return v
 }
 
 func
-++( _ l: Matrix, _ r: Matrix ) -> Matrix {
++( _ l: Matrix, _ r: Matrix ) -> Matrix {
 	guard l.numR == r.numR && l.numC == r.numC else { fatalError() }
-	return Matrix( l.numR, l.numC, l.u ++ r.u )
+	return Matrix( l.numR, l.numC, l.u + r.u )
 }
 
 func
---( _ l: Matrix, _ r: Matrix ) -> Matrix {
+-( _ l: Matrix, _ r: Matrix ) -> Matrix {
 	guard l.numR == r.numR && l.numC == r.numC else { fatalError() }
-	return Matrix( l.numR, l.numC, l.u -- r.u )
+	return Matrix( l.numR, l.numC, l.u - r.u )
 }
 
 func
-* ( _ l: Matrix, _ r: Matrix ) -> Matrix {
+*( _ l: Matrix, _ r: Matrix ) -> Matrix {
 	guard l.numR == r.numR && l.numC == r.numC else { fatalError() }
 	return Matrix( l.numR, l.numC, l.u * r.u )
 }
 
 func
-/ ( _ l: Matrix, _ r: Matrix ) -> Matrix {
+/( _ l: Matrix, _ r: Matrix ) -> Matrix {
 	guard l.numR == r.numR && l.numC == r.numC else { fatalError() }
 	return Matrix( l.numR, l.numC, l.u / r.u )
 }
@@ -310,14 +459,14 @@ func
 func
 OutOfPlace( _ l: Matrix, _ r: Matrix ) -> Matrix {
 	guard l.numC == r.numR else { fatalError() }
-	var	v = Matrix( l.numR, r.numC )
+	let	v = Matrix( l.numR, r.numC )
 	vDSP_mmulD( l.u, 1, r.u, 1, &v.u, 1, l.numR, r.numC, l.numC )
 	return v
 }
 
 func
 I( _ p: UInt ) -> Matrix {
-	var	v = Matrix( p, p )
+	let	v = Matrix( p, p )
 	let	w = Int( p )
 	for i in 0 ..< w {
 		v.u[ i * w + i ] = 1
@@ -330,36 +479,50 @@ JPMatrixTest() {
 
 	let	w22 = [ 2.0, -2.0 ];
 
-	guard w22 ++ 2 == [ 4,  0 ] else { fatalError() }
-	guard w22 -- 2 == [ 0, -4 ] else { fatalError() }
-	guard w22 *  2 == [ 4, -4 ] else { fatalError() }
-	guard w22 /  2 == [ 1, -1 ] else { fatalError() }
+	guard w22 + 2 == [ 4,  0 ] else { fatalError() }
+	guard w22 - 2 == [ 0, -4 ] else { fatalError() }
+	guard w22 * 2 == [ 4, -4 ] else { fatalError() }
+	guard w22 / 2 == [ 1, -1 ] else { fatalError() }
 
-	guard 2 ++ w22 == [ 4,  0 ] else { fatalError() }
-	guard 2 -- w22 == [ 0,  4 ] else { fatalError() }
+	guard 2 + w22 == [ 4,  0 ] else { fatalError() }
+	guard 2 - w22 == [ 0,  4 ] else { fatalError() }
 	guard 2 *  w22 == [ 4, -4 ] else { fatalError() }
 	guard 2 /  w22 == [ 1, -1 ] else { fatalError() }
 
-	guard w22 ++ w22 == [ 4, -4 ] else { fatalError() }
-	guard w22 -- w22 == [ 0,  0 ] else { fatalError() }
+	guard w22 + w22 == [ 4, -4 ] else { fatalError() }
+	guard w22 - w22 == [ 0,  0 ] else { fatalError() }
 	guard w22 *  w22 == [ 4,  4 ] else { fatalError() }
 	guard w22 /  w22 == [ 1,  1 ] else { fatalError() }
 	
 	guard DotProduct( [ -4, -9 ], [ -1, 2 ] ) == -14 else { fatalError() }
 	
+	let	wMat = Mat( [ [ 1, 2, 3 ], [ 4, 5 ], [ 6 ] ] )
+	guard wMat +    2 == Mat( [ [  3.0,  4  ,  5   ], [  6  ,  7   ], [  8   ] ] ) else { fatalError() }
+	guard wMat -    2 == Mat( [ [ -1  ,  0  ,  1   ], [  2  ,  3   ], [  4   ] ] ) else { fatalError() }
+	guard wMat *    2 == Mat( [ [  2  ,  4  ,  6   ], [  8  , 10   ], [ 12   ] ] ) else { fatalError() }
+	guard wMat /    2 == Mat( [ [  0.5,  1  ,  1.5 ], [  2  ,  2.5 ], [  3   ] ] ) else { fatalError() }
+	guard    2 + wMat == Mat( [ [  3  ,  4  ,  5   ], [  6  ,  7   ], [  8   ] ] ) else { fatalError() }
+	guard    2 - wMat == Mat( [ [  1  ,  0  , -1   ], [ -2  , -3   ], [ -4   ] ] ) else { fatalError() }
+	guard    2 * wMat == Mat( [ [  2  ,  4  ,  6   ], [  8  , 10   ], [ 12   ] ] ) else { fatalError() }
+	guard    2 / wMat == Mat( [ [  2  ,  1  ,  2.0/3.0 ], [  0.5, 0.4, ], [ 2.0/6.0 ] ] ) else { fatalError() }
+	guard wMat + wMat == Mat( [ [  2  ,  4  ,  6   ], [  8  , 10   ], [ 12   ] ] ) else { fatalError() }
+	guard wMat - wMat == Mat( [ [  0  ,  0  ,  0   ], [  0  ,  0   ], [  0   ] ] ) else { fatalError() }
+	guard wMat * wMat == Mat( [ [  1  ,  4  ,  9   ], [ 16  ,  25  ], [ 36   ] ] ) else { fatalError() }
+	guard wMat / wMat == Mat( [ [  1  ,  1  ,  1   ], [  1  ,  1   ], [  1   ] ] ) else { fatalError() }
+
 	let	wM = Matrix( 2, 3, [ 1, 2, 3, 4, 5, 6 ] )
-	guard wM ++ 2 == Matrix( 2, 3, [  3,  4,  5,  6,  7,  8 ] ) else { fatalError() }
-	guard wM -- 2 == Matrix( 2, 3, [ -1,  0,  1,  2,  3,  4 ] ) else { fatalError() }
-	guard wM *  2 == Matrix( 2, 3, [  2,  4,  6,  8, 10, 12 ] ) else { fatalError() }
-	guard wM /  2 == Matrix( 2, 3, [  0.5,  1,  1.5,  2, 2.5, 3 ] ) else { fatalError() }
-	guard 2 ++ wM == Matrix( 2, 3, [  3,  4,  5,  6,  7,  8 ] ) else { fatalError() }
-	guard 2 -- wM == Matrix( 2, 3, [  1,  0, -1, -2, -3, -4 ] ) else { fatalError() }
-	guard 2 *  wM == Matrix( 2, 3, [  2,  4,  6,  8, 10, 12 ] ) else { fatalError() }
-	guard 2 /  wM == Matrix( 2, 3, [  2,  1,  2.0/3.0,  0.5, 0.4, 2.0/6.0 ] ) else { fatalError() }
-	guard wM ++ wM == Matrix( 2, 3, [  2,  4,  6,  8, 10, 12 ] ) else { fatalError() }
-	guard wM -- wM == Matrix( 2, 3, [  0,  0,  0,  0,  0,  0 ] ) else { fatalError() }
-	guard wM *  wM == Matrix( 2, 3, [  1,  4,  9, 16, 25, 36 ] ) else { fatalError() }
-	guard wM /  wM == Matrix( 2, 3, [  1,  1,  1,  1,  1,  1 ] ) else { fatalError() }
+	guard wM +  2 == Matrix( 2, 3, [  3  ,  4  ,  5  ,  6  ,  7  ,  8 ] ) else { fatalError() }
+	guard wM -  2 == Matrix( 2, 3, [ -1  ,  0  ,  1  ,  2  ,  3  ,  4 ] ) else { fatalError() }
+	guard wM *  2 == Matrix( 2, 3, [  2  ,  4  ,  6  ,  8  , 10  , 12 ] ) else { fatalError() }
+	guard wM /  2 == Matrix( 2, 3, [  0.5,  1  ,  1.5,  2  ,  2.5,  3 ] ) else { fatalError() }
+	guard  2 + wM == Matrix( 2, 3, [  3  ,  4  ,  5  ,  6  ,  7  ,  8 ] ) else { fatalError() }
+	guard  2 - wM == Matrix( 2, 3, [  1  ,  0  , -1  , -2  , -3  , -4 ] ) else { fatalError() }
+	guard  2 * wM == Matrix( 2, 3, [  2  ,  4  ,  6  ,  8  , 10  , 12 ] ) else { fatalError() }
+	guard  2 / wM == Matrix( 2, 3, [  2  ,  1  ,  2.0/3.0,  0.5, 0.4, 2.0/6.0 ] ) else { fatalError() }
+	guard wM + wM == Matrix( 2, 3, [  2  ,  4  ,  6  ,  8  , 10  , 12 ] ) else { fatalError() }
+	guard wM - wM == Matrix( 2, 3, [  0  ,  0  ,  0  ,  0  ,  0  ,  0 ] ) else { fatalError() }
+	guard wM * wM == Matrix( 2, 3, [  1  ,  4  ,  9  , 16  , 25  , 36 ] ) else { fatalError() }
+	guard wM / wM == Matrix( 2, 3, [  1  ,  1  ,  1  ,  1  ,  1  ,  1 ] ) else { fatalError() }
 	
 	guard OutOfPlace(
 		wM
@@ -378,3 +541,13 @@ JPMatrixTest() {
 		5 6
 */
 
+func
+GradientDescent(
+	_ pDerivative	: ( [ Double ] ) -> [ Double ]
+,	_ pInitialValue	: [ Double ]
+,	_ pLearningRate	: [ Double ]
+,	_ pCB			: ( [ Double ] ) -> Bool
+) {
+	var	x = pInitialValue
+	repeat { x = x - pLearningRate * pDerivative( x ) } while pCB( x )
+}

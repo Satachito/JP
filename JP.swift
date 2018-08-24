@@ -100,12 +100,9 @@ DecodeJSON( _ p: Data, _ options: JSONSerialization.ReadingOptions = [] ) throws
 }
 
 func
-JSONString( _ from: Any ) -> String? {
-	if #available(iOS 11.0, *) {
-		if let w = try? EncodeJSON( from, [ .prettyPrinted, .sortedKeys ] ) { return UTF8String( w ) } else { return nil }
-	} else {
-		if let w = try? EncodeJSON( from, [ .prettyPrinted ] ) { return UTF8String( w ) } else { return nil }
-	}
+JSONString( _ p: Any, _ options: JSONSerialization.WritingOptions = [ .prettyPrinted, .sortedKeys ]  ) -> String? {
+	guard let v = try? EncodeJSON( p, options ) else { return nil }
+	return UTF8String( v )
 }
 
 func
@@ -282,8 +279,8 @@ Notify( _ name: String, _ p: @escaping ( Notification ) -> () ) -> NSObjectProto
 }
 
 func
-Main( _ d: @escaping () -> () ) {
-	DispatchQueue.main.async( execute: d )
+Main( _ d: () -> () ) {
+	DispatchQueue.main.sync( execute: d )
 }
 
 func
@@ -599,3 +596,8 @@ LazyUTF8String( _ p: Data ) -> String {
 	return v
 }
 */
+func
+Square( _ p: Double ) -> Double {
+	return p * p
+}
+
