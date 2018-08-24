@@ -99,6 +99,7 @@ Matrix< T: Numeric > {
 }
 
 func
+<<<<<<< HEAD
 RandomMatrix( _ numR: Int, _ numC: Int, _ range: Range<Int> ) -> Matrix<Int> {
 	var	v = [ Int ]( repeating: 0, count: numR * numC )
 	for i in 0 ..< v.count { v[ i ] = Int.random( in: range ) }
