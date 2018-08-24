@@ -180,7 +180,7 @@ Matrix {
 func
 RandomMatrix( _ numR: UInt, _ numC: UInt ) -> Matrix {
 	var	v = [ Double ]( repeating: 0, count: Int( numR * numC ) )
-	for i in 0 ..< v.count { v[ i ] = Double.random( in: 0 ..< 1 ) }
+	for i in 0 ..< v.count { v[ i ] = Double( arc4random() ) / Double( UInt32.max ) }
 	return Matrix( numR, numC, v )
 }
 
