@@ -49,17 +49,15 @@ TGAFile {
 		let	wNumPixels = Int( width ) * Int( height )
 		var	v = [ UInt32 ]( repeating: 0, count: wNumPixels )
 		rawData.withUnsafeBytes { ( p: UnsafePointer< UInt8 > ) -> Void in
+			let	wStart = 18 + Int( IDSize )
 			switch bitsPerPixel {
 			case 24:
-				let	wStart = 18 + Int( IDSize )
 				for i in 0 ..< wNumPixels {
 					let	w = wStart + i * 3
 					v[ i ] = UInt32( p[ w ] ) + UInt32( p[ w + 1 ] ) << 8 + UInt32( p[ w + 2 ] ) << 16 + UInt32( 0x0ff ) << 24
 				}
 			case 32:
-				for i in 0 ..< wNumPixels {
-					v[ i ] = UnsafePointer< UInt32 >( OpaquePointer( p ) )[ i ]
-				}
+				UnsafeMutablePointer<UInt32>( OpaquePointer( v ) ).assign( from: UnsafePointer< UInt32 >( OpaquePointer( p + wStart ) ), count: wNumPixels )
 			default:
 				break
 			}
