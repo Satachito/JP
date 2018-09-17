@@ -1,5 +1,7 @@
 import Accelerate
 
+//	NEED JPMath
+
 struct
 Matrix< T: Numeric > {
 	var	numR	:	Int
@@ -19,7 +21,7 @@ Matrix< T: Numeric > {
 		self.u = [ T ]( repeating: initial, count: numR * numC )
 	}
 
-	init( _ p: [ [ T ] ] ) {
+	init( _ p: [ [ T ] ] = [ [ T ] ]() ) {
 		guard p.count > 0 else { fatalError( "Need to have more than one element." ) }
 		self.init( p.count, p[ 0 ].count )
 		for i in 0 ..< numR {

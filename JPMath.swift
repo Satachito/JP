@@ -317,6 +317,16 @@ L2Norm( _ p: [ Double ] ) -> Double {
 }
 
 func
+UnitVector( _ p: [ Float ] ) -> [ Float ] {
+	return p / L2Norm( p )
+}
+
+func
+UnitVector( _ p: [ Double ] ) -> [ Double ] {
+	return p / L2Norm( p )
+}
+
+func
 Normalize( _ p: [ Float ] ) -> [ Float ] {
 	var	v = [ Float ]( repeating: 0, count: p.count )
 	var	wM = Float( 0 )
