@@ -1,3 +1,5 @@
+//	Written by Satoru Ogura, Tokyo.
+//
 func
 Gaussian() -> Float {
 	return
