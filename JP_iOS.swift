@@ -239,7 +239,7 @@ ImageV	: UIImageView {
 			label.removeFromSuperview()
 			let	wAIV = UIActivityIndicatorView( style: aiStyle )
 			addSubview( wAIV )
-			wAIV.center = Center( bounds )
+			wAIV.center = Mid( bounds )
 			wAIV.startAnimating()
 			Image_iOS(
 				uri!

@@ -11,6 +11,13 @@ Mid( _ p: CGRect ) -> CGPoint {
 }
 
 func
+Dist2( _ left: CGPoint, _ right: CGPoint ) -> Double {
+	let w = Double( right.x - left.x )
+	let h = Double( right.y - left.y )
+	return w * w + h * h
+}
+
+func
 ARGBContext( _ pW: size_t, _ pH: size_t ) -> CGContext? {
 	return CGContext(
 		data			: nil

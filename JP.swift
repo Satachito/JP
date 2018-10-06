@@ -10,7 +10,7 @@ JPError: Error {
 
 func
 HexChar( _ p: Int ) -> Character {
-	return [ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f" ][ p & 0x0f ]
+	return [ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f" ][ p ]
 }
 
 func
@@ -193,13 +193,13 @@ JPTest() {
 	print( "RandomData, HexString, HexChar, ToArray<T>, UTF8String, UTF8Data, Base64Data, Base64String, IsNull, AsInt" );
 }
 
-enum
-ReaderError	: Error {
-case		eod
-}
 
 class
 Reader< T > {
+	enum
+	ReaderError	: Error {
+	case		eod
+	}
 	var
 	_unread : Chain< T >?
 	func
@@ -340,18 +340,6 @@ DocumentDirectoryPathes() -> [ String ] {
 	,	.userDomainMask
 	,	true
 	) as [ String ]
-}
-
-func
-Dist2( _ left: CGPoint, _ right: CGPoint ) -> Double {
-	let w = Double( right.x - left.x )
-	let h = Double( right.y - left.y )
-	return w * w + h * h
-}
-
-func
-Center( _ p: CGRect ) -> CGPoint {
-	return CGPoint( x: p.midX, y: p.midY )
 }
 
 typealias	JSONDict = [ String: Any ]
