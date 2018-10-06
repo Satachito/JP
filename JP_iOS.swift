@@ -26,7 +26,7 @@ _	duration	: TimeInterval					= 0.25
 ,	delay		: TimeInterval					= 0
 ,	damping		: CGFloat						= 0.5
 ,	velocity	: CGFloat						= 0.1
-,	options		: UIViewAnimationOptions		= .curveEaseInOut
+,	options		: UIView.AnimationOptions		= .curveEaseInOut
 ,	completion	: ( ( Bool ) -> () )?	= nil
 ,	animations	: @escaping () -> ()
 ) {
@@ -221,7 +221,7 @@ Image_iOS(
 class
 ImageV	: UIImageView {
 	var
-	aiStyle	= UIActivityIndicatorViewStyle.whiteLarge
+	aiStyle	= UIActivityIndicatorView.Style.whiteLarge
 	let
 	label	= UILabel()
 	
@@ -237,7 +237,7 @@ ImageV	: UIImageView {
 	uri	: String? {
 		didSet {
 			label.removeFromSuperview()
-			let	wAIV = UIActivityIndicatorView( activityIndicatorStyle: aiStyle )
+			let	wAIV = UIActivityIndicatorView( style: aiStyle )
 			addSubview( wAIV )
 			wAIV.center = Center( bounds )
 			wAIV.startAnimating()
@@ -286,7 +286,7 @@ JPFitLabel	: UIView {
 	}
 	
 	private	var
-	attributes	: [ NSAttributedStringKey: Any ] {
+	attributes	: [ NSAttributedString.Key: Any ] {
 		get { return [ .font: font, .foregroundColor: tintColor ] }
 	}
 

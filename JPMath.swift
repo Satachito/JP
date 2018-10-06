@@ -284,6 +284,19 @@ Sum( _ p: [ Double ] ) -> Double {
 }
 
 func
+Mean( _ p: [ Float ] ) -> Float {
+	var	v: Float = 0.0
+	vDSP_meanv( p, 1, &v, vDSP_Length( p.count ) )
+	return v
+}
+func
+Mean( _ p: [ Double ] ) -> Double {
+	var	v: Double = 0.0
+	vDSP_meanvD( p, 1, &v, vDSP_Length( p.count ) )
+	return v
+}
+
+func
 L1Norm( _ p: [ Float ] ) -> Float {
 	var	v: Float = 0.0
 	vDSP_svemg( p, 1, &v, vDSP_Length( p.count ) )

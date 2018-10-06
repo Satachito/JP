@@ -16,7 +16,7 @@ HexChar( _ p: Int ) -> Character {
 func
 HexString( _ p: UnsafePointer<UInt8>, _ count: Int ) -> String {
 	var	v = ""
-	for i in 0 ..< 16 {
+	for i in 0 ..< count {
 		v.append( HexChar( Int( p[ i ] ) >> 4 ) )
 		v.append( HexChar( Int( p[ i ] ) ) )
 	}
@@ -26,7 +26,7 @@ HexString( _ p: UnsafePointer<UInt8>, _ count: Int ) -> String {
 func
 HexString( _ p: Data ) -> String {
 	var	v = ""
-	p.withUnsafeBytes { ( q: UnsafePointer<UInt8> ) in
+	p.withUnsafeBytes { q in
 		v = HexString( q, p.count )
 	}
 	return v
@@ -43,14 +43,8 @@ RandomData( _ p: Int ) -> Data {
 }
 
 func
-RandomIndices( _ p: Int ) -> [ Int ] {
-	var	v = [ Int ]( repeating: 0, count: p )
-	for i in 0 ..< p { v[ i ] = i }
-	for i in 0 ..< p {
-		let j = Int( arc4random_uniform( UInt32( p - i ) ) ) + i
-		( v[ i ], v[ j ] ) = ( v[ j ], v[ i ] )
-	}
-	return v
+ShuffledIndices( _ p: Int ) -> [ Int ] {
+	return ( 0 ..< p ).map{ $0 }.shuffled()
 }
 
 func
@@ -60,12 +54,12 @@ ToArray<T>( _ start: UnsafePointer<T>, _ count: Int ) -> [ T ] {
 //	USAGE: let wArray : [ Int16 ] = ToArray( data.bytes, data.length / sizeof( Int16 ) )
 
 func
-UTF8Length( _ p: String ) -> Int {
+LengthByUTF8( _ p: String ) -> Int {
 	return p.lengthOfBytes( using: .utf8 )
 }
 
 func
-UTF8Data( _ p: String ) -> Data? {
+DataByUTF8( _ p: String ) -> Data? {
 	return p.data( using: .utf8 )
 }
 
@@ -85,13 +79,19 @@ Base64String( _ p: Data, _ options: Data.Base64EncodingOptions = [] ) -> String 
 }
 
 func
-Base64Data( _ p: String, _ options: Data.Base64DecodingOptions = [] ) -> Data? {
+DataByBase64( _ p: String, _ options: Data.Base64DecodingOptions = [] ) -> Data? {
 	return Data( base64Encoded: p, options: options )
 }
 
 func
-EncodeJSON( _ p: Any, _ options: JSONSerialization.WritingOptions = [] ) throws -> Data {
+JSONData( _ p: Any, _ options: JSONSerialization.WritingOptions = [] ) throws -> Data {
 	return try JSONSerialization.data( withJSONObject: p, options: options )
+}
+
+func
+JSONString( _ p: Any, _ options: JSONSerialization.WritingOptions = [ .prettyPrinted, .sortedKeys ]  ) -> String? {
+	guard let v = try? JSONData( p, options ) else { return nil }
+	return UTF8String( v )
 }
 
 func
@@ -100,20 +100,13 @@ DecodeJSON( _ p: Data, _ options: JSONSerialization.ReadingOptions = [] ) throws
 }
 
 func
-JSONString( _ p: Any, _ options: JSONSerialization.WritingOptions = [ .prettyPrinted, .sortedKeys ]  ) -> String? {
-	guard let v = try? EncodeJSON( p, options ) else { return nil }
-	return UTF8String( v )
-}
-
-func
-JSONObject( _ from: String ) -> Any? {
-	guard let wJSONData = UTF8Data( from ) else { return nil }
-	guard let v = try? DecodeJSON( wJSONData ) else { return nil }
-	return v
+DecodeJSON( _ p: String, _ options: JSONSerialization.ReadingOptions = [] ) -> Any? {
+	guard let v = DataByUTF8( p ) else { return nil }
+	return try? DecodeJSON( v, options )
 }
 
 class
-Chain<T> {
+Chain< T > {
 	var
 	m			: T
 	let
@@ -175,8 +168,8 @@ JPTest() {
 	assert( wStr == HexString( wData ) )
 	
 	wStr = "今日は、Alberto López.☕️";
-	assert( wStr == UTF8String( UTF8Data( wStr )! ) )
-	assert( wData == Base64Data( Base64String( wData ) )! )
+	assert( wStr == UTF8String( DataByUTF8( wStr )! ) )
+	assert( wData == DataByBase64( Base64String( wData ) )! )
 	
 	assert( IsNull( nil ) )
 	assert( IsNull( NSNull() ) )
@@ -281,6 +274,11 @@ Notify( _ name: String, _ p: @escaping ( Notification ) -> () ) -> NSObjectProto
 func
 Main( _ d: () -> () ) {
 	DispatchQueue.main.sync( execute: d )
+}
+
+func
+Queue( _ d: @escaping () -> () ) {
+	DispatchQueue.main.async( execute: d )
 }
 
 func
@@ -470,7 +468,7 @@ OnJSON(
 ) {
 	do {
 		var	wBody	: Data?
-		if let wJSON = json { wBody = try EncodeJSON( wJSON ) }
+		if let wJSON = json { wBody = try JSONData( wJSON ) }
 		OnHTML( uri, method, wBody, er, ex ) { p in
 			do {
 				ed( try DecodeJSON( p ) )
