@@ -277,7 +277,7 @@ Main( _ d: () -> () ) {
 }
 
 func
-Queue( _ d: @escaping () -> () ) {
+Delay( _ d: @escaping () -> () ) {
 	DispatchQueue.main.async( execute: d )
 }
 
@@ -297,21 +297,8 @@ Periodical( _ p: TimeInterval, d: @escaping () -> () ) -> Timer {
 	)
 }
 
-/*
 func
-Delay( _ p: TimeInterval, d: @escaping () -> () ) -> Timer {
-	return Timer.scheduledTimer(
-		timeInterval: TimeInterval( p )
-	,	target		: BlockOperation( block: { d() } )
-	,	selector	: #selector( Operation.main )
-	,	userInfo	: nil
-	,	repeats		: false
-	)
-}
-*/
-
-func
-Delay( _ p: TimeInterval, _ queue: DispatchQueue = DispatchQueue.main, d: @escaping () -> () ) {
+After( _ p: TimeInterval, _ queue: DispatchQueue = DispatchQueue.main, d: @escaping () -> () ) {
 	queue.asyncAfter(
 		deadline	: DispatchTime.now() + .nanoseconds( Int( p * Double( NSEC_PER_SEC ) ) )
 	,	execute		: d
