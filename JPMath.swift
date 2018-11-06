@@ -58,17 +58,13 @@ func
 -( _ p: [ Double ], _ s: Double ) -> [ Double ] { return p + -s }
 func
 -( _ s: Float, _ p: [ Float ] ) -> [ Float ] {
-	var	v = [ Float ]( repeating: 0, count: p.count )
-	var	w = s
-	vDSP_vfill( &w, &v, 1, vDSP_Length( v.count ) )
+	var	v = [ Float ]( repeating: s, count: p.count )
 	vDSP_vsub( p, 1, v, 1, &v, 1, vDSP_Length( v.count ) )
 	return v
 }
 func
 -( _ s: Double, _ p: [ Double ] ) -> [ Double ] {
-	var	v = [ Double ]( repeating: 0, count: p.count )
-	var	w = s
-	vDSP_vfillD( &w, &v, 1, vDSP_Length( v.count ) )
+	var	v = [ Double ]( repeating: s, count: p.count )
 	vDSP_vsubD( p, 1, v, 1, &v, 1, vDSP_Length( v.count ) )
 	return v
 }

@@ -1,5 +1,7 @@
 //	Written by Satoru Ogura, Tokyo.
 //
+#pragma	once
+
 #include	<iostream>
 
 inline	int
@@ -22,14 +24,13 @@ _N( T* p, const char* file, int line ) {
 }
 #define	N( p ) _N( p, __FILE__, __LINE__ )
 
+#include	<random>
 
-#include	<vector>
-
-namespace
+struct
 JP {
 	typedef	int	UNICODE;
 
-	inline	UNICODE
+	static	UNICODE
 	Unicode( std::istream& p ) {
 		unsigned char	c;
 		p >> c;
@@ -91,11 +92,28 @@ JP {
 		}
 	};
 
-	template	< typename T >	std::vector<T>
-	operator+ ( std::vector<T> const& l, std::vector<T> const& r ) {
-		std::vector<T> v( l.size() + r.size() );
-		v.insert( v.end(), l.begin(), l.end() );
-		v.insert( v.end(), r.begin(), r.end() );
-		return v;
+	template	< typename T >	struct
+	Range {
+		T	min;
+		T	max;
+		Range( T pMin, T pMax ) : min( pMin ), max( pMax ) {}
+	};
+	
+	static	double
+	Random() {
+		static	std::mt19937 sMT( (std::random_device())() );
+		return sMT();
 	}
-}
+	
+	template	< typename T >	static	T
+	UniformInts( const std::uniform_int_distribution< T >& p ) {
+		static	std::mt19937 sMT( (std::random_device())() );
+		return p( sMT );
+	}
+	
+	template	< typename T >	static	T
+	UniformFloats( const std::uniform_real_distribution< T >& p ) {
+		static	std::mt19937 sMT( (std::random_device())() );
+		return p( sMT );
+	}
+};
