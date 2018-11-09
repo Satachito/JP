@@ -26,11 +26,11 @@ _N( T* p, const char* file, int line ) {
 
 #include	<random>
 
-struct
-JP {
+namespace JP {
+
 	typedef	int	UNICODE;
 
-	static	UNICODE
+	inline	UNICODE
 	Unicode( std::istream& p ) {
 		unsigned char	c;
 		p >> c;
@@ -99,21 +99,24 @@ JP {
 		Range( T pMin, T pMax ) : min( pMin ), max( pMax ) {}
 	};
 	
-	static	double
-	Random() {
+	template	< typename T >	static	T
+	UniformRandomInt( T l = 0, T h = 1 ) {
 		static	std::mt19937 sMT( (std::random_device())() );
-		return sMT();
+		std::uniform_int_distribution< T > wURD( l, h );
+		return wURD( sMT );
 	}
 	
 	template	< typename T >	static	T
-	UniformInts( const std::uniform_int_distribution< T >& p ) {
+	UniformRandomFloat( T l = 0, T h = 1 ) {
 		static	std::mt19937 sMT( (std::random_device())() );
-		return p( sMT );
+		std::uniform_real_distribution< T > wURD( l, h );
+		return wURD( sMT );
 	}
 	
 	template	< typename T >	static	T
-	UniformFloats( const std::uniform_real_distribution< T >& p ) {
+	NormalRandom( T l = 0, T h = 1 ) {
 		static	std::mt19937 sMT( (std::random_device())() );
-		return p( sMT );
+		std::normal_distribution< T > wURD( l, h );
+		return wURD( sMT );
 	}
 };
