@@ -100,23 +100,20 @@ namespace JP {
 	};
 	
 	template	< typename T >	static	T
-	UniformRandomInt( T l = 0, T h = 1 ) {
+	UniformRandomInt( T p = 1 ) {
 		static	std::mt19937 sMT( (std::random_device())() );
-		std::uniform_int_distribution< T > wURD( l, h );
-		return wURD( sMT );
+		return std::uniform_int_distribution< T >( 0, p )( sMT );
 	}
 	
 	template	< typename T >	static	T
-	UniformRandomFloat( T l = 0, T h = 1 ) {
+	UniformRandomFloat( T p = 1 ) {
 		static	std::mt19937 sMT( (std::random_device())() );
-		std::uniform_real_distribution< T > wURD( l, h );
-		return wURD( sMT );
+		return std::uniform_real_distribution< T >( 0, p )( sMT );
 	}
 	
 	template	< typename T >	static	T
-	NormalRandom( T l = 0, T h = 1 ) {
+	NormalRandom( T p = 1 ) {
 		static	std::mt19937 sMT( (std::random_device())() );
-		std::normal_distribution< T > wURD( l, h );
-		return wURD( sMT );
+		return std::normal_distribution< T >( 0, p )( sMT );
 	}
 };
