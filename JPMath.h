@@ -19,6 +19,10 @@ Cube( const T& p ) {
 	return p * p * p;
 }
 
+template < typename T >	T
+Sigmoid( const T& p ) {
+    return 1 / ( 1 + exp( -p ) );
+}
 //	() -> Scalar
 
 template < typename T >	T
@@ -32,79 +36,79 @@ Gaussian() {
 //	() -> Vector
 
 inline	void
-Ramp( float pInit, float pStep, std::vector< float >& p, size_t pLength ) {
-	vDSP_vramp( &pInit, &pStep, &p[ 0 ], 1, vDSP_Length( pLength ) );
+Ramp( float pInit, float pStep, float* p, size_t pLength ) {
+	vDSP_vramp( &pInit, &pStep, p, 1, pLength );
 }
 inline	void
-Ramp( double pInit, double pStep, std::vector< double >& p, size_t pLength ) {
-	vDSP_vrampD( &pInit, &pStep, &p[ 0 ], 1, vDSP_Length( pLength ) );
+Ramp( double pInit, double pStep, double* p, size_t pLength ) {
+	vDSP_vrampD( &pInit, &pStep, p, 1, pLength );
 }
 template	< typename T >	std::vector< T >
 Ramp( size_t p, T pInit = 0, T pStep = 1 ) {
 	std::vector< T > v( p );
-	Ramp( pInit, pStep, v, p );
+	Ramp( pInit, pStep, &v[ 0 ], p );
 	return v;
 }
 
 //	Vector -> Scalar
 
 inline	void
-Sum( const std::vector< float >& p, float& v ) {
-	vDSP_sve( &p[ 0 ], 1, &v, p.size() );
+Sum( const float* p, float& v, size_t pLength ) {
+	vDSP_sve( p, 1, &v, pLength );
 }
 inline	void
-Sum( const std::vector< double >& p, double& v ) {
-	vDSP_sveD( &p[ 0 ], 1, &v, p.size() );
+Sum( const double* p, double& v, size_t pLength ) {
+	vDSP_sveD( p, 1, &v, pLength );
 }
 template	< typename T >	T
 Sum( const std::vector< T >& p ) {
 	T	v = 0;
-	Sum( p, v );
+	Sum( &p[ 0 ], v, p.size() );
 	return v;
 }
 
 inline	void
-Mean( const std::vector< float >& p, float& v ) {
-	vDSP_meanv( &p[ 0 ], 1, &v, p.size() );
+Mean( const float* p, float& v, size_t pLength ) {
+	vDSP_meanv( p, 1, &v, pLength );
 }
 inline	void
-Mean( const std::vector< double >& p, double& v ) {
-	vDSP_meanvD( &p[ 0 ], 1, &v, p.size() );
+Mean( const double* p, double& v, size_t pLength ) {
+	vDSP_meanvD( p, 1, &v, pLength );
 }
 template	< typename T >	T
 Mean( const std::vector< T >& p ) {
 	T	v = 0;
-	Mean( p, v );
+	Mean( &p[ 0 ], v, p.size() );
 	return v;
 }
 
 inline	void
-L1Norm( const std::vector< float >& p, float& v ) {
-	vDSP_svemg( &p[ 0 ], 1, &v, p.size() );
+L1Norm( const float* p, float& v, size_t pLength ) {
+	vDSP_svemg( p, 1, &v, pLength );
 }
 inline	void
-L1Norm( const std::vector< double >& p, double& v ) {
-	vDSP_svemgD( &p[ 0 ], 1, &v, p.size() );
+L1Norm( const double* p, double& v, size_t pLength ) {
+	vDSP_svemgD( p, 1, &v, pLength );
 }
 template	< typename T >	T
 L1Norm( const std::vector< T >& p ) {
 	T	v = 0;
-	L1Norm( p, v );
+	L1Norm( &p[ 0 ], v, p.size() );
 	return v;
 }
 
 inline	void
-L2NormSquare( const std::vector< float >& p, float& v ) {
-	vDSP_svesq( &p[ 0 ], 1, &v, p.size() );
+L2NormSquare( const float* p, float& v, size_t pLength ) {
+	vDSP_svesq( p, 1, &v, pLength );
 }
 inline	void
-L2NormSquare( const std::vector< double >& p, double& v ) {
-	vDSP_svesqD( &p[ 0 ], 1, &v, p.size() );
+L2NormSquare( const double* p, double& v, size_t pLength ) {
+	vDSP_svesqD( p, 1, &v, pLength );
 }
 template	< typename T >	T
 L2NormSquare( const std::vector< T >& p ) {
 	T	v = 0;
-	L2NormSquare( p, v );
+	L2NormSquare( &p[ 0 ], v, p.size() );
 	return v;
 }
 template	< typename T >	T
@@ -118,115 +122,115 @@ L2Norm( const std::vector< T >& p ) {
 //	( Vector, Scalar ) -> Vector
 
 inline	void
-Add( const std::vector< float >& l, const std::vector< float >& r, std::vector< float >& v ) {
-	vDSP_vadd( &l[ 0 ], 1, &r[ 0 ], 1, &v[ 0 ], 1, v.size() );
+Add( const float* l, const float* r, float* v, size_t pLength ) {
+	vDSP_vadd( l, 1, r, 1, v, 1, pLength );
 }
 inline	void
-Add( const std::vector< double >& l, const std::vector< double >& r, std::vector< double >& v ) {
-	vDSP_vaddD( &l[ 0 ], 1, &r[ 0 ], 1, &v[ 0 ], 1, v.size() );
+Add( const double* l, const double* r, double* v, size_t pLength ) {
+	vDSP_vaddD( l, 1, r, 1, v, 1, pLength );
 }
 template	< typename T >	std::vector< T >
 operator +( const std::vector< T >& l, const std::vector< T >& r ) {
 	assert( l.size() == r.size() );
 	std::vector< T > v( l.size(), 0 );
-	Add( l, r, v );
+	Add( &l[ 0 ], &r[ 0 ], &v[ 0 ], v.size() );
 	return v;
 }
 template	< typename T >	std::vector< T >
 operator +( const std::vector< T >& p, T s ) {
 	std::vector< T > v( p.size(), s );
-	Add( p, v, v );
+	Add( &p[ 0 ], &v[ 0 ], &v[ 0 ], v.size() );
 	return v;
 }
 template	< typename T >	std::vector< T >
 operator +( T s, const std::vector< T >& p ) {
 	std::vector< T > v( p.size(), s );
-	Add( v, p, v );
+	Add( &v[ 0 ], &p[ 0 ], &v[ 0 ], v.size() );
 	return v;
 }
 
 inline	void
-Sub( const std::vector< float >& l, const std::vector< float >& r, std::vector< float >& v ) {
-	vDSP_vsub( &r[ 0 ], 1, &l[ 0 ], 1, &v[ 0 ], 1, v.size() );
+Sub( const float* l, const float* r, float* v, size_t pLength ) {
+	vDSP_vsub( r, 1, l, 1, v, 1, pLength );
 }
 inline	void
-Sub( const std::vector< double >& l, const std::vector< double >& r, std::vector< double >& v ) {
-	vDSP_vsubD( &r[ 0 ], 1, &l[ 0 ], 1, &v[ 0 ], 1, v.size() );
+Sub( const double* l, const double* r, double* v, size_t pLength ) {
+	vDSP_vsubD( r, 1, l, 1, v, 1, pLength );
 }
 template	< typename T >	std::vector< T >
 operator -( const std::vector< T >& l, const std::vector< T >& r ) {
 	assert( l.size() == r.size() );
 	std::vector< T > v( l.size(), 0 );
-	Sub( l, r, v );
+	Sub( &l[ 0 ], &r[ 0 ], &v[ 0 ], v.size() );
 	return v;
 }
 template	< typename T >	std::vector< T >
 operator -( const std::vector< T >& p, T s ) {
 	std::vector< T > v( p.size(), s );
-	Sub( p, v, v );
+	Sub( &p[ 0 ], &v[ 0 ], &v[ 0 ], v.size() );
 	return v;
 }
 template	< typename T >	std::vector< T >
 operator -( T s, const std::vector< T >& p ) {
 	std::vector< T > v( p.size(), s );
-	Sub( v, p, v );
+	Sub( &v[ 0 ], &p[ 0 ], &v[ 0 ], v.size() );
 	return v;
 }
 
 //	Hadamard
 inline	void
-Mul( const std::vector< float >& l, const std::vector< float >& r, std::vector< float >& v ) {
-	vDSP_vmul( &l[ 0 ], 1, &r[ 0 ], 1, &v[ 0 ], 1, v.size() );
+Mul( const float* l, const float* r, float* v, size_t pLength ) {
+	vDSP_vmul( l, 1, r, 1, v, 1, pLength );
 }
 inline	void
-Mul( const std::vector< double >& l, const std::vector< double >& r, std::vector< double >& v ) {
-	vDSP_vmulD( &l[ 0 ], 1, &r[ 0 ], 1, &v[ 0 ], 1, v.size() );
+Mul( const double* l, const double* r, double* v, size_t pLength ) {
+	vDSP_vmulD( l, 1, r, 1, v, 1, pLength );
 }
 template	< typename T >	std::vector< T >
 operator *( const std::vector< T >& l, const std::vector< T >& r ) {
 	assert( l.size() == r.size() );
 	std::vector< T > v( l.size(), 0 );
-	Mul( l, r, v );
+	Mul( &l[ 0 ], &r[ 0 ], &v[ 0 ], v.size() );
 	return v;
 }
 template	< typename T >	std::vector< T >
 operator *( const std::vector< T >& p, T s ) {
 	std::vector< T > v( p.size(), s );
-	Mul( p, v, v );
+	Mul( &p[ 0 ], &v[ 0 ], &v[ 0 ], v.size() );
 	return v;
 }
 template	< typename T >	std::vector< T >
 operator *( T s, const std::vector< T >& p ) {
 	std::vector< T > v( p.size(), s );
-	Mul( v, p, v );
+	Mul( &v[ 0 ], &p[ 0 ], &v[ 0 ], v.size() );
 	return v;
 }
 
 inline	void
-Div( const std::vector< float >& l, const std::vector< float >& r, std::vector< float >& v ) {
-	vDSP_vdiv( &r[ 0 ], 1, &l[ 0 ], 1, &v[ 0 ], 1, v.size() );
+Div( const float* l, const float* r, float* v, size_t pLength ) {
+	vDSP_vdiv( r, 1, l, 1, v, 1, pLength );
 }
 inline	void
-Div( const std::vector< double >& l, const std::vector< double >& r, std::vector< double >& v ) {
-	vDSP_vdivD( &r[ 0 ], 1, &l[ 0 ], 1, &v[ 0 ], 1, v.size() );
+Div( const double* l, const double* r, double* v, size_t pLength ) {
+	vDSP_vdivD( r, 1, l, 1, v, 1, pLength );
 }
 template	< typename T >	std::vector< T >
 operator /( const std::vector< T >& l, const std::vector< T >& r ) {
 	assert( l.size() == r.size() );
 	std::vector< T > v( l.size(), 0 );
-	Div( l, r, v );
+	Div( &l[ 0 ], &r[ 0 ], &v[ 0 ], v.size() );
 	return v;
 }
 template	< typename T >	std::vector< T >
 operator /( const std::vector< T >& p, T s ) {
 	std::vector< T > v( p.size(), s );
-	Div( p, v, v );
+	Div( &p[ 0 ], &v[ 0 ], &v[ 0 ], v.size() );
 	return v;
 }
 template	< typename T >	std::vector< T >
 operator /( T s, const std::vector< T >& p ) {
 	std::vector< T > v( p.size(), s );
-	Div( v, p, v );
+	Div( &v[ 0 ], &p[ 0 ], &v[ 0 ], v.size() );
 	return v;
 }
 
