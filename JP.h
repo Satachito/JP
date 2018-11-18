@@ -4,17 +4,17 @@
 
 #include	<iostream>
 
-inline	int
+inline	int	//	UNIX ERROR EXCEPTION
 _U( int p, const char* file, int line ) {
 	if ( p == -1 ) {
 		fprintf( stderr, "%s:%d:%s\n", file, line, strerror( errno ) );
-		throw 0;
+		throw -1;
 	}
 	return p;
 }
 #define	U( p ) _U( p, __FILE__, __LINE__ )
 
-template	< typename T >	T*
+template	< typename T >	T*	//	NULL EXCEPTION
 _N( T* p, const char* file, int line ) {
 	if ( ! p ) {
 		fprintf( stderr, "%s:%d:NULL\n", file, line );
@@ -80,8 +80,7 @@ namespace JP {
 			if ( v == '/' ) {
 				auto w = UnicodeStream::Read();
 				if ( w == '/' ) {
-					v = UnicodeStream::Read();
-					while ( v != '\n' ) v = UnicodeStream::Read();
+					while ( UnicodeStream::Read() != '\n' ) {}
 					goto RESET;	//	return Read();
 				} else {
 					Unread( w );
@@ -99,21 +98,30 @@ namespace JP {
 		Range( T pMin, T pMax ) : min( pMin ), max( pMax ) {}
 	};
 	
-	template	< typename T >	static	T
-	UniformRandomInt( T p = 1 ) {
-		static	std::mt19937 sMT( (std::random_device())() );
-		return std::uniform_int_distribution< T >( 0, p )( sMT );
+	template	< typename I >	I
+	UniformRandomInt( I l = 0, I h = 1 ) {
+		static	std::mt19937_64 sMT( (std::random_device())() );
+		return	std::uniform_int_distribution< I >( l, h )( sMT );
 	}
 	
-	template	< typename T >	static	T
-	UniformRandomFloat( T p = 1 ) {
-		static	std::mt19937 sMT( (std::random_device())() );
-		return std::uniform_real_distribution< T >( 0, p )( sMT );
+	template	< typename F >	F
+	UniformRandomFloat( F l = 0, F h = 1 ) {
+		static	std::mt19937_64 sMT( (std::random_device())() );
+		return	std::uniform_real_distribution< F >( l, h )( sMT );
 	}
 	
-	template	< typename T >	static	T
-	NormalRandom( T p = 1 ) {
-		static	std::mt19937 sMT( (std::random_device())() );
-		return std::normal_distribution< T >( 0, p )( sMT );
+	template	< typename T >	T
+	NormalRandom( T l = 0, T h = 1 ) {
+		static	std::mt19937_64 sMT( (std::random_device())() );
+		return	std::normal_distribution< T >( l, h )( sMT );
+	}
+
+	//	This function exits to keep compatibility to the Swift version.
+	template < typename F >	F
+	Gaussian() {
+		return
+			sqrt( -2 * log( JP::UniformRandomFloat< F >() ) )
+		*	sin( 2 * M_PI * JP::UniformRandomFloat< F >() )
+		;
 	}
 };
