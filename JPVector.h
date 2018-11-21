@@ -29,6 +29,8 @@ namespace JP {
 
 	namespace Accelerate {
 
+		inline	void	Clear( float* p, vDSP_Stride sP, vDSP_Length pLength )																	{ vDSP_vclr			( p, sP, pLength ); }
+		inline	void	Clear( double* p, vDSP_Stride sP, vDSP_Length pLength )																	{ vDSP_vclrD		( p, sP, pLength ); }
 		inline	void	Ramp( float pInit, float pStep, float* p, vDSP_Stride sP, vDSP_Length pLength )											{ vDSP_vramp		( &pInit, &pStep, p, sP, pLength ); }
 		inline	void	Ramp( double pInit, double pStep, double* p, vDSP_Stride sP, vDSP_Length pLength )										{ vDSP_vrampD		( &pInit, &pStep, p, sP, pLength ); }
 		inline	void	Sum( const float* p, vDSP_Stride sP, float& v, vDSP_Length pLength )													{ vDSP_sve			( p, sP, &v, pLength ); }
@@ -118,6 +120,10 @@ namespace JP {
 			F&
 			operator []( size_t p ) {
 				return iVector< F >::m[ p * iVector< F >::s ];
+			}
+			void
+			Clear() {
+				Accelerate::Clear( iVector< F >::m, iVector< F >::s, iVector< F >::n );
 			}
 			const Vector< F >&
 			operator +=( const iVector< F >& p ) {

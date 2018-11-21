@@ -128,6 +128,10 @@ namespace JP {
 				Div( iMatrix< F >::m, 1, p.m, 1, iMatrix< F >::m, 1, iMatrix< F >::nR * iMatrix< F >::nC );
 				return *this;
 			}
+			void
+			Clear() {
+				Accelerate::Clear( iMatrix< F >::m, 1, iMatrix< F >::nR * iMatrix< F >::nC );
+			}
 		};
 	
 		inline	void

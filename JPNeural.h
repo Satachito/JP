@@ -38,6 +38,16 @@ namespace JP {
 				,	deltaT( nN )
 				,	deltaW( nN, nI ) {
 				}
+				const void
+				Clear() {
+					deltaT.Clear();
+					deltaW.Clear();
+				}
+				const void
+				Update() {
+					theta += deltaT;
+					weight += deltaW;
+				}
 				virtual	const Vector< F >&
 				Forward( const iVector< F >& ) = 0;
 				virtual	const Vector< F >
@@ -61,9 +71,10 @@ namespace JP {
 				}
 				const Vector< F >
 				Backward( const iVector< F >& p, const iVector< F >& i ) {
-					Layer::deltaT = p * Layer::output * ( F( 1 ) - Layer::output );
-					Layer::deltaW = MulVH( Layer::deltaT, i );
-					return Mul( Layer::deltaT, Layer::weight );
+					auto deltaT = p * Layer::output * ( F( 1 ) - Layer::output );
+					Layer::deltaT += deltaT;
+					Layer::deltaW += MulVH( deltaT, i );
+					return Mul( deltaT, Layer::weight );
 				}
 			};
 			struct
@@ -78,9 +89,11 @@ namespace JP {
 				}
 				const Vector< F >
 				Backward( const iVector< F >& p, const iVector< F >& i ) {
-					for ( auto i = 0; i < Layer::deltaT.n; i++ ) Layer::deltaT[ i ] = p[ i ] < 0 ? 0 : 1;
-					Layer::deltaW = MulVH( Layer::deltaT, i );
-					return Mul( Layer::deltaT, Layer::weight );
+					Vector< F >	deltaT( Layer::deltaT.n );
+					for ( auto i = 0; i < Layer::deltaT.n; i++ )deltaT[ i ] = p[ i ] < 0 ? 0 : 1;
+					Layer::deltaT += deltaT;
+					Layer::deltaW += MulVH( deltaT, i );
+					return Mul( deltaT, Layer::weight );
 				}
 			};
 			std::vector< Layer* >	layers;
@@ -90,6 +103,14 @@ namespace JP {
 				for ( auto w: layers ) delete w;
 			}
 			Network( size_t nInput ) : nInput( nInput ) {
+			}
+			void
+			Clear() {
+				for ( auto w: layers ) w->Clear();
+			}
+			void
+			Update() {
+				for ( auto w: layers ) w->Update();
 			}
 			void
 			NewSigmoidLayer( size_t p ) {
@@ -116,9 +137,47 @@ namespace JP {
 					auto wPrev = w + 1;
 					D = (*w)->Backward( D, wPrev == layers.rend() ? X : (*wPrev)->output );
 				}
-				for ( auto w: layers ) {
-					w->theta += w->deltaT;
-					w->weight += w->deltaW;
+			}
+			
+			void
+			TrainPartialBatch(
+				const iMatrix< F >&	Xs
+			,	const iMatrix< F >&	As
+			,	F					η									//	Learning rate
+			,	size_t				nSample
+			) {
+				assert( Xs.nR == As.nR );
+				Clear();
+				for ( auto i = 0; i < nSample; i++ ) {
+					auto wIndex = UniformRandomInt< size_t >( 0, Xs.nR );
+					TrainMain( Xs.Row( wIndex ), As.Row( wIndex ), η );
+				}
+				Update();
+			}
+			void
+			TrainBatch(
+				const iMatrix< F >&	Xs
+			,	const iMatrix< F >&	As
+			,	F					η									//	Learning rate
+			) {
+				assert( Xs.nR == As.nR );
+				Clear();
+				for ( auto i = 0; i < Xs.nR; i++ ) TrainMain( Xs.Row( i ), As.Row( i ), η );
+				Update();
+			}
+			void
+			TrainPartial(
+				const iMatrix< F >&	Xs
+			,	const iMatrix< F >&	As
+			,	F					η									//	Learning rate
+			,	size_t				nSample
+			) {
+				assert( Xs.nR == As.nR );
+				for ( auto i = 0; i < nSample; i++ ) {
+					auto wIndex = UniformRandomInt< size_t >( 0, Xs.nR );
+					Clear();
+					TrainMain( Xs.Row( wIndex ), As.Row( wIndex ), η );
+					Update();
 				}
 			}
 			void
@@ -126,26 +185,20 @@ namespace JP {
 				const iMatrix< F >&	Xs
 			,	const iMatrix< F >&	As
 			,	F					η									//	Learning rate
-			,	size_t				nMiniBatch = 0
 			) {
 				assert( Xs.nR == As.nR );
-				if ( nMiniBatch ) {
-					for ( auto i = 0; i < nMiniBatch; i++ ) {
-						auto wIndex = UniformRandomInt< size_t >( 0, Xs.nR );
-						TrainMain( Xs.Row( wIndex ), As.Row( wIndex ), η );
-					}
-				} else {
-					for ( auto i = 0; i < Xs.nR; i++ ) {
-						TrainMain( Xs.Row( i ), As.Row( i ), η );
-					}
+				for ( auto i = 0; i < Xs.nR; i++ ) {
+					Clear();
+					TrainMain( Xs.Row( i ), As.Row( i ), η );
+					Update();
 				}
 			}
-			
+
 			template < typename E >	void
 			ForAll(
 				const iMatrix< F >& Xs
 			,	E	p
-			) {
+			) const {
 				for ( auto iR = 0; iR < Xs.nR; iR++ ) {
 					auto	V = Xs.Row( iR );
 					for ( auto w: layers ) V = w->Forward( V );

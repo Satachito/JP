@@ -101,7 +101,7 @@ namespace JP {
 	template	< typename I >	I
 	UniformRandomInt( I l = 0, I h = 1 ) {
 		static	std::mt19937_64 sMT( (std::random_device())() );
-		return	std::uniform_int_distribution< I >( l, h )( sMT );
+		return	std::uniform_int_distribution< I >( l, h - 1 )( sMT );
 	}
 	
 	template	< typename F >	F
