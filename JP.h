@@ -115,13 +115,4 @@ namespace JP {
 		static	std::mt19937_64 sMT( (std::random_device())() );
 		return	std::normal_distribution< T >( l, h )( sMT );
 	}
-
-	//	This function exits to keep compatibility to the Swift version.
-	template < typename F >	F
-	Gaussian() {
-		return
-			sqrt( -2 * log( JP::UniformRandomFloat< F >() ) )
-		*	sin( 2 * M_PI * JP::UniformRandomFloat< F >() )
-		;
-	}
 };

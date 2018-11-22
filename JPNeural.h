@@ -12,7 +12,7 @@ namespace JP {
 	}
 	namespace Accelerate {
 
-		template	< typename F >	Vector< F >			ReLU( const iVector< F >& p ) {
+		template	< typename F >	Vector< F >			ReLU( const vVector< F >& p ) {
 			Vector< F >	v( p.n );
 			for ( auto i = 0; i < v.n; i++ ) v[ i ] = p[ i ] < 0 ? 0 : p[ i ];
 			return v;
@@ -22,16 +22,16 @@ namespace JP {
 		Network {
 
 			struct
-			Layer {
+			vLayer {
 				Vector< F >	output;
 				Vector< F >	theta;
 				Matrix< F >	weight;
 				Vector< F >	deltaT;
 				Matrix< F >	deltaW;
 				virtual	~
-				Layer() {
+				vLayer() {
 				}
-				Layer( size_t nN, size_t nI )
+				vLayer( size_t nN, size_t nI )
 				:	output( nN )
 				,	theta( Random< F >, nN )
 				,	weight( Random< F >, nN, nI )
@@ -49,54 +49,77 @@ namespace JP {
 					weight += deltaW;
 				}
 				virtual	const Vector< F >&
-				Forward( const iVector< F >& ) = 0;
+				Forward( const vVector< F >& ) = 0;
 				virtual	const Vector< F >
-				Backward( const iVector< F >&, const iVector< F >& ) = 0;
+				Backward( const vVector< F >&, const vVector< F >& ) = 0;
 			};
 			struct
-			SigmoidLayer: Layer {
-				SigmoidLayer( size_t nN, size_t nI )
-				:	Layer( nN, nI ) {
+			SoftmaxLayer: vLayer {
+				SoftmaxLayer( size_t nN, size_t nI )
+				:	vLayer( nN, nI ) {
 				}
 				Vector< F >
-				Sigmoid( const iVector< F >& p ) {
+				Softmax( const vVector< F >& p ) {
 					auto w = Exp( p );
 					return w / ( F( 1 ) + w );
 			//		return Rec( Exp( - p ) + F( 1 ) );
 				}
 				const Vector< F >&
-				Forward( const iVector< F >& p ) {
-					Layer::output = Sigmoid( Layer::theta + Mul( Layer::weight, p ) );
-					return Layer::output;
+				Forward( const vVector< F >& p ) {
+					auto v = Exp( p );
+					v /= Sum( v );
+					return v;
 				}
+				static	Matrix< F >	I = IdentityMatrix( vLayer::theta.n );
 				const Vector< F >
-				Backward( const iVector< F >& p, const iVector< F >& i ) {
-					auto deltaT = p * Layer::output * ( F( 1 ) - Layer::output );
-					Layer::deltaT += deltaT;
-					Layer::deltaW += MulVH( deltaT, i );
-					return Mul( deltaT, Layer::weight );
+				Backward( const vVector< F >& p, const vVector< F >& i ) {
+					
 				}
 			};
 			struct
-			ReLULayer: Layer {
-				ReLULayer( size_t nN, size_t nI )
-				:	Layer( nN, nI ) {
+			SigmoidLayer: vLayer {
+				SigmoidLayer( size_t nN, size_t nI )
+				:	vLayer( nN, nI ) {
+				}
+				Vector< F >
+				Sigmoid( const vVector< F >& p ) {
+					auto w = Exp( p );
+					return w / ( F( 1 ) + w );
+			//		return Rec( Exp( - p ) + F( 1 ) );
 				}
 				const Vector< F >&
-				Forward( const iVector< F >& p ) {
-					for ( auto i = 0; i < Layer::output.n; i++ ) Layer::output[ i ] = p[ i ] < 0 ? 0 : p[ i ];
-					return Layer::output;
+				Forward( const vVector< F >& p ) {
+					vLayer::output = Sigmoid( vLayer::theta + Mul( vLayer::weight, p ) );
+					return vLayer::output;
 				}
 				const Vector< F >
-				Backward( const iVector< F >& p, const iVector< F >& i ) {
-					Vector< F >	deltaT( Layer::deltaT.n );
-					for ( auto i = 0; i < Layer::deltaT.n; i++ )deltaT[ i ] = p[ i ] < 0 ? 0 : 1;
-					Layer::deltaT += deltaT;
-					Layer::deltaW += MulVH( deltaT, i );
-					return Mul( deltaT, Layer::weight );
+				Backward( const vVector< F >& p, const vVector< F >& i ) {
+					auto deltaT = p * vLayer::output * ( F( 1 ) - vLayer::output );
+					vLayer::deltaT += deltaT;
+					vLayer::deltaW += MulVH( deltaT, i );
+					return Mul( deltaT, vLayer::weight );
 				}
 			};
-			std::vector< Layer* >	layers;
+			struct
+			ReLULayer: vLayer {
+				ReLULayer( size_t nN, size_t nI )
+				:	vLayer( nN, nI ) {
+				}
+				const Vector< F >&
+				Forward( const vVector< F >& p ) {
+					for ( auto i = 0; i < vLayer::output.n; i++ ) vLayer::output[ i ] = p[ i ] < 0 ? 0 : p[ i ];
+					return vLayer::output;
+				}
+				const Vector< F >
+				Backward( const vVector< F >& p, const vVector< F >& i ) {
+					Vector< F >	deltaT( vLayer::deltaT.n );
+					for ( auto i = 0; i < vLayer::deltaT.n; i++ )deltaT[ i ] = p[ i ] < 0 ? 0 : 1;
+					vLayer::deltaT += deltaT;
+					vLayer::deltaW += MulVH( deltaT, i );
+					return Mul( deltaT, vLayer::weight );
+				}
+			};
+			std::vector< vLayer* >	layers;
 			size_t					nInput;
 			~
 			Network() {
@@ -123,8 +146,8 @@ namespace JP {
 
 			void
 			TrainMain(
-				const iVector< F >&	X
-			,	const iVector< F >&	A
+				const vVector< F >&	X
+			,	const vVector< F >&	A
 			,	F					η									//	Learning rate
 			) {
 				auto	V = X;
@@ -141,8 +164,8 @@ namespace JP {
 			
 			void
 			TrainPartialBatch(
-				const iMatrix< F >&	Xs
-			,	const iMatrix< F >&	As
+				const vMatrix< F >&	Xs
+			,	const vMatrix< F >&	As
 			,	F					η									//	Learning rate
 			,	size_t				nSample
 			) {
@@ -156,8 +179,8 @@ namespace JP {
 			}
 			void
 			TrainBatch(
-				const iMatrix< F >&	Xs
-			,	const iMatrix< F >&	As
+				const vMatrix< F >&	Xs
+			,	const vMatrix< F >&	As
 			,	F					η									//	Learning rate
 			) {
 				assert( Xs.nR == As.nR );
@@ -167,8 +190,8 @@ namespace JP {
 			}
 			void
 			TrainPartial(
-				const iMatrix< F >&	Xs
-			,	const iMatrix< F >&	As
+				const vMatrix< F >&	Xs
+			,	const vMatrix< F >&	As
 			,	F					η									//	Learning rate
 			,	size_t				nSample
 			) {
@@ -182,8 +205,8 @@ namespace JP {
 			}
 			void
 			Train(
-				const iMatrix< F >&	Xs
-			,	const iMatrix< F >&	As
+				const vMatrix< F >&	Xs
+			,	const vMatrix< F >&	As
 			,	F					η									//	Learning rate
 			) {
 				assert( Xs.nR == As.nR );
@@ -196,7 +219,7 @@ namespace JP {
 
 			template < typename E >	void
 			ForAll(
-				const iMatrix< F >& Xs
+				const vMatrix< F >& Xs
 			,	E	p
 			) const {
 				for ( auto iR = 0; iR < Xs.nR; iR++ ) {
@@ -208,8 +231,8 @@ namespace JP {
 /*
 			Matrix< F >
 			Diff(
-				const iMatrix< F >& Xs
-			,	const iMatrix< F >& As
+				const vMatrix< F >& Xs
+			,	const vMatrix< F >& As
 			) {
 				assert( Xs.nR == As.nR );
 				Matrix< F >	v( As.nR, As.nC );
@@ -223,8 +246,8 @@ namespace JP {
 */
 			bool
 			Eval(
-				const iMatrix< F >& Xs
-			,	const iMatrix< F >& As
+				const vMatrix< F >& Xs
+			,	const vMatrix< F >& As
 			,	F					pThreshold
 			) {
 				assert( Xs.nR == As.nR );

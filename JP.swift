@@ -569,16 +569,16 @@ LazyUTF8String( _ p: Data ) -> String {
 	return v
 }
 */
+
 func
-Gaussian() -> Float {
+NormalRandom() -> Float {
 	return
 		sqrt( -2 * log( Float.random( in: 0 ..< 1 ) ) )
 	*	sin( 2 * .pi * Float.random( in: 0 ..< 1 ) )
 }
 func
-Gaussian() -> Double {
+NormalRandom() -> Double {
 	return
 		sqrt( -2 * log( Double.random( in: 0 ..< 1 ) ) )
 	*	sin( 2 * .pi * Double.random( in: 0 ..< 1 ) )
 }
-

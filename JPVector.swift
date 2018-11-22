@@ -1,176 +1,154 @@
 //	Written by Satoru Ogura, Tokyo.
 //
 
-//	Scalar -> Scalar
-
-func
-Square<T: Numeric>( _ p: T ) -> T {
-	return p * p
-}
-
-func
-Cube<T: Numeric>( _ p: T ) -> T {
-	return p * p * p
-}
-
-//	() -> Scalar
-
 import Accelerate
 
-//	() -> Vector
+//	() -> Array
 
 func
-Ramp( _ p: Int, _ pInit: Float = 0, _ pStep: Float = 1 ) -> [ Float ] {
+RandomArray( _ p: Int, _ range: Range<Int> ) -> ArraySlice< Int > {
+	return ArraySlice( ( 0 ..< p ).map { _ in Int.random( in: range ) } )
+}
+func
+RandomArray( _ p: Int, _ range: Range<Float> ) -> ArraySlice< Float > {
+	return ArraySlice( ( 0 ..< p ).map { _ in Float.random( in: range ) } )
+}
+func
+RandomArray( _ p: Int, _ range: Range<Double> ) -> ArraySlice< Double > {
+	return ArraySlice( ( 0 ..< p ).map { _ in Double.random( in: range ) } )
+}
+func
+RandomArray( _ p: Int, _ range: ClosedRange<Int> ) -> ArraySlice< Int > {
+	return ArraySlice( ( 0 ..< p ).map { _ in Int.random( in: range ) } )
+}
+func
+RandomArray( _ p: Int, _ range: ClosedRange<Float> ) -> ArraySlice< Float > {
+	return ArraySlice( ( 0 ..< p ).map { _ in Float.random( in: range ) } )
+}
+func
+RandomArray( _ p: Int, _ range: ClosedRange<Double> ) -> ArraySlice< Double > {
+	return ArraySlice( ( 0 ..< p ).map { _ in Double.random( in: range ) } )
+}
+
+func
+Ramp( _ p: Int, _ pInit: Float = 0, _ pStep: Float = 1 ) -> ArraySlice< Float > {
 	var	v = [ Float ]( repeating: 0, count: p )
 	var	wInit = pInit
 	var	wStep = pStep
 	vDSP_vramp( &wInit, &wStep, &v, 1, vDSP_Length( p ) )
-	return v
+	return ArraySlice( v )
 }
 func
-Ramp( _ p: Int, _ pInit: Double = 0, _ pStep: Double = 1 ) -> [ Double ] {
+Ramp( _ p: Int, _ pInit: Double = 0, _ pStep: Double = 1 ) -> ArraySlice< Double > {
 	var	v = [ Double ]( repeating: 0, count: p )
 	var	wInit = pInit
 	var	wStep = pStep
 	vDSP_vrampD( &wInit, &wStep, &v, 1, vDSP_Length( p ) )
-	return v
-}
-
-func
-RandomVector( _ p: Int, _ range: Range<Int> ) -> [ Int ] {
-	var	v = [ Int ]( repeating: 0, count: p )
-	for i in 0 ..< v.count { v[ i ] = Int.random( in: range ) }
-	return v
-}
-func
-RandomVector( _ p: Int, _ range: Range<Float> ) -> [ Float ] {
-	var	v = [ Float ]( repeating: 0, count: p )
-	for i in 0 ..< v.count { v[ i ] = Float.random( in: range ) }
-	return v
-}
-func
-RandomVector( _ p: Int, _ range: Range<Double> ) -> [ Double ] {
-	var	v = [ Double ]( repeating: 0, count: p)
-	for i in 0 ..< v.count { v[ i ] = Double.random( in: range ) }
-	return v
-}
-func
-RandomVector( _ p: Int, _ range: ClosedRange<Int> ) -> [ Int ] {
-	var	v = [ Int ]( repeating: 0, count: p )
-	for i in 0 ..< v.count { v[ i ] = Int.random( in: range ) }
-	return v
-}
-func
-RandomVector( _ p: Int, _ range: ClosedRange<Float> ) -> [ Float ] {
-	var	v = [ Float ]( repeating: 0, count: p )
-	for i in 0 ..< v.count { v[ i ] = Float.random( in: range ) }
-	return v
-}
-func
-RandomVector( _ p: Int, _ range: ClosedRange<Double> ) -> [ Double ] {
-	var	v = [ Double ]( repeating: 0, count: p)
-	for i in 0 ..< v.count { v[ i ] = Double.random( in: range ) }
-	return v
+	return ArraySlice( v )
 }
 
 //	Vector -> Scalar
 
 func
-Sum( _ p: [ Float ] ) -> Float {
-	var	v: Float = 0
-	vDSP_sve( p, 1, &v, vDSP_Length( p.count ) )
+Sum( _ p: ArraySlice< Float  > ) -> Float  {
+	var	v: Float  = 0
+	p.withUnsafeBufferPointer { vDSP_sve ( $0.baseAddress!, 1, &v, vDSP_Length( p.count ) ) }
 	return v
 }
 func
-Sum( _ p: [ Double ] ) -> Double {
-	var	v: Double = 0
-	vDSP_sveD( p, 1, &v, vDSP_Length( p.count ) )
-	return v
-}
-
-func
-Mean( _ p: [ Float ] ) -> Float {
-	var	v: Float = 0
-	vDSP_meanv( p, 1, &v, vDSP_Length( p.count ) )
+Sum( _ p: ArraySlice< Double > ) -> Double {
+	var	v: Double  = 0
+	p.withUnsafeBufferPointer { vDSP_sveD( $0.baseAddress!, 1, &v, vDSP_Length( p.count ) ) }
 	return v
 }
 func
-Mean( _ p: [ Double ] ) -> Double {
-	var	v: Double = 0
-	vDSP_meanvD( p, 1, &v, vDSP_Length( p.count ) )
-	return v
-}
-
-func
-L1Norm( _ p: [ Float ] ) -> Float {
-	var	v: Float = 0
-	vDSP_svemg( p, 1, &v, vDSP_Length( p.count ) )
+Mean( _ p: ArraySlice< Float  > ) -> Float  {
+	var	v: Float  = 0
+	p.withUnsafeBufferPointer { vDSP_meanv ( $0.baseAddress!, 1, &v, vDSP_Length( p.count ) ) }
 	return v
 }
 func
-L1Norm( _ p: [ Double ] ) -> Double {
-	var	v: Double = 0
-	vDSP_svemgD( p, 1, &v, vDSP_Length( p.count ) )
-	return v
-}
-
-func
-L2NormSquare( _ p: [ Float ] ) -> Float {
-	var	v: Float = 0
-	vDSP_svesq( p, 1, &v, vDSP_Length( p.count ) )
+Mean( _ p: ArraySlice< Double > ) -> Double {
+	var	v: Double  = 0
+	p.withUnsafeBufferPointer { vDSP_meanvD( $0.baseAddress!, 1, &v, vDSP_Length( p.count ) ) }
 	return v
 }
 func
-L2NormSquare( _ p: [ Double ] ) -> Double {
-	var	v: Double = 0
-	vDSP_svesqD( p, 1, &v, vDSP_Length( p.count ) )
+L2NormQ( _ p: ArraySlice< Float  > ) -> Float  {
+	var	v: Float  = 0
+	p.withUnsafeBufferPointer { vDSP_svesq ( $0.baseAddress!, 1, &v, vDSP_Length( p.count ) ) }
 	return v
 }
-
 func
-L2Norm( _ p: [ Float ] ) -> Float {
-	return sqrt( L2NormSquare( p ) )
+L2NormQ( _ p: ArraySlice< Double > ) -> Double {
+	var	v: Double  = 0
+	p.withUnsafeBufferPointer { vDSP_svesqD( $0.baseAddress!, 1, &v, vDSP_Length( p.count ) ) }
+	return v
 }
 func
-L2Norm( _ p: [ Double ] ) -> Double {
-	return sqrt( L2NormSquare( p ) )
+L2Norm( _ p: ArraySlice< Float  > ) -> Float  {
+	return sqrt( L2NormQ( p ) )
+}
+func
+L2Norm( _ p: ArraySlice< Double > ) -> Double {
+	return sqrt( L2NormQ( p ) )
+}
+func
+DistanceQ( _ l: ArraySlice< Float  >, _ r: ArraySlice< Float  > ) -> Float  {
+	var	v: Float  = 0
+	l.withUnsafeBufferPointer { pL in
+		r.withUnsafeBufferPointer { pR in
+			vDSP_distancesq ( pL.baseAddress!, 1, pR.baseAddress!, 1, &v, vDSP_Length( l.count ) )
+		}
+	}
+	return v
+}
+func
+DistanceQ( _ l: ArraySlice< Double >, _ r: ArraySlice< Double > ) -> Double {
+	var	v: Double  = 0
+	l.withUnsafeBufferPointer { pL in
+		r.withUnsafeBufferPointer { pR in
+			vDSP_distancesqD( pL.baseAddress!, 1, pR.baseAddress!, 1, &v, vDSP_Length( l.count ) )
+		}
+	}
+	return v
 }
 
 //	Vector -> Vector
 
 func
-UnitVector( _ p: [ Float ] ) -> [ Float ] {
+UnitVector( _ p: ArraySlice< Float  > ) -> ArraySlice< Float  > {
 	return p / L2Norm( p )
 }
 func
-UnitVector( _ p: [ Double ] ) -> [ Double ] {
+UnitVector( _ p: ArraySlice< Double  > ) -> ArraySlice< Double  > {
 	return p / L2Norm( p )
 }
 
 func
-Abs( _ p: [ Float ] ) -> [ Float ] {
+Abs( _ p: ArraySlice< Float  > ) -> ArraySlice< Float  > {
 	var	v = [ Float ]( repeating: 0, count: p.count )
-	vDSP_vabs( p, 1, &v, 1, vDSP_Length( p.count ) )
-	return v
+	p.withUnsafeBufferPointer { vDSP_vabs( $0.baseAddress!, 1, &v, 1, vDSP_Length( v.count ) ) }
+	return ArraySlice( v )
 }
 func
-Abs( _ p: [ Double ] ) -> [ Double ] {
+Abs( _ p: ArraySlice< Double  > ) -> ArraySlice< Double  > {
 	var	v = [ Double ]( repeating: 0, count: p.count )
-	vDSP_vabsD( p, 1, &v, 1, vDSP_Length( p.count ) )
-	return v
+	p.withUnsafeBufferPointer { vDSP_vabsD( $0.baseAddress!, 1, &v, 1, vDSP_Length( v.count ) ) }
+	return ArraySlice( v )
 }
 
 prefix func
--( _ p: [ Float ] ) -> [ Float ] {
+-( _ p: ArraySlice< Float  > ) -> ArraySlice< Float  > {
 	var	v = [ Float ]( repeating: 0, count: p.count )
-	vDSP_vneg( p, 1, &v, 1, vDSP_Length( v.count ) )
-	return v
+	p.withUnsafeBufferPointer { vDSP_vneg( $0.baseAddress!, 1, &v, 1, vDSP_Length( v.count ) ) }
+	return ArraySlice( v )
 }
 prefix func
--( _ p: [ Double ] ) -> [ Double ] {
+-( _ p: ArraySlice< Double  > ) -> ArraySlice< Double  > {
 	var	v = [ Double ]( repeating: 0, count: p.count )
-	vDSP_vnegD( p, 1, &v, 1, vDSP_Length( v.count ) )
-	return v
+	p.withUnsafeBufferPointer { vDSP_vnegD( $0.baseAddress!, 1, &v, 1, vDSP_Length( v.count ) ) }
+	return ArraySlice( v )
 }
 
 //	( Vector, Vector ) -> Vector
@@ -178,168 +156,204 @@ prefix func
 //	( Vector, Scalar ) -> Vector
 
 func
-+( _ l: [ Float ], _ r: [ Float ] ) -> [ Float ] {
++( _ l: ArraySlice< Float  >, _ r: ArraySlice< Float  > ) -> ArraySlice< Float  > {
 	guard l.count == r.count else { fatalError() }
 	var	v = [ Float ]( repeating: 0, count: l.count )
-	vDSP_vadd( l, 1, r, 1, &v, 1, vDSP_Length( v.count ) )
-	return v
+	l.withUnsafeBufferPointer { pL in
+		r.withUnsafeBufferPointer { pR in
+			vDSP_vadd( pL.baseAddress!, 1, pR.baseAddress!, 1, &v, 1, vDSP_Length( v.count ) )
+		}
+	}
+	return ArraySlice( v )
 }
 func
-+( _ l: [ Double ], _ r: [ Double ] ) -> [ Double ] {
++( _ l: ArraySlice< Double  >, _ r: ArraySlice< Double  > ) -> ArraySlice< Double  > {
 	guard l.count == r.count else { fatalError() }
 	var	v = [ Double ]( repeating: 0, count: l.count )
-	vDSP_vaddD( l, 1, r, 1, &v, 1, vDSP_Length( v.count ) )
-	return v
+	l.withUnsafeBufferPointer { pL in
+		r.withUnsafeBufferPointer { pR in
+			vDSP_vaddD( pL.baseAddress!, 1, pR.baseAddress!, 1, &v, 1, vDSP_Length( v.count ) )
+		}
+	}
+	return ArraySlice( v )
 }
 
 func
-+( _ p: [ Float ], _ s: Float ) -> [ Float ] {
++( _ p: ArraySlice< Float  >, _ s: Float ) -> ArraySlice< Float  > {
 	var	v = [ Float ]( repeating: 0, count: p.count )
 	var	w = s
-	vDSP_vsadd( p, 1, &w, &v, 1, vDSP_Length( v.count ) )
-	return v
+	p.withUnsafeBufferPointer { vDSP_vsadd( $0.baseAddress!, 1, &w, &v, 1, vDSP_Length( v.count ) ) }
+	return ArraySlice( v )
 }
 func
-+( _ p: [ Double ], _ s: Double ) -> [ Double ] {
++( _ p: ArraySlice< Double  >, _ s: Double ) -> ArraySlice< Double  > {
 	var	v = [ Double ]( repeating: 0, count: p.count )
 	var	w = s
-	vDSP_vsaddD( p, 1, &w, &v, 1, vDSP_Length( v.count ) )
-	return v
+	p.withUnsafeBufferPointer { vDSP_vsaddD( $0.baseAddress!, 1, &w, &v, 1, vDSP_Length( v.count ) ) }
+	return ArraySlice( v )
 }
+func
++( _ s: Float, _ p: ArraySlice< Float  > ) -> ArraySlice< Float  > { return p + s }
+func
++( _ s: Double, _ p: ArraySlice< Double  > ) -> ArraySlice< Double  > { return p + s }
 
 func
-+( _ s: Float, _ p: [ Float ] ) -> [ Float ] { return p + s }
-func
-+( _ s: Double, _ p: [ Double ] ) -> [ Double ] { return p + s }
-
-func
--( _ l: [ Float ], _ r: [ Float ] ) -> [ Float ] {
+-( _ l: ArraySlice< Float  >, _ r: ArraySlice< Float  > ) -> ArraySlice< Float  > {
 	guard l.count == r.count else { fatalError() }
 	var	v = [ Float ]( repeating: 0, count: l.count )
-	vDSP_vsub( r, 1, l, 1, &v, 1, vDSP_Length( v.count ) )
-	return v
+	l.withUnsafeBufferPointer { pL in
+		r.withUnsafeBufferPointer { pR in
+			vDSP_vsub( pR.baseAddress!, 1, pL.baseAddress!, 1, &v, 1, vDSP_Length( v.count ) )
+		}
+	}
+	return ArraySlice( v )
 }
 func
--( _ l: [ Double ], _ r: [ Double ] ) -> [ Double ] {
+-( _ l: ArraySlice< Double  >, _ r: ArraySlice< Double  > ) -> ArraySlice< Double  > {
 	guard l.count == r.count else { fatalError() }
 	var	v = [ Double ]( repeating: 0, count: l.count )
-	vDSP_vsubD( r, 1, l, 1, &v, 1, vDSP_Length( v.count ) )
-	return v
+	l.withUnsafeBufferPointer { pL in
+		r.withUnsafeBufferPointer { pR in
+			vDSP_vsubD( pR.baseAddress!, 1, pL.baseAddress!, 1, &v, 1, vDSP_Length( v.count ) )
+		}
+	}
+	return ArraySlice( v )
 }
 
 func
--( _ p: [ Float ], _ s: Float ) -> [ Float ] { return p + -s }
+-( _ p: ArraySlice< Float  >, _ s: Float ) -> ArraySlice< Float  > { return p + -s }
 func
--( _ p: [ Double ], _ s: Double ) -> [ Double ] { return p + -s }
+-( _ p: ArraySlice< Double  >, _ s: Double ) -> ArraySlice< Double  > { return p + -s }
 
 func
--( _ s: Float, _ p: [ Float ] ) -> [ Float ] {
+-( _ s: Float, _ p: ArraySlice< Float  > ) -> ArraySlice< Float  > {
 	var	v = [ Float ]( repeating: s, count: p.count )
-	vDSP_vsub( p, 1, v, 1, &v, 1, vDSP_Length( v.count ) )
-	return v
+	p.withUnsafeBufferPointer { vDSP_vsub( $0.baseAddress!, 1, v, 1, &v, 1, vDSP_Length( v.count ) ) }
+	return ArraySlice( v )
 }
 func
--( _ s: Double, _ p: [ Double ] ) -> [ Double ] {
+-( _ s: Double, _ p: ArraySlice< Double  > ) -> ArraySlice< Double  > {
 	var	v = [ Double ]( repeating: s, count: p.count )
-	vDSP_vsubD( p, 1, v, 1, &v, 1, vDSP_Length( v.count ) )
-	return v
+	p.withUnsafeBufferPointer { vDSP_vsubD( $0.baseAddress!, 1, v, 1, &v, 1, vDSP_Length( v.count ) ) }
+	return ArraySlice( v )
 }
 
 func
-*( _ l: [ Float ], _ r: [ Float ] ) -> [ Float ] {
+*( _ l: ArraySlice< Float  >, _ r: ArraySlice< Float  > ) -> ArraySlice< Float  > {
 	guard l.count == r.count else { fatalError() }
 	var	v = [ Float ]( repeating: 0, count: l.count )
-	vDSP_vmul( l, 1, r, 1, &v, 1, vDSP_Length( v.count ) )
-	return v
+	l.withUnsafeBufferPointer { pL in
+		r.withUnsafeBufferPointer { pR in
+			vDSP_vmul( pL.baseAddress!, 1, pR.baseAddress!, 1, &v, 1, vDSP_Length( v.count ) )
+		}
+	}
+	return ArraySlice( v )
 }
 func
-*( _ l: [ Double ], _ r: [ Double ] ) -> [ Double ] {
+*( _ l: ArraySlice< Double  >, _ r: ArraySlice< Double  > ) -> ArraySlice< Double  > {
 	guard l.count == r.count else { fatalError() }
 	var	v = [ Double ]( repeating: 0, count: l.count )
-	vDSP_vmulD( l, 1, r, 1, &v, 1, vDSP_Length( v.count ) )
-	return v
+	l.withUnsafeBufferPointer { pL in
+		r.withUnsafeBufferPointer { pR in
+			vDSP_vmulD( pL.baseAddress!, 1, pR.baseAddress!, 1, &v, 1, vDSP_Length( v.count ) )
+		}
+	}
+	return ArraySlice( v )
 }
 
 func
-*( _ p: [ Float ], _ s: Float ) -> [ Float ] {
+*( _ p: ArraySlice< Float  >, _ s: Float ) -> ArraySlice< Float  > {
 	var	v = [ Float ]( repeating: 0, count: p.count )
 	var	w = s
-	vDSP_vsmul( p, 1, &w, &v, 1, vDSP_Length( v.count ) )
-	return v
+	p.withUnsafeBufferPointer { vDSP_vsmul( $0.baseAddress!, 1, &w, &v, 1, vDSP_Length( v.count ) ) }
+	return ArraySlice( v )
 }
 func
-*( _ p: [ Double ], _ s: Double ) -> [ Double ] {
+*( _ p: ArraySlice< Double  >, _ s: Double ) -> ArraySlice< Double  > {
 	var	v = [ Double ]( repeating: 0, count: p.count )
 	var	w = s
-	vDSP_vsmulD( p, 1, &w, &v, 1, vDSP_Length( v.count ) )
-	return v
+	p.withUnsafeBufferPointer { vDSP_vsmulD( $0.baseAddress!, 1, &w, &v, 1, vDSP_Length( v.count ) ) }
+	return ArraySlice( v )
 }
 
 func
-*( _ s: Float, _ p: [ Float ] ) -> [ Float ] { return p * s }
+*( _ s: Float, _ p: ArraySlice< Float  > ) -> ArraySlice< Float  > { return p * s }
 func
-*( _ s: Double, _ p: [ Double ] ) -> [ Double ] { return p * s }
+*( _ s: Double, _ p: ArraySlice< Double  > ) -> ArraySlice< Double  > { return p * s }
 
 func
-/( _ l: [ Float ], _ r: [ Float ] ) -> [ Float ] {
+/( _ l: ArraySlice< Float  >, _ r: ArraySlice< Float  > ) -> ArraySlice< Float  > {
 	guard l.count == r.count else { fatalError() }
 	var	v = [ Float ]( repeating: 0, count: l.count )
-	vDSP_vdiv( r, 1, l, 1, &v, 1, vDSP_Length( v.count ) )
-	return v
+	l.withUnsafeBufferPointer { pL in
+		r.withUnsafeBufferPointer { pR in
+			vDSP_vdiv( pR.baseAddress!, 1, pL.baseAddress!, 1, &v, 1, vDSP_Length( v.count ) )
+		}
+	}
+	return ArraySlice( v )
 }
 func
-/( _ l: [ Double ], _ r: [ Double ] ) -> [ Double ] {
+/( _ l: ArraySlice< Double  >, _ r: ArraySlice< Double  > ) -> ArraySlice< Double  > {
 	guard l.count == r.count else { fatalError() }
 	var	v = [ Double ]( repeating: 0, count: l.count )
-	vDSP_vdivD( r, 1, l, 1, &v, 1, vDSP_Length( v.count ) )
-	return v
+	l.withUnsafeBufferPointer { pL in
+		r.withUnsafeBufferPointer { pR in
+			vDSP_vdivD( pR.baseAddress!, 1, pL.baseAddress!, 1, &v, 1, vDSP_Length( v.count ) )
+		}
+	}
+	return ArraySlice( v )
 }
 
 func
-/( _ p: [ Float ], _ s: Float ) -> [ Float ] {
+/( _ p: ArraySlice< Float  >, _ s: Float ) -> ArraySlice< Float  > {
 	var	v = [ Float ]( repeating: 0, count: p.count )
 	var	w = s
-	vDSP_vsdiv( p, 1, &w, &v, 1, vDSP_Length( v.count ) )
-	return v
+	p.withUnsafeBufferPointer { vDSP_vsdiv( $0.baseAddress!, 1, &w, &v, 1, vDSP_Length( v.count ) ) }
+	return ArraySlice( v )
 }
 func
-/( _ p: [ Double ], _ s: Double ) -> [ Double ] {
+/( _ p: ArraySlice< Double  >, _ s: Double ) -> ArraySlice< Double  > {
 	var	v = [ Double ]( repeating: 0, count: p.count )
 	var	w = s
-	vDSP_vsdivD( p, 1, &w, &v, 1, vDSP_Length( v.count ) )
-	return v
+	p.withUnsafeBufferPointer { vDSP_vsdivD( $0.baseAddress!, 1, &w, &v, 1, vDSP_Length( v.count ) ) }
+	return ArraySlice( v )
 }
 
 func
-/( _ s: Float, _ p: [ Float ] ) -> [ Float ] {
-	var	v = [ Float ]( repeating: 0, count: p.count )
-	var	w = s
-	vDSP_vfill( &w, &v, 1, vDSP_Length( v.count ) )
-	vDSP_vdiv( p, 1, v, 1, &v, 1, vDSP_Length( v.count ) )
-	return v
+/( _ s: Float, _ p: ArraySlice< Float  > ) -> ArraySlice< Float  > {
+	var	v = [ Float ]( repeating: s, count: p.count )
+	p.withUnsafeBufferPointer { vDSP_vdiv( $0.baseAddress!, 1, v, 1, &v, 1, vDSP_Length( v.count ) ) }
+	return ArraySlice( v )
 }
 func
-/( _ s: Double, _ p: [ Double ] ) -> [ Double ] {
-	var	v = [ Double ]( repeating: 0, count: p.count )
-	var	w = s
-	vDSP_vfillD( &w, &v, 1, vDSP_Length( v.count ) )
-	vDSP_vdivD( p, 1, v, 1, &v, 1, vDSP_Length( v.count ) )
-	return v
+/( _ s: Double, _ p: ArraySlice< Double  > ) -> ArraySlice< Double  > {
+	var	v = [ Double ]( repeating: s, count: p.count )
+	p.withUnsafeBufferPointer { vDSP_vdivD( $0.baseAddress!, 1, v, 1, &v, 1, vDSP_Length( v.count ) ) }
+	return ArraySlice( v )
 }
 
 //	( Vector, Vector ) -> Scalar
 
 func
-DotProduct( _ l: [ Float ], _ r: [ Float ] ) -> Float {
+DotProduct( _ l: ArraySlice< Float  >, _ r: ArraySlice< Float  > ) -> Float {
 	guard l.count == r.count else { fatalError() }
 	var	v: Float = 0.0
-	vDSP_dotpr( r, 1, l, 1, &v, vDSP_Length( l.count ) )
+	l.withUnsafeBufferPointer { pL in
+		r.withUnsafeBufferPointer { pR in
+			vDSP_dotpr( pR.baseAddress!, 1, pL.baseAddress!, 1, &v, vDSP_Length( l.count ) )
+		}
+	}
 	return v
 }
 func
-DotProduct( _ l: [ Double ], _ r: [ Double ] ) -> Double {
+DotProduct( _ l: ArraySlice< Double  >, _ r: ArraySlice< Double  > ) -> Double {
 	guard l.count == r.count else { fatalError() }
 	var	v: Double = 0.0
-	vDSP_dotprD( r, 1, l, 1, &v, vDSP_Length( l.count ) )
+	l.withUnsafeBufferPointer { pL in
+		r.withUnsafeBufferPointer { pR in
+			vDSP_dotprD( pR.baseAddress!, 1, pL.baseAddress!, 1, &v, vDSP_Length( l.count ) )
+		}
+	}
 	return v
 }
+
