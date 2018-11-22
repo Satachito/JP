@@ -137,7 +137,7 @@ namespace JP {
 		template	< typename F >	Matrix< F >
 		IdentityMatrix( size_t p ) {
 			Matrix< F >	v( p, p );
-			for ( auto iR = 0; iR < p; iR++ ) for ( auto iC = 0; iC < p; iC++ ) v( iR, iC ) = 1;
+			for ( auto i = 0; i < p; i++ ) v( i, i ) = 1;
 			return v;
 		}
 	

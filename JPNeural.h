@@ -12,12 +12,6 @@ namespace JP {
 	}
 	namespace Accelerate {
 
-		template	< typename F >	Vector< F >			ReLU( const vVector< F >& p ) {
-			Vector< F >	v( p.n );
-			for ( auto i = 0; i < v.n; i++ ) v[ i ] = p[ i ] < 0 ? 0 : p[ i ];
-			return v;
-		}
-
 		template	< typename F >	struct
 		Network {
 
@@ -48,32 +42,20 @@ namespace JP {
 					theta += deltaT;
 					weight += deltaW;
 				}
-				virtual	const Vector< F >&
-				Forward( const vVector< F >& ) = 0;
 				virtual	const Vector< F >
-				Backward( const vVector< F >&, const vVector< F >& ) = 0;
-			};
-			struct
-			SoftmaxLayer: vLayer {
-				SoftmaxLayer( size_t nN, size_t nI )
-				:	vLayer( nN, nI ) {
-				}
-				Vector< F >
-				Softmax( const vVector< F >& p ) {
-					auto w = Exp( p );
-					return w / ( F( 1 ) + w );
-			//		return Rec( Exp( - p ) + F( 1 ) );
-				}
-				const Vector< F >&
+				Activate( const vVector< F >& ) = 0;
+				virtual	const Vector< F >&
 				Forward( const vVector< F >& p ) {
-					auto v = Exp( p );
-					v /= Sum( v );
-					return v;
+					return output = Activate( theta + Mul( weight, p ) );
 				}
-				static	Matrix< F >	I = IdentityMatrix( vLayer::theta.n );
-				const Vector< F >
-				Backward( const vVector< F >& p, const vVector< F >& i ) {
-					
+				virtual	const Vector< F >
+				Gradient( const vVector< F >& ) = 0;
+				virtual	const Vector< F >
+				Backward( const vVector< F >& d, const vVector< F >& p ) {
+					auto w = d * Gradient( p );
+					deltaT += w;
+					deltaW += MulVH( w, p );
+					return Mul( w, weight );
 				}
 			};
 			struct
@@ -81,23 +63,31 @@ namespace JP {
 				SigmoidLayer( size_t nN, size_t nI )
 				:	vLayer( nN, nI ) {
 				}
-				Vector< F >
-				Sigmoid( const vVector< F >& p ) {
+				const Vector< F >
+				Activate( const vVector< F >& p ) {
 					auto w = Exp( p );
 					return w / ( F( 1 ) + w );
 			//		return Rec( Exp( - p ) + F( 1 ) );
 				}
-				const Vector< F >&
-				Forward( const vVector< F >& p ) {
-					vLayer::output = Sigmoid( vLayer::theta + Mul( vLayer::weight, p ) );
-					return vLayer::output;
+				const Vector< F >
+				Gradient( const vVector< F >& p ) {
+					return vLayer::output * ( F( 1 ) - vLayer::output );
+				}
+			};
+			struct
+			SoftmaxLayer: vLayer {
+				SoftmaxLayer( size_t nN, size_t nI )
+				:	vLayer( nN, nI ) {
 				}
 				const Vector< F >
-				Backward( const vVector< F >& p, const vVector< F >& i ) {
-					auto deltaT = p * vLayer::output * ( F( 1 ) - vLayer::output );
-					vLayer::deltaT += deltaT;
-					vLayer::deltaW += MulVH( deltaT, i );
-					return Mul( deltaT, vLayer::weight );
+				Activate( const vVector< F >& p ) {
+					auto v = Exp( p - Max( p ) );
+					v /= Sum( v );
+					return v;
+				}
+				const Vector< F >
+				Gradient( const vVector< F >& p ) {
+					return vLayer::output * ( F( 1 ) - vLayer::output );
 				}
 			};
 			struct
@@ -105,18 +95,20 @@ namespace JP {
 				ReLULayer( size_t nN, size_t nI )
 				:	vLayer( nN, nI ) {
 				}
-				const Vector< F >&
-				Forward( const vVector< F >& p ) {
-					for ( auto i = 0; i < vLayer::output.n; i++ ) vLayer::output[ i ] = p[ i ] < 0 ? 0 : p[ i ];
-					return vLayer::output;
+				const Vector< F >
+				Activate( const vVector< F >& p ) {
+					Vector< F >	v( p.n );
+					for ( auto i = 0; i < v.n; i++ ) v[ i ] = p[ i ] < 0 ? 0 : p[ i ];
+					return v;
 				}
 				const Vector< F >
-				Backward( const vVector< F >& p, const vVector< F >& i ) {
-					Vector< F >	deltaT( vLayer::deltaT.n );
-					for ( auto i = 0; i < vLayer::deltaT.n; i++ )deltaT[ i ] = p[ i ] < 0 ? 0 : 1;
-					vLayer::deltaT += deltaT;
-					vLayer::deltaW += MulVH( deltaT, i );
-					return Mul( deltaT, vLayer::weight );
+				Gradient( const vVector< F >& p ) {
+//					auto v = vLayer::theta + Mul( vLayer::weight, p );
+//					for ( auto i = 0; i < v.n; i++ ) v[ i ] = v[ i ] < 0 ? 0 : 1;
+//					return v;
+					Vector< F >	v( vLayer::output.n );
+					for ( auto i = 0; i < v.n; i++ ) v[ i ] = vLayer::output[ i ] == 0 ? 0 : 1;
+					return v;
 				}
 			};
 			std::vector< vLayer* >	layers;
@@ -138,6 +130,10 @@ namespace JP {
 			void
 			NewSigmoidLayer( size_t p ) {
 				layers.emplace_back( new SigmoidLayer( p, layers.size() ? layers.back()->output.n : nInput ) );
+			}
+			void
+			NewSoftmaxLayer( size_t p ) {
+				layers.emplace_back( new SoftmaxLayer( p, layers.size() ? layers.back()->output.n : nInput ) );
 			}
 			void
 			NewReLULayer( size_t p ) {

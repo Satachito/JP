@@ -37,6 +37,10 @@ namespace JP {
 		inline	void	Sum( const double* p, vDSP_Stride sP, double& v, vDSP_Length pLength )													{ vDSP_sveD			( p, sP, &v, pLength ); }
 		inline	void	Mean( const float* p, vDSP_Stride sP, float& v, vDSP_Length pLength )													{ vDSP_meanv		( p, sP, &v, pLength ); }
 		inline	void	Mean( const double* p, vDSP_Stride sP, double& v, vDSP_Length pLength )													{ vDSP_meanvD		( p, sP, &v, pLength ); }
+		inline	void	Max( const float* p, vDSP_Stride sP, float& v, vDSP_Length pLength )													{ vDSP_maxv			( p, sP, &v, pLength ); }
+		inline	void	Max( const double* p, vDSP_Stride sP, double& v, vDSP_Length pLength )													{ vDSP_maxvD		( p, sP, &v, pLength ); }
+		inline	void	Min( const float* p, vDSP_Stride sP, float& v, vDSP_Length pLength )													{ vDSP_minv			( p, sP, &v, pLength ); }
+		inline	void	Min( const double* p, vDSP_Stride sP, double& v, vDSP_Length pLength )													{ vDSP_minvD		( p, sP, &v, pLength ); }
 		inline	void	L1Norm( const float* p, vDSP_Stride sP, float& v, vDSP_Length pLength )													{ vDSP_svemg		( p, sP, &v, pLength ); }
 		inline	void	L1Norm( const double* p, vDSP_Stride sP, double& v, vDSP_Length pLength )												{ vDSP_svemgD		( p, sP, &v, pLength ); }
 		inline	void	L2NormQ( const float* p, vDSP_Stride sP, float& v, vDSP_Length pLength )												{ vDSP_svesq		( p, sP, &v, pLength ); }
@@ -177,6 +181,12 @@ namespace JP {
 
 		template	< typename F >	F					Mean			( const std::vector< F >& p )			{	F	v = 0;					Mean( &p[ 0 ], 1, v, p.size() );		return v;	}
 		template	< typename F >	F					Mean			( const vVector< F >& p )				{	F	v = 0;					Mean( p.m, p.s, v, p.n );				return v;	}
+
+		template	< typename F >	F					Max				( const std::vector< F >& p )			{	F	v = 0;					Max( &p[ 0 ], 1, v, p.size() );			return v;	}
+		template	< typename F >	F					Max				( const vVector< F >& p )				{	F	v = 0;					Max( p.m, p.s, v, p.n );				return v;	}
+
+		template	< typename F >	F					Min				( const std::vector< F >& p )			{	F	v = 0;					Min( &p[ 0 ], 1, v, p.size() );			return v;	}
+		template	< typename F >	F					Min				( const vVector< F >& p )				{	F	v = 0;					Min( p.m, p.s, v, p.n );				return v;	}
 
 		template	< typename F >	F					L1Norm			( const std::vector< F >& p )			{	F	v = 0;					L1Norm( &p[ 0 ], 1, v, p.size() );		return v;	}
 		template	< typename F >	F					L1Norm			( const vVector< F >& p )				{	F	v = 0;					L1Norm( p.m, p.s, v, p.n );				return v;	}
