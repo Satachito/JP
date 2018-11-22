@@ -105,6 +105,8 @@ DecodeJSON( _ p: String, _ options: JSONSerialization.ReadingOptions = [] ) -> A
 	return try? DecodeJSON( v, options )
 }
 
+typealias	JSONDict = [ String: Any ]
+
 class
 Chain< T > {
 	var
@@ -327,27 +329,6 @@ DocumentDirectoryPathes() -> [ String ] {
 	,	.userDomainMask
 	,	true
 	) as [ String ]
-}
-
-typealias	JSONDict = [ String: Any ]
-
-func
-FetchJSON( _ url: String ) -> Any? {
-	if	let	wURL = URL( string: url ) {
-		return try? DecodeJSON( Data( contentsOf: wURL ) )
-	} else {
-		return nil
-	}
-}
-
-func
-FetchArrayJSON( _ url: String ) -> [ Any ]? {
-	return FetchJSON( url ) as? [ Any ]
-}
-
-func
-FetchDictJSON( _ url: String ) -> JSONDict? {
-	return FetchJSON( url ) as? JSONDict
 }
 
 func
