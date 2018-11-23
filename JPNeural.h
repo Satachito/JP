@@ -141,10 +141,21 @@ namespace JP {
 			}
 			
 			const vVector< F >&
-			Predict( const vVector< F >& p ) {
+			Predict( const vVector< F >& p ) const {
 				const vVector< F >*	v = &p;
 				for ( auto w: layers ) v = &w->Forward( *v );
 				return *v;
+			}
+
+			const Matrix< F >
+			Predict( const vMatrix< F >& p ) const {
+				Matrix< F >	v( p.nR, layers.back()->output.n );
+				for ( auto iR = 0; iR < v.nR; iR++ ) {
+					auto w = p.Row( iR );
+					for ( auto wLayer: layers ) w = wLayer->Forward( w );
+					v.SetRow( iR, w );
+				}
+				return v;
 			}
 
 			void
