@@ -15,6 +15,13 @@ namespace JP {
 		size_t	n;
 		size_t	s;	//	Stride
 		vVector( F* p, size_t n, size_t s = 1 ) : m( p ), n( n ), s( s ) {}
+//		const vVector&
+//		operator =( const vVector& p ) {
+//			m = p.m;
+//			n = p.n;
+//			s = p.s;
+//			return *this;
+//		}
 		virtual F
 		operator []( size_t p ) const {
 			return m[ p * s ];

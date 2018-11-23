@@ -139,20 +139,22 @@ namespace JP {
 			NewReLULayer( size_t p ) {
 				layers.emplace_back( new ReLULayer( p, layers.size() ? layers.back()->output.n : nInput ) );
 			}
-
+			
 			const vVector< F >&
-			Predict( const vVector< F >& X ) {
-				auto	v = X;
-				for ( auto w: layers ) v = w->Forward( v );
-				return v;
+			Predict( const vVector< F >& p ) {
+				const vVector< F >*	v = &p;
+				for ( auto w: layers ) v = &w->Forward( *v );
+				return *v;
 			}
+
 			void
 			TrainMain(
 				const vVector< F >&	X
 			,	const vVector< F >&	A
 			,	F					η									//	Learning rate
 			) {
-				auto	V = Predict( X );
+				auto	V = X;
+				for ( auto w: layers ) V = w->Forward( V );
 //static	int	sCounter = 0;
 //if ( sCounter % 100 == 0 ) std::cerr << "Train " << sCounter << ": " << ( A - V ) << std::endl;
 //sCounter++;
