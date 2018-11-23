@@ -111,22 +111,23 @@ namespace JP {
 				for ( auto i = 0; i < p.n * p.s; i += p.s ) vVector< F >::m[ i ] = p.m[ i ];
 			}
 			const Vector< F >&
-			operator =( const Vector< F >& p ) {
-				delete[] vVector< F >::m;
-				vVector< F >::m = new F[ p.n * p.s ];
-				vVector< F >::n = p.n;
-				vVector< F >::s = p.s;
+			Substitution( const vVector< F >& p ) {
+				if ( vVector< F >::n != p.n || vVector< F >::s != p.s ) {
+					delete[] vVector< F >::m;
+					vVector< F >::n = p.n;
+					vVector< F >::s = p.s;
+					vVector< F >::m = new F[ p.n * p.s ];
+				}
 				for ( auto i = 0; i < p.n * p.s; i += p.s ) vVector< F >::m[ i ] = p.m[ i ];
 				return *this;
 			}
 			const Vector< F >&
+			operator =( const Vector< F >& p ) {
+				return Substitution( p );
+			}
+			const Vector< F >&
 			operator =( const vVector< F >& p ) {
-				delete[] vVector< F >::m;
-				vVector< F >::m = new F[ p.n * p.s ];
-				vVector< F >::n = p.n;
-				vVector< F >::s = p.s;
-				for ( auto i = 0; i < p.n * p.s; i += p.s ) vVector< F >::m[ i ] = p.m[ i ];
-				return *this;
+				return Substitution( p );
 			}
 			F&
 			operator []( size_t p ) {

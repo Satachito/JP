@@ -70,22 +70,23 @@ namespace JP {
 				for ( auto i = 0; i < p.nR * p.nC; i++ ) vMatrix< F >::m[ i ] = p.m[ i ];
 			}
 			const Matrix< F >&
-			operator =( const Matrix< F >& p ) {
-				delete[] vMatrix< F >::m;
-				vMatrix< F >::m = new F[ p.nR * p.nC ];
-				vMatrix< F >::nR = p.nR;
-				vMatrix< F >::nC = p.nC;
-				for ( auto i = 0; i < p.nR * p.nC; i++ ) vMatrix< F >::m[ i ] = p.m[ i ];
+			Substitution( const vMatrix< F >& p ) {
+				if ( vMatrix< F >::nR != p.nR || vMatrix< F >::nC != p.nC ) {
+					delete[] vMatrix< F >::m;
+					vMatrix< F >::m = new F[ p.nR * p.nC ];
+					vMatrix< F >::nR = p.nR;
+					vMatrix< F >::nC = p.nC;
+					for ( auto i = 0; i < p.nR * p.nC; i++ ) vMatrix< F >::m[ i ] = p.m[ i ];
+				}
 				return *this;
 			}
 			const Matrix< F >&
+			operator =( const Matrix< F >& p ) {
+				return Substitution( p );
+			}
+			const Matrix< F >&
 			operator =( const vMatrix< F >& p ) {
-				delete[] vMatrix< F >::m;
-				vMatrix< F >::m = new F[ p.nR * p.nC ];
-				vMatrix< F >::nR = p.nR;
-				vMatrix< F >::nC = p.nC;
-				for ( auto i = 0; i < p.nR * p.nC; i++ ) vMatrix< F >::m[ i ] = p.m[ i ];
-				return *this;
+				return Substitution( p );
 			}
 			F&
 			operator()( size_t pR, size_t pC ) {
