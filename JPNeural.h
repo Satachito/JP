@@ -25,12 +25,12 @@ namespace JP {
 				virtual	~
 				vLayer() {
 				}
-				vLayer( size_t nN, size_t nI )
+				vLayer( size_t nI, size_t nN )
 				:	output( nN )
 				,	theta( Random< F >, nN )
-				,	weight( Random< F >, nN, nI )
+				,	weight( Random< F >, nI, nN )
 				,	deltaT( nN )
-				,	deltaW( nN, nI ) {
+				,	deltaW( nI, nN ) {
 				}
 				const void
 				Clear() {
@@ -46,7 +46,7 @@ namespace JP {
 				Activate( const vVector< F >& ) = 0;
 				virtual	const Vector< F >&
 				Forward( const vVector< F >& p ) {
-					return output = Activate( theta + Mul( weight, p ) );
+					return output = Activate( theta + Mul( p, weight ) );
 				}
 				virtual	const Vector< F >
 				Gradient( const vVector< F >& ) = 0;
@@ -54,14 +54,14 @@ namespace JP {
 				Backward( const vVector< F >& d, const vVector< F >& p ) {
 					auto w = d * Gradient( p );
 					deltaT += w;
-					deltaW += MulVH( w, p );
-					return Mul( w, weight );
+					deltaW += MulVH( p, w );
+					return Mul( weight, w );
 				}
 			};
 			struct
 			SigmoidLayer: vLayer {
-				SigmoidLayer( size_t nN, size_t nI )
-				:	vLayer( nN, nI ) {
+				SigmoidLayer( size_t nI, size_t nN )
+				:	vLayer( nI, nN ) {
 				}
 				const Vector< F >
 				Activate( const vVector< F >& p ) {
@@ -76,8 +76,8 @@ namespace JP {
 			};
 			struct
 			SoftmaxLayer: vLayer {
-				SoftmaxLayer( size_t nN, size_t nI )
-				:	vLayer( nN, nI ) {
+				SoftmaxLayer( size_t nI, size_t nN )
+				:	vLayer( nI, nN ) {
 				}
 				const Vector< F >
 				Activate( const vVector< F >& p ) {
@@ -92,8 +92,8 @@ namespace JP {
 			};
 			struct
 			ReLULayer: vLayer {
-				ReLULayer( size_t nN, size_t nI )
-				:	vLayer( nN, nI ) {
+				ReLULayer( size_t nI, size_t nN )
+				:	vLayer( nI, nN ) {
 				}
 				const Vector< F >
 				Activate( const vVector< F >& p ) {
@@ -129,15 +129,15 @@ namespace JP {
 			}
 			void
 			NewSigmoidLayer( size_t p ) {
-				layers.emplace_back( new SigmoidLayer( p, layers.size() ? layers.back()->output.n : nInput ) );
+				layers.emplace_back( new SigmoidLayer( layers.size() ? layers.back()->output.n : nInput, p ) );
 			}
 			void
 			NewSoftmaxLayer( size_t p ) {
-				layers.emplace_back( new SoftmaxLayer( p, layers.size() ? layers.back()->output.n : nInput ) );
+				layers.emplace_back( new SoftmaxLayer( layers.size() ? layers.back()->output.n : nInput, p ) );
 			}
 			void
 			NewReLULayer( size_t p ) {
-				layers.emplace_back( new ReLULayer( p, layers.size() ? layers.back()->output.n : nInput ) );
+				layers.emplace_back( new ReLULayer( layers.size() ? layers.back()->output.n : nInput, p ) );
 			}
 			
 			const vVector< F >&
