@@ -36,50 +36,50 @@ namespace JP {
 
 	namespace Accelerate {
 
-		inline	void	Clear( float* p, vDSP_Stride sP, vDSP_Length pLength )																	{ vDSP_vclr			( p, sP, pLength ); }
-		inline	void	Clear( double* p, vDSP_Stride sP, vDSP_Length pLength )																	{ vDSP_vclrD		( p, sP, pLength ); }
-		inline	void	Ramp( float pInit, float pStep, float* p, vDSP_Stride sP, vDSP_Length pLength )											{ vDSP_vramp		( &pInit, &pStep, p, sP, pLength ); }
-		inline	void	Ramp( double pInit, double pStep, double* p, vDSP_Stride sP, vDSP_Length pLength )										{ vDSP_vrampD		( &pInit, &pStep, p, sP, pLength ); }
-		inline	void	Sum( const float* p, vDSP_Stride sP, float& v, vDSP_Length pLength )													{ vDSP_sve			( p, sP, &v, pLength ); }
-		inline	void	Sum( const double* p, vDSP_Stride sP, double& v, vDSP_Length pLength )													{ vDSP_sveD			( p, sP, &v, pLength ); }
-		inline	void	Mean( const float* p, vDSP_Stride sP, float& v, vDSP_Length pLength )													{ vDSP_meanv		( p, sP, &v, pLength ); }
-		inline	void	Mean( const double* p, vDSP_Stride sP, double& v, vDSP_Length pLength )													{ vDSP_meanvD		( p, sP, &v, pLength ); }
-		inline	void	Max( const float* p, vDSP_Stride sP, float& v, vDSP_Length pLength )													{ vDSP_maxv			( p, sP, &v, pLength ); }
-		inline	void	Max( const double* p, vDSP_Stride sP, double& v, vDSP_Length pLength )													{ vDSP_maxvD		( p, sP, &v, pLength ); }
-		inline	void	Min( const float* p, vDSP_Stride sP, float& v, vDSP_Length pLength )													{ vDSP_minv			( p, sP, &v, pLength ); }
-		inline	void	Min( const double* p, vDSP_Stride sP, double& v, vDSP_Length pLength )													{ vDSP_minvD		( p, sP, &v, pLength ); }
-		inline	void	L1Norm( const float* p, vDSP_Stride sP, float& v, vDSP_Length pLength )													{ vDSP_svemg		( p, sP, &v, pLength ); }
-		inline	void	L1Norm( const double* p, vDSP_Stride sP, double& v, vDSP_Length pLength )												{ vDSP_svemgD		( p, sP, &v, pLength ); }
-		inline	void	L2NormQ( const float* p, vDSP_Stride sP, float& v, vDSP_Length pLength )												{ vDSP_svesq		( p, sP, &v, pLength ); }
-		inline	void	L2NormQ( const double* p, vDSP_Stride sP, double& v, vDSP_Length pLength )												{ vDSP_svesqD		( p, sP, &v, pLength ); }
-		inline	void	DistanceQ( const float* l, vDSP_Stride sL, const float* r, vDSP_Stride sR, float& v, vDSP_Length pLength )				{ vDSP_distancesq	( l, sL, r, sR, &v, pLength ); }
-		inline	void	DistanceQ( const double* l, vDSP_Stride sL, const double* r, vDSP_Stride sR, double& v, vDSP_Length pLength )			{ vDSP_distancesqD	( l, sL, r, sR, &v, pLength ); }
-		inline	void	Neg( const float* p, vDSP_Stride sP, float* v, vDSP_Stride sV, vDSP_Length pLength )									{ vDSP_vneg			( p, sP, v, sV, pLength ); }
-		inline	void	Neg( const double* p, vDSP_Stride sP, double* v, vDSP_Stride sV, vDSP_Length pLength )									{ vDSP_vnegD		( p, sP, v, sV, pLength ); }
-		inline	void	Abs( const float* p, vDSP_Stride sP, float* v, vDSP_Stride sV, vDSP_Length pLength )									{ vDSP_vabs			( p, sP, v, sV, pLength ); }
-		inline	void	Abs( const double* p, vDSP_Stride sP, double* v, vDSP_Stride sV, vDSP_Length pLength )									{ vDSP_vabsD		( p, sP, v, sV, pLength ); }
-		inline	void	Rec( const float* p, float* v, int pLength )																			{ vvrecf			( v, p, &pLength ); }
-		inline	void	Rec( const double* p, double* v, int pLength )																			{ vvrec				( v, p, &pLength ); }
-		inline	void	Exp( const float* p, float* v, int pLength )																			{ vvexpf			( v, p, &pLength ); }
-		inline	void	Exp( const double* p, double* v, int pLength )																			{ vvexp				( v, p, &pLength ); }
-		inline	void	Add( const float* l, vDSP_Stride sL, const float* r, vDSP_Stride sR, float* v, vDSP_Stride sV, vDSP_Length pLength )	{ vDSP_vadd			( l, sL, r, sR, v, sV, pLength ); }
-		inline	void	Add( const double* l, vDSP_Stride sL, const double* r, vDSP_Stride sR, double* v, vDSP_Stride sV, vDSP_Length pLength )	{ vDSP_vaddD		( l, sL, r, sR, v, sV, pLength ); }
-		inline	void	Add( const float* l, vDSP_Stride sL, const float& r, float* v, vDSP_Stride sV, vDSP_Length pLength )					{ vDSP_vsadd		( l, sL, &r, v, sV, pLength ); }
-		inline	void	Add( const double* l, vDSP_Stride sL, const double& r, double* v, vDSP_Stride sV, vDSP_Length pLength )					{ vDSP_vsaddD		( l, sL, &r, v, sV, pLength ); }
-		inline	void	Sub( const float* l, vDSP_Stride sL, const float* r, vDSP_Stride sR, float* v, vDSP_Stride sV, vDSP_Length pLength )	{ vDSP_vsub			( r, sR, l, sL, v, sV, pLength ); }
-		inline	void	Sub( const double* l, vDSP_Stride sL, const double* r, vDSP_Stride sR, double* v, vDSP_Stride sV, vDSP_Length pLength )	{ vDSP_vsubD		( r, sR, l, sL, v, sV, pLength ); }
-		inline	void	Sub( const float* l, vDSP_Stride sL, const float& r, float* v, vDSP_Stride sV, vDSP_Length pLength )					{ auto w = -r;	vDSP_vsadd	( l, sL, &w, v, sV, pLength ); }
-		inline	void	Sub( const double* l, vDSP_Stride sL, const double& r, double* v, vDSP_Stride sV, vDSP_Length pLength )					{ auto w = -r;	vDSP_vsaddD	( l, sL, &w, v, sV, pLength ); }
-		inline	void	Mul( const float* l, vDSP_Stride sL, const float* r, vDSP_Stride sR, float* v, vDSP_Stride sV, vDSP_Length pLength )	{ vDSP_vmul			( l, sL, r, sR, v, sV, pLength ); }
-		inline	void	Mul( const double* l, vDSP_Stride sL, const double* r, vDSP_Stride sR, double* v, vDSP_Stride sV, vDSP_Length pLength )	{ vDSP_vmulD		( l, sL, r, sR, v, sV, pLength ); }
-		inline	void	Mul( const float* l, vDSP_Stride sL, const float& r, float* v, vDSP_Stride sV, vDSP_Length pLength )					{ vDSP_vsmul		( l, sL, &r, v, sV, pLength ); }
-		inline	void	Mul( const double* l, vDSP_Stride sL, const double& r, double* v, vDSP_Stride sV, vDSP_Length pLength )					{ vDSP_vsmulD		( l, sL, &r, v, sV, pLength ); }
-		inline	void	Div( const float* l, vDSP_Stride sL, const float* r, vDSP_Stride sR, float* v, vDSP_Stride sV, vDSP_Length pLength )	{ vDSP_vdiv			( r, sR, l, sL, v, sV, pLength ); }
-		inline	void	Div( const double* l, vDSP_Stride sL, const double* r, vDSP_Stride sR, double* v, vDSP_Stride sV, vDSP_Length pLength )	{ vDSP_vdivD		( r, sR, l, sL, v, sV, pLength ); }
-		inline	void	Div( const float* l, vDSP_Stride sL, const float& r, float* v, vDSP_Stride sV, vDSP_Length pLength )					{ vDSP_vsdiv		( l, sL, &r, v, sV, pLength ); }
-		inline	void	Div( const double* l, vDSP_Stride sL, const double& r, double* v, vDSP_Stride sV, vDSP_Length pLength )					{ vDSP_vsdivD		( l, sL, &r, v, sV, pLength ); }
-		inline	void	Dot( const float* l, vDSP_Stride sL, const float* r, vDSP_Stride sR, float& v, vDSP_Length pLength )					{ vDSP_dotpr		( r, sR, l, sL, &v, pLength ); }
-		inline	void	Dot( const double* l, vDSP_Stride sL, const double* r, vDSP_Stride sR, double& v, vDSP_Length pLength )					{ vDSP_dotprD		( r, sR, l, sL, &v, pLength ); }
+		inline	void	Clear		( float * p, vDSP_Stride sP, vDSP_Length pLength )																		{ vDSP_vclr			( p, sP, pLength ); }
+		inline	void	Clear		( double* p, vDSP_Stride sP, vDSP_Length pLength )																		{ vDSP_vclrD		( p, sP, pLength ); }
+		inline	void	Ramp		( float  pInit, float  pStep, float * p, vDSP_Stride sP, vDSP_Length pLength )											{ vDSP_vramp		( &pInit, &pStep, p, sP, pLength ); }
+		inline	void	Ramp		( double pInit, double pStep, double* p, vDSP_Stride sP, vDSP_Length pLength )											{ vDSP_vrampD		( &pInit, &pStep, p, sP, pLength ); }
+		inline	void	Sum			( const float * p, vDSP_Stride sP, float & v, vDSP_Length pLength )														{ vDSP_sve			( p, sP, &v, pLength ); }
+		inline	void	Sum			( const double* p, vDSP_Stride sP, double& v, vDSP_Length pLength )														{ vDSP_sveD			( p, sP, &v, pLength ); }
+		inline	void	Mean		( const float * p, vDSP_Stride sP, float & v, vDSP_Length pLength )														{ vDSP_meanv		( p, sP, &v, pLength ); }
+		inline	void	Mean		( const double* p, vDSP_Stride sP, double& v, vDSP_Length pLength )														{ vDSP_meanvD		( p, sP, &v, pLength ); }
+		inline	void	Max			( const float * p, vDSP_Stride sP, float & v, vDSP_Length pLength )														{ vDSP_maxv			( p, sP, &v, pLength ); }
+		inline	void	Max			( const double* p, vDSP_Stride sP, double& v, vDSP_Length pLength )														{ vDSP_maxvD		( p, sP, &v, pLength ); }
+		inline	void	Min			( const float * p, vDSP_Stride sP, float & v, vDSP_Length pLength )														{ vDSP_minv			( p, sP, &v, pLength ); }
+		inline	void	Min			( const double* p, vDSP_Stride sP, double& v, vDSP_Length pLength )														{ vDSP_minvD		( p, sP, &v, pLength ); }
+		inline	void	L1Norm		( const float * p, vDSP_Stride sP, float & v, vDSP_Length pLength )														{ vDSP_svemg		( p, sP, &v, pLength ); }
+		inline	void	L1Norm		( const double* p, vDSP_Stride sP, double& v, vDSP_Length pLength )														{ vDSP_svemgD		( p, sP, &v, pLength ); }
+		inline	void	L2NormQ		( const float * p, vDSP_Stride sP, float & v, vDSP_Length pLength )														{ vDSP_svesq		( p, sP, &v, pLength ); }
+		inline	void	L2NormQ		( const double* p, vDSP_Stride sP, double& v, vDSP_Length pLength )														{ vDSP_svesqD		( p, sP, &v, pLength ); }
+		inline	void	DistanceQ	( const float * l, vDSP_Stride sL, const float * r, vDSP_Stride sR, float & v, vDSP_Length pLength )					{ vDSP_distancesq	( l, sL, r, sR, &v, pLength ); }
+		inline	void	DistanceQ	( const double* l, vDSP_Stride sL, const double* r, vDSP_Stride sR, double& v, vDSP_Length pLength )					{ vDSP_distancesqD	( l, sL, r, sR, &v, pLength ); }
+		inline	void	Neg			( const float * p, vDSP_Stride sP, float * v, vDSP_Stride sV, vDSP_Length pLength )										{ vDSP_vneg			( p, sP, v, sV, pLength ); }
+		inline	void	Neg			( const double* p, vDSP_Stride sP, double* v, vDSP_Stride sV, vDSP_Length pLength )										{ vDSP_vnegD		( p, sP, v, sV, pLength ); }
+		inline	void	Abs			( const float * p, vDSP_Stride sP, float * v, vDSP_Stride sV, vDSP_Length pLength )										{ vDSP_vabs			( p, sP, v, sV, pLength ); }
+		inline	void	Abs			( const double* p, vDSP_Stride sP, double* v, vDSP_Stride sV, vDSP_Length pLength )										{ vDSP_vabsD		( p, sP, v, sV, pLength ); }
+		inline	void	Rec			( const float * p, float * v, int pLength )																				{ vvrecf			( v, p, &pLength ); }
+		inline	void	Rec			( const double* p, double* v, int pLength )																				{ vvrec				( v, p, &pLength ); }
+		inline	void	Exp			( const float * p, float * v, int pLength )																				{ vvexpf			( v, p, &pLength ); }
+		inline	void	Exp			( const double* p, double* v, int pLength )																				{ vvexp				( v, p, &pLength ); }
+		inline	void	Add			( const float * l, vDSP_Stride sL, const float * r, vDSP_Stride sR, float * v, vDSP_Stride sV, vDSP_Length pLength )	{ vDSP_vadd			( l, sL, r, sR, v, sV, pLength ); }
+		inline	void	Add			( const double* l, vDSP_Stride sL, const double* r, vDSP_Stride sR, double* v, vDSP_Stride sV, vDSP_Length pLength )	{ vDSP_vaddD		( l, sL, r, sR, v, sV, pLength ); }
+		inline	void	Add			( const float * l, vDSP_Stride sL, const float & r, float * v, vDSP_Stride sV, vDSP_Length pLength )					{ vDSP_vsadd		( l, sL, &r, v, sV, pLength ); }
+		inline	void	Add			( const double* l, vDSP_Stride sL, const double& r, double* v, vDSP_Stride sV, vDSP_Length pLength )					{ vDSP_vsaddD		( l, sL, &r, v, sV, pLength ); }
+		inline	void	Sub			( const float * l, vDSP_Stride sL, const float * r, vDSP_Stride sR, float * v, vDSP_Stride sV, vDSP_Length pLength )	{ vDSP_vsub			( r, sR, l, sL, v, sV, pLength ); }
+		inline	void	Sub			( const double* l, vDSP_Stride sL, const double* r, vDSP_Stride sR, double* v, vDSP_Stride sV, vDSP_Length pLength )	{ vDSP_vsubD		( r, sR, l, sL, v, sV, pLength ); }
+		inline	void	Sub			( const float * l, vDSP_Stride sL, const float & r, float * v, vDSP_Stride sV, vDSP_Length pLength )					{ auto w = -r;		vDSP_vsadd	( l, sL, &w, v, sV, pLength ); }
+		inline	void	Sub			( const double* l, vDSP_Stride sL, const double& r, double* v, vDSP_Stride sV, vDSP_Length pLength )					{ auto w = -r;		vDSP_vsaddD	( l, sL, &w, v, sV, pLength ); }
+		inline	void	Mul			( const float * l, vDSP_Stride sL, const float * r, vDSP_Stride sR, float * v, vDSP_Stride sV, vDSP_Length pLength )	{ vDSP_vmul			( l, sL, r, sR, v, sV, pLength ); }
+		inline	void	Mul			( const double* l, vDSP_Stride sL, const double* r, vDSP_Stride sR, double* v, vDSP_Stride sV, vDSP_Length pLength )	{ vDSP_vmulD		( l, sL, r, sR, v, sV, pLength ); }
+		inline	void	Mul			( const float * l, vDSP_Stride sL, const float & r, float * v, vDSP_Stride sV, vDSP_Length pLength )					{ vDSP_vsmul		( l, sL, &r, v, sV, pLength ); }
+		inline	void	Mul			( const double* l, vDSP_Stride sL, const double& r, double* v, vDSP_Stride sV, vDSP_Length pLength )					{ vDSP_vsmulD		( l, sL, &r, v, sV, pLength ); }
+		inline	void	Div			( const float * l, vDSP_Stride sL, const float * r, vDSP_Stride sR, float * v, vDSP_Stride sV, vDSP_Length pLength )	{ vDSP_vdiv			( r, sR, l, sL, v, sV, pLength ); }
+		inline	void	Div			( const double* l, vDSP_Stride sL, const double* r, vDSP_Stride sR, double* v, vDSP_Stride sV, vDSP_Length pLength )	{ vDSP_vdivD		( r, sR, l, sL, v, sV, pLength ); }
+		inline	void	Div			( const float * l, vDSP_Stride sL, const float & r, float * v, vDSP_Stride sV, vDSP_Length pLength )					{ vDSP_vsdiv		( l, sL, &r, v, sV, pLength ); }
+		inline	void	Div			( const double* l, vDSP_Stride sL, const double& r, double* v, vDSP_Stride sV, vDSP_Length pLength )					{ vDSP_vsdivD		( l, sL, &r, v, sV, pLength ); }
+		inline	void	Dot			( const float * l, vDSP_Stride sL, const float * r, vDSP_Stride sR, float & v, vDSP_Length pLength )					{ vDSP_dotpr		( r, sR, l, sL, &v, pLength ); }
+		inline	void	Dot			( const double* l, vDSP_Stride sL, const double* r, vDSP_Stride sR, double& v, vDSP_Length pLength )					{ vDSP_dotprD		( r, sR, l, sL, &v, pLength ); }
 
 		template	< typename F >	struct
 		Vector 	: vVector< F > {
@@ -110,8 +110,8 @@ namespace JP {
 			:	vVector< F >( new F[ p.n * p.s ], p.n, p.s ) {
 				for ( auto i = 0; i < p.n * p.s; i += p.s ) vVector< F >::m[ i ] = p.m[ i ];
 			}
-			const Vector< F >&
-			Substitution( const vVector< F >& p ) {
+			
+			const Vector< F >&							Substitution( const vVector< F >& p ) {
 				if ( vVector< F >::n != p.n || vVector< F >::s != p.s ) {
 					delete[] vVector< F >::m;
 					vVector< F >::n = p.n;
@@ -121,59 +121,47 @@ namespace JP {
 				for ( auto i = 0; i < p.n * p.s; i += p.s ) vVector< F >::m[ i ] = p.m[ i ];
 				return *this;
 			}
-			const Vector< F >&
-			operator =( const Vector< F >& p ) {
+			const Vector< F >&							operator =( const Vector< F >& p ) {
 				return Substitution( p );
 			}
-			const Vector< F >&
-			operator =( const vVector< F >& p ) {
+			const Vector< F >&							operator =( const vVector< F >& p ) {
 				return Substitution( p );
 			}
-			F&
-			operator []( size_t p ) {
+			F&											operator []( size_t p ) {
 				return vVector< F >::m[ p * vVector< F >::s ];
 			}
-			void
-			Clear() {
+			void										Clear() {
 				Accelerate::Clear( vVector< F >::m, vVector< F >::s, vVector< F >::n );
 			}
-			const Vector< F >&
-			operator +=( const vVector< F >& p ) {
+			const Vector< F >&							operator +=( const vVector< F >& p ) {
 				Add( vVector< F >::m, vVector< F >::s, p.m, p.s, vVector< F >::m, vVector< F >::s, vVector< F >::n );
 				return *this;;
 			}
-			const Vector< F >&
-			operator -=( const vVector< F >& p ) {
+			const Vector< F >&							operator -=( const vVector< F >& p ) {
 				Sub( vVector< F >::m, vVector< F >::s, p.m, p.s, vVector< F >::m, vVector< F >::s, vVector< F >::n );
 				return *this;;
 			}
-			const Vector< F >&
-			operator *=( const vVector< F >& p ) {
+			const Vector< F >&							operator *=( const vVector< F >& p ) {
 				Mul( vVector< F >::m, vVector< F >::s, p.m, p.s, vVector< F >::m, vVector< F >::s, vVector< F >::n );
 				return *this;;
 			}
-			const Vector< F >&
-			operator /=( const vVector< F >& p ) {
+			const Vector< F >&							operator /=( const vVector< F >& p ) {
 				Div( vVector< F >::m, vVector< F >::s, p.m, p.s, vVector< F >::m, vVector< F >::s, vVector< F >::n );
 				return *this;;
 			}
-			const Vector< F >&
-			operator +=( F p ) {
+			const Vector< F >&							operator +=( F p ) {
 				Add( vVector< F >::m, vVector< F >::s, p, vVector< F >::m, vVector< F >::s, vVector< F >::n );
 				return *this;;
 			}
-			const Vector< F >&
-			operator -=( F p ) {
+			const Vector< F >&							operator -=( F p ) {
 				Sub( vVector< F >::m, vVector< F >::s, p, vVector< F >::m, vVector< F >::s, vVector< F >::n );
 				return *this;;
 			}
-			const Vector< F >&
-			operator *=( F p ) {
+			const Vector< F >&							operator *=( F p ) {
 				Mul( vVector< F >::m, vVector< F >::s, p, vVector< F >::m, vVector< F >::s, vVector< F >::n );
 				return *this;;
 			}
-			const Vector< F >&
-			operator /=( F p ) {
+			const Vector< F >&							operator /=( F p ) {
 				Div( vVector< F >::m, vVector< F >::s, p, vVector< F >::m, vVector< F >::s, vVector< F >::n );
 				return *this;;
 			}
@@ -342,52 +330,52 @@ namespace JP {
 			return v;
 		}
 
-		template	< typename F >	Vector< F >			operator *( const vVector< F >& l, const vVector< F >& r ) {
+		template	< typename F >	Vector< F >			operator *	( const vVector< F >& l, const vVector< F >& r ) {
 			assert( l.n == r.n );
 			Vector< F > v( l.n );
 			Mul( l.m, l.s, r.m, r.s, v.m, v.s, v.n );
 			return v;
 		}
-		template	< typename F >	Vector< F >			operator *( const vVector< F >& p, F scalar ) {
+		template	< typename F >	Vector< F >			operator *	( const vVector< F >& p, F scalar ) {
 			Vector< F > v( scalar, p.n );
 			Mul( p.m, p.s, v.m, v.s, v.m, v.s, v.n );
 			return v;
 		}
-		template	< typename F >	Vector< F >			operator *( F scalar, const vVector< F >& p ) {
+		template	< typename F >	Vector< F >			operator *	( F scalar, const vVector< F >& p ) {
 			Vector< F > v( scalar, p.n );
 			Mul( v.m, v.s, p.m, p.s, v.m, v.s, v.n );
 			return v;
 		}
 
-		template	< typename F >	std::vector< F >	operator /( const std::vector< F >& l, const std::vector< F >& r ) {
+		template	< typename F >	std::vector< F >	operator /	( const std::vector< F >& l, const std::vector< F >& r ) {
 			assert( l.size() == r.size() );
 			std::vector< F > v( l.size() );
 			Div( &l[ 0 ], 1, &r[ 0 ], 1, &v[ 0 ], 1, v.size() );
 			return v;
 		}
-		template	< typename F >	std::vector< F >	operator /( const std::vector< F >& p, F scalar ) {
+		template	< typename F >	std::vector< F >	operator /	( const std::vector< F >& p, F scalar ) {
 			std::vector< F > v( p.size(), scalar );
 			Div( &p[ 0 ], 1, &v[ 0 ], 1, &v[ 0 ], 1, v.size() );
 			return v;
 		}
-		template	< typename F >	std::vector< F >	operator /( F scalar, const std::vector< F >& p ) {
+		template	< typename F >	std::vector< F >	operator /	( F scalar, const std::vector< F >& p ) {
 			std::vector< F > v( p.size(), scalar );
 			Div( &v[ 0 ], 1, &p[ 0 ], 1, &v[ 0 ], 1, v.size() );
 			return v;
 		}
 
-		template	< typename F >	Vector< F >			operator /( const vVector< F >& l, const vVector< F >& r ) {
+		template	< typename F >	Vector< F >			operator /	( const vVector< F >& l, const vVector< F >& r ) {
 			assert( l.n == r.n );
 			Vector< F > v( l.n );
 			Div( l.m, l.s, r.m, r.s, v.m, v.s, v.n );
 			return v;
 		}
-		template	< typename F >	Vector< F >			operator /( const vVector< F >& p, F scalar ) {
+		template	< typename F >	Vector< F >			operator /	( const vVector< F >& p, F scalar ) {
 			Vector< F > v( scalar, p.n );
 			Div( p.m, p.s, v.m, v.s, v.m, v.s, v.n );
 			return v;
 		}
-		template	< typename F >	Vector< F >			operator /( F scalar, const vVector< F >& p ) {
+		template	< typename F >	Vector< F >			operator /	( F scalar, const vVector< F >& p ) {
 			Vector< F > v( scalar, p.n );
 			Div( v.m, v.s, p.m, p.s, v.m, v.s, v.n );
 			return v;
@@ -395,7 +383,7 @@ namespace JP {
 
 		//	( Vector, Vector ) -> Scalar
 
-		template	< typename F >	F					Dot( const std::vector< F >& l, const std::vector< F >& r ){
+		template	< typename F >	F					Dot( const std::vector< F >& l, const std::vector< F >& r ) {
 			assert( l.size() == r.size() );
 			F	v = 0;
 			Dot( &l[ 0 ], 1, &r[ 0 ], 1, v, l.size() );

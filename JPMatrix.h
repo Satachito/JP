@@ -92,18 +92,18 @@ namespace JP {
 			operator()( size_t pR, size_t pC ) {
 				return vMatrix< F >::m[ pR * vMatrix< F >::nC + pC ];
 			}
-			inline	void	AddS( const float* l, vDSP_Stride sL, const float& r, float* v, vDSP_Stride sV, vDSP_Length pLength )		{ vDSP_vsadd		( l, sL, &r, v, sV, pLength ); }
-			inline	void	AddS( const double* l, vDSP_Stride sL, const double& r, double* v, vDSP_Stride sV, vDSP_Length pLength )	{ vDSP_vsaddD		( l, sL, &r, v, sV, pLength ); }
+			inline	void	AddScalar( const float * l, vDSP_Stride sL, const float & r, float * v, vDSP_Stride sV, vDSP_Length pLength )	{ vDSP_vsadd		( l, sL, &r, v, sV, pLength ); }
+			inline	void	AddScalar( const double* l, vDSP_Stride sL, const double& r, double* v, vDSP_Stride sV, vDSP_Length pLength )	{ vDSP_vsaddD		( l, sL, &r, v, sV, pLength ); }
 			void
-			SetR( size_t pR, const vVector< F >& p ) {
+			SetRow( size_t pR, const vVector< F >& p ) {
 				assert( vMatrix< F >::nC == p.n );
 //				for ( auto i = 0; i < p.n; i++ ) vMatrix< F >::m[ pR * vMatrix< F >::nC + i ] = p[ i ];
-				AddS( p.m, p.s, 0, &vMatrix< F >::m[ pR * vMatrix< F >::nC ], 1, vMatrix< F >::nC );
+				AddScalar( p.m, p.s, 0, &vMatrix< F >::m[ pR * vMatrix< F >::nC ], 1, vMatrix< F >::nC );
 			}
 			void
-			SetC( size_t pC, const vVector< F >& p ) {
+			SetCol( size_t pC, const vVector< F >& p ) {
 				assert( vMatrix< F >::nR == p.n );
-				AddS( p.m, p.s, 0, &vMatrix< F >::m[ pC ], vMatrix< F >::nC, vMatrix< F >::nR );
+				AddScalar( p.m, p.s, 0, &vMatrix< F >::m[ pC ], vMatrix< F >::nC, vMatrix< F >::nR );
 			}
 			const Matrix< F >&
 			operator +=( const vMatrix< F >& p ) {
@@ -141,7 +141,14 @@ namespace JP {
 			for ( auto i = 0; i < p; i++ ) v( i, i ) = 1;
 			return v;
 		}
-	
+
+		template	< typename F >	Matrix< F >
+		Transpose( const Matrix< F >& p ) {
+			Matrix< F > v( p.nC, p.nR );
+			vDSP_mtransD( p.m, 1, v.m, 1, v.nR, v.nC );
+			return v;
+		}
+
 		inline	void
 		VMA( const float* l, vDSP_Stride sL, const float* p, vDSP_Stride sP, const float* r, vDSP_Stride sR, float* v, vDSP_Stride sV, vDSP_Length pLength ) {
 			vDSP_vma( l, sL, p, sP, r, sR, v, sV, pLength );
@@ -150,8 +157,34 @@ namespace JP {
 		VMA( const double* l, vDSP_Stride sL, const double* p, vDSP_Stride sP, const double* r, vDSP_Stride sR, double* v, vDSP_Stride sV, vDSP_Length pLength ) {
 			vDSP_vmaD( l, sL, p, sP, r, sR, v, sV, pLength );
 		}
+		template	< typename F >	Matrix< F >
+		Mul( const vMatrix< F >& l, const vMatrix< F >& r ) {
+			assert( l.nC == r.nR );
+			Matrix< F >	v( l.nR, r.nC );
+			for ( auto iR = 0; iR < l.nR; iR++ ) {
+				for ( auto iC = 0; iC < r.nC; iC++ ) {
+					v( iR, iC ) = Dot( l.Row( iR ), r.Col( iC ) );
+				}
+	//			VMA( l.m + l.nC * iR, 1, r.m, 1, v.m, 1, v.m, 1, v.n );
+			}
+			return v;
+		}
+		template	< typename F >	Matrix< F >
+		MulAdd( const vMatrix< F >& l, const vMatrix< F >& r, vVector< F >& p ) {
+			assert( l.nC == r.nR );
+			assert( r.nC == p.n );
+			Matrix< F >	v( l.nR, r.nC );
+			for ( auto iR = 0; iR < l.nR; iR++ ) {
+				for ( auto iC = 0; iC < r.nC; iC++ ) {
+					v( iR, iC ) = Dot( l.Row( iR ), r.Col( iC ) );
+				}
+	//			VMA( l.m + l.nC * iR, 1, r.m, 1, v.m, 1, v.m, 1, v.n );
+				Add( v.m + iR * v.nC, 1, p.m, 1, v.m + iR * v.nC, 1, v.nC );
+			}
+			return v;
+		}
 		template	< typename F >	Vector< F >
-		Mul( const vMatrix< F >& l, const vVector< F >& r ) {	//	treat l as vertical
+		Mul( const vMatrix< F >& l, const vVector< F >& r ) {	//	treat vector as vertical
 			assert( l.nC == r.n );
 			Vector< F >	v( l.nR );
 			for ( auto iR = 0; iR < l.nR; iR++ ) {
@@ -163,7 +196,7 @@ namespace JP {
 			return v;
 		}
 		template	< typename F >	Vector< F >
-		Mul( const vVector< F >& l, const vMatrix< F >& r ) {	//	treat l as horizontal
+		Mul( const vVector< F >& l, const vMatrix< F >& r ) {	//	treat vector as horizontal
 			assert( l.n == r.nR );
 			Vector< F >	v( r.nC );
 			for ( auto iR = 0; iR < r.nR; iR++ ) {
@@ -215,13 +248,13 @@ namespace JP {
 		}
 		template	< typename F >	Matrix< F >
 		operator +( const vMatrix< F >& l, F r ) {
-			Matrix< F >	v( l.nR, l.nC, r );
+			Matrix< F >	v( r, l.nR, l.nC );
 			Add( l.m, 1, v.m, 1, v.m, 1, v.nR * v.nC );
 			return v;
 		}
 		template	< typename F >	Matrix< F >
 		operator +( F l, const vMatrix< F >& r ) {
-			Matrix< F >	v( r.nR, r.nC, l );
+			Matrix< F >	v( l, r.nR, r.nC );
 			Add( v.m, 1, r.m, 1, v.m, 1, v.nR * v.nC );
 			return v;
 		}
@@ -235,13 +268,13 @@ namespace JP {
 		}
 		template	< typename F >	Matrix< F >
 		operator -( const vMatrix< F >& l, F r ) {
-			Matrix< F >	v( l.nR, l.nC, r );
+			Matrix< F >	v( r, l.nR, l.nC );
 			Sub( l.m, 1, v.m, 1, v.m, 1, v.nR * v.nC );
 			return v;
 		}
 		template	< typename F >	Matrix< F >
 		operator -( F l, const vMatrix< F >& r ) {
-			Matrix< F >	v( r.nR, r.nC, l );
+			Matrix< F >	v( l, r.nR, r.nC );
 			Sub( v.m, 1, r.m, 1, v.m, 1, v.nR * v.nC );
 			return v;
 		}
@@ -255,15 +288,43 @@ namespace JP {
 		}
 		template	< typename F >	Matrix< F >
 		operator *( F l, const vMatrix< F >& r ) {
-			Matrix< F >	v( r.nR, r.nC, l );
+			Matrix< F >	v( l, r.nR, r.nC );
 			Mul( v.m, 1, r.m, 1, v.m, 1, v.nR * v.nC );
 			return v;
 		}
 		template	< typename F >	Matrix< F >
 		operator *( const vMatrix< F >& l, F r ) {
-			Matrix< F >	v( l.nR, l.nC, r );
+			Matrix< F >	v( r, l.nR, l.nC );
 			Mul( l.m, 1, v.m, 1, v.m, 1, v.nR * v.nC );
 			return v;
 		}
+
+		template	< typename F >	Matrix< F >
+		operator /( const vMatrix< F >& l, const vMatrix< F >& r ) {
+			assert( l.nR == r.nR && l.nC == r.nC );
+			Matrix< F >	v( l.nR, l.nC );
+			Div( l.m, 1, r.m, 1, v.m, 1, v.nR * v.nC );
+			return v;
+		}
+		template	< typename F >	Matrix< F >
+		operator /( F l, const vMatrix< F >& r ) {
+			Matrix< F >	v( l, r.nR, r.nC );
+			Div( v.m, 1, r.m, 1, v.m, 1, v.nR * v.nC );
+			return v;
+		}
+		template	< typename F >	Matrix< F >
+		operator /( const vMatrix< F >& l, F r ) {
+			Matrix< F >	v( r, l.nR, l.nC );
+			Div( l.m, 1, v.m, 1, v.m, 1, v.nR * v.nC );
+			return v;
+		}
+
+		template	< typename F >	Matrix< F >
+		Exp( const vMatrix< F >& p ) {
+			vMatrix< F > v( p );
+			Exp( p.m, v.m, (int)( v.nR * v.nC ) );
+			return v;
+		}
+
 	}
 }
