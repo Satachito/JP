@@ -110,8 +110,10 @@ namespace JP {
 				}
 				const Matrix< F >
 				Activate( const vMatrix< F >& p ) {
-					Vector< F >	v( p.n );
-					for ( auto i = 0; i < v.n; i++ ) v[ i ] = p[ i ] < 0 ? 0 : p[ i ];
+					Matrix< F >	v( p.nR, p.nC );
+					for ( auto iR = 0; iR < v.nR; iR++ ) {
+						for ( auto iC = 0; iC < v.nC; iC++ ) v( iR, iC ) = p( iR, iC ) == 0 ? 0 : p( iR, iC );
+					}
 					return v;
 				}
 				const Matrix< F >
@@ -119,8 +121,10 @@ namespace JP {
 //					auto v = vLayer::theta + Mul( vLayer::weight, p );
 //					for ( auto i = 0; i < v.n; i++ ) v[ i ] = v[ i ] < 0 ? 0 : 1;
 //					return v;
-					Vector< F >	v( vLayer::output.n );
-					for ( auto i = 0; i < v.n; i++ ) v[ i ] = vLayer::output[ i ] == 0 ? 0 : 1;
+					Matrix< F >	v( p.nR, p.nC );
+					for ( auto iR = 0; iR < v.nR; iR++ ) {
+						for ( auto iC = 0; iC < v.nC; iC++ ) v( iR, iC ) = vLayer::output( iR, iC ) == 0 ? 0 : 1;
+					}
 					return v;
 				}
 			};
