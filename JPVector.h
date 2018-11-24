@@ -80,6 +80,8 @@ namespace JP {
 		inline	void	Div			( const double* l, vDSP_Stride sL, const double& r, double* v, vDSP_Stride sV, vDSP_Length pLength )					{ vDSP_vsdivD		( l, sL, &r, v, sV, pLength ); }
 		inline	void	Dot			( const float * l, vDSP_Stride sL, const float * r, vDSP_Stride sR, float & v, vDSP_Length pLength )					{ vDSP_dotpr		( r, sR, l, sL, &v, pLength ); }
 		inline	void	Dot			( const double* l, vDSP_Stride sL, const double* r, vDSP_Stride sR, double& v, vDSP_Length pLength )					{ vDSP_dotprD		( r, sR, l, sL, &v, pLength ); }
+		inline	void	Trans		( const float * p, vDSP_Stride sP, float * v, vDSP_Stride sV, vDSP_Length nR, vDSP_Length nC )							{ vDSP_mtrans		( p, sP, v, sV, nR, nC ); }
+		inline	void	Trans		( const double* p, vDSP_Stride sP, double* v, vDSP_Stride sV, vDSP_Length nR, vDSP_Length nC )							{ vDSP_mtransD		( p, sP, v, sV, nR, nC ); }
 
 		template	< typename F >	struct
 		Vector 	: vVector< F > {

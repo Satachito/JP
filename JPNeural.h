@@ -46,7 +46,11 @@ namespace JP {
 				Activate( const vMatrix< F >& ) = 0;
 				virtual	const Matrix< F >&
 				Forward( const vMatrix< F >& p ) {
-					return output = Activate( MulAdd( p, weight, theta ) );
+					output = Activate( MulAdd( p, weight, theta ) );
+//					std::cerr << weight.Row( 0 ) << std::endl;
+//					std::cerr << theta << std::endl;
+//					std::cerr << output << std::endl;
+					return output;
 				}
 				virtual	const Matrix< F >
 				Gradient( const vMatrix< F >& ) = 0;

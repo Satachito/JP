@@ -145,7 +145,7 @@ namespace JP {
 		template	< typename F >	Matrix< F >
 		Transpose( const vMatrix< F >& p ) {
 			Matrix< F > v( p.nC, p.nR );
-			vDSP_mtransD( p.m, 1, v.m, 1, v.nR, v.nC );
+			Trans( p.m, 1, v.m, 1, v.nR, v.nC );
 			return v;
 		}
 
