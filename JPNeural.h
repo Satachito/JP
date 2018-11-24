@@ -154,13 +154,6 @@ namespace JP {
 				layers.emplace_back( new ReLULayer( layers.size() ? layers.back()->theta.n : nInput, p ) );
 			}
 			
-//			const vVector< F >&
-//			Predict( const vVector< F >& p ) const {
-//				const vVector< F >*	v = &p;
-//				for ( auto w: layers ) v = &w->Forward( *v );
-//				return *v;
-//			}
-//
 			const vMatrix< F >&
 			Predict( const vMatrix< F >& p ) const {
 				const vMatrix< F >*	v = &p;
@@ -184,53 +177,6 @@ namespace JP {
 					D = (*w)->Backward( D, wPrev == layers.rend() ? X : (*wPrev)->output );
 				}
 				Update();
-			}
-			
-			void
-			TrainPartialBatch(
-				const vMatrix< F >&	Xs
-			,	const vMatrix< F >&	As
-			,	F					η									//	Learning rate
-			,	size_t				nSample
-			) {
-				assert( Xs.nR == As.nR );
-				Matrix< F >	SubXs( nSample, Xs.nC );
-				Matrix< F >	SubAs( nSample, As.nC );
-				for ( auto i = 0; i < nSample; i++ ) {
-					auto wIndex = UniformRandomInt< size_t >( 0, Xs.nR );
-					SubXs.SetRow( i, Xs.Row( wIndex ) );
-					SubAs.SetRow( i, As.Row( wIndex ) );
-				}
-				Train( SubXs, SubAs, η );
-			}
-			
-			const Matrix< F >
-			RowMatrix( const vMatrix< F >& p, size_t i ) {
-				return Matrix< F >( p.Row( i ).m, 1, p.nC );
-			}
-			void
-			TrainEachPartial(
-				const vMatrix< F >&	Xs
-			,	const vMatrix< F >&	As
-			,	F					η									//	Learning rate
-			,	size_t				nSample
-			) {
-				assert( Xs.nR == As.nR );
-				for ( auto i = 0; i < nSample; i++ ) {
-					auto wIndex = UniformRandomInt< size_t >( 0, Xs.nR );
-					Train( RowMatrix( Xs, wIndex ), RowMatrix( As, wIndex ), η );
-				}
-			}
-			void
-			TrainEach(
-				const vMatrix< F >&	Xs
-			,	const vMatrix< F >&	As
-			,	F					η									//	Learning rate
-			) {
-				assert( Xs.nR == As.nR );
-				for ( auto i = 0; i < Xs.nR; i++ ) {
-					Train( RowMatrix( Xs, i ), RowMatrix( As, i ), η );
-				}
 			}
 			bool
 			Eval(
