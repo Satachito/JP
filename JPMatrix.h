@@ -76,8 +76,8 @@ namespace JP {
 					vMatrix< F >::m = new F[ p.nR * p.nC ];
 					vMatrix< F >::nR = p.nR;
 					vMatrix< F >::nC = p.nC;
-					for ( auto i = 0; i < p.nR * p.nC; i++ ) vMatrix< F >::m[ i ] = p.m[ i ];
 				}
+				for ( auto i = 0; i < p.nR * p.nC; i++ ) vMatrix< F >::m[ i ] = p.m[ i ];
 				return *this;
 			}
 			const Matrix< F >&

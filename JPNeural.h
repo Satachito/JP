@@ -17,7 +17,7 @@ namespace JP {
 
 			struct
 			vLayer {
-				Vector< F >	output;
+				Matrix< F >	output;
 				Vector< F >	theta;
 				Matrix< F >	weight;
 				Vector< F >	deltaT;
@@ -26,7 +26,7 @@ namespace JP {
 				vLayer() {
 				}
 				vLayer( size_t nI, size_t nN )
-				:	output( nN )
+				:	output( 0, 0 )
 				,	theta( Random< F >, nN )
 				,	weight( Random< F >, nI, nN )
 				,	deltaT( nN )
@@ -42,20 +42,23 @@ namespace JP {
 					theta += deltaT;
 					weight += deltaW;
 				}
-				virtual	const Vector< F >
-				Activate( const vVector< F >& ) = 0;
-				virtual	const Vector< F >&
-				Forward( const vVector< F >& p ) {
-					return output = Activate( theta + Mul( p, weight ) );
+				virtual	const Matrix< F >
+				Activate( const vMatrix< F >& ) = 0;
+				virtual	const Matrix< F >&
+				Forward( const vMatrix< F >& p ) {
+					return output = Activate( MulAdd( p, weight, theta ) );
 				}
-				virtual	const Vector< F >
-				Gradient( const vVector< F >& ) = 0;
-				virtual	const Vector< F >
-				Backward( const vVector< F >& d, const vVector< F >& p ) {
+				virtual	const Matrix< F >
+				Gradient( const vMatrix< F >& ) = 0;
+				virtual	const Matrix< F >
+				Backward( const vMatrix< F >& d, const vMatrix< F >& p ) {
 					auto w = d * Gradient( p );
-					deltaT += w;
-					deltaW += MulVH( p, w );
-					return Mul( weight, w );
+					for ( auto iR = 0; iR < d.nR; iR++ ) {
+						auto wRow = w.Row( iR );
+						deltaT += wRow;
+						deltaW += MulVH( p.Row( iR ), wRow );
+					}
+					return Transpose( Mul( weight, Transpose( w ) ) );
 				}
 			};
 			struct
@@ -63,14 +66,19 @@ namespace JP {
 				SigmoidLayer( size_t nI, size_t nN )
 				:	vLayer( nI, nN ) {
 				}
-				const Vector< F >
-				Activate( const vVector< F >& p ) {
-					auto w = Exp( p );
-					return w / ( F( 1 ) + w );
+				const Matrix< F >
+				Activate( const vMatrix< F >& p ) {
+					Matrix< F >	v( p.nR, p.nC );
+					for ( auto iR = 0; iR < v.nR; iR++ ) {
+						auto wRow = p.Row( iR );
+						auto w = Exp( wRow );
+						v.SetRow( iR, w / ( F( 1 ) + w ) );
+					}
+					return v;
 			//		return Rec( Exp( - p ) + F( 1 ) );
 				}
-				const Vector< F >
-				Gradient( const vVector< F >& p ) {
+				const Matrix< F >
+				Gradient( const vMatrix< F >& p ) {
 					return vLayer::output * ( F( 1 ) - vLayer::output );
 				}
 			};
@@ -79,14 +87,19 @@ namespace JP {
 				SoftmaxLayer( size_t nI, size_t nN )
 				:	vLayer( nI, nN ) {
 				}
-				const Vector< F >
-				Activate( const vVector< F >& p ) {
-					auto v = Exp( p - Max( p ) );
-					v /= Sum( v );
+				const Matrix< F >
+				Activate( const vMatrix< F >& p ) {
+					Matrix< F >	v( p.nR, p.nC );
+					for ( auto iR = 0; iR < v.nR; iR++ ) {
+						auto wRow = p.Row( iR );
+						auto w = Exp( wRow - Max( wRow ) );
+						w /= Sum( w );
+						v.SetRow( iR, w );
+					}
 					return v;
 				}
-				const Vector< F >
-				Gradient( const vVector< F >& p ) {
+				const Matrix< F >
+				Gradient( const vMatrix< F >& p ) {
 					return vLayer::output * ( F( 1 ) - vLayer::output );
 				}
 			};
@@ -95,14 +108,14 @@ namespace JP {
 				ReLULayer( size_t nI, size_t nN )
 				:	vLayer( nI, nN ) {
 				}
-				const Vector< F >
-				Activate( const vVector< F >& p ) {
+				const Matrix< F >
+				Activate( const vMatrix< F >& p ) {
 					Vector< F >	v( p.n );
 					for ( auto i = 0; i < v.n; i++ ) v[ i ] = p[ i ] < 0 ? 0 : p[ i ];
 					return v;
 				}
-				const Vector< F >
-				Gradient( const vVector< F >& p ) {
+				const Matrix< F >
+				Gradient( const vMatrix< F >& p ) {
 //					auto v = vLayer::theta + Mul( vLayer::weight, p );
 //					for ( auto i = 0; i < v.n; i++ ) v[ i ] = v[ i ] < 0 ? 0 : 1;
 //					return v;
@@ -113,6 +126,7 @@ namespace JP {
 			};
 			std::vector< vLayer* >	layers;
 			size_t					nInput;
+			size_t					nBatch;
 			~
 			Network() {
 				for ( auto w: layers ) delete w;
@@ -129,135 +143,41 @@ namespace JP {
 			}
 			void
 			NewSigmoidLayer( size_t p ) {
-				layers.emplace_back( new SigmoidLayer( layers.size() ? layers.back()->output.n : nInput, p ) );
+				layers.emplace_back( new SigmoidLayer( layers.size() ? layers.back()->theta.n : nInput, p ) );
 			}
 			void
 			NewSoftmaxLayer( size_t p ) {
-				layers.emplace_back( new SoftmaxLayer( layers.size() ? layers.back()->output.n : nInput, p ) );
+				layers.emplace_back( new SoftmaxLayer( layers.size() ? layers.back()->theta.n : nInput, p ) );
 			}
 			void
 			NewReLULayer( size_t p ) {
-				layers.emplace_back( new ReLULayer( layers.size() ? layers.back()->output.n : nInput, p ) );
+				layers.emplace_back( new ReLULayer( layers.size() ? layers.back()->theta.n : nInput, p ) );
 			}
 			
-			const vVector< F >&
-			Predict( const vVector< F >& p ) const {
-				const vVector< F >*	v = &p;
+			const vMatrix< F >&
+			Predict( const vMatrix< F >& p ) const {
+				const vMatrix< F >*	v = &p;
 				for ( auto w: layers ) v = &w->Forward( *v );
 				return *v;
 			}
 
-			const Matrix< F >
-			Predict( const vMatrix< F >& p ) const {
-				Matrix< F >	v( p.nR, layers.back()->output.n );
-				for ( auto iR = 0; iR < v.nR; iR++ ) {
-					auto w = p.Row( iR );
-					for ( auto wLayer: layers ) w = wLayer->Forward( w );
-					v.SetRow( iR, w );
-				}
-				return v;
-			}
-
 			void
-			TrainMain(
-				const vVector< F >&	X
-			,	const vVector< F >&	A
+			Train(
+				const vMatrix< F >&	X
+			,	const vMatrix< F >&	A
 			,	F					η									//	Learning rate
 			) {
-				auto	V = X;
-				for ( auto w: layers ) V = w->Forward( V );
 //static	int	sCounter = 0;
 //if ( sCounter % 100 == 0 ) std::cerr << "Train " << sCounter << ": " << ( A - V ) << std::endl;
 //sCounter++;
-				auto	D = η * ( A - V );
+				Clear();
+				auto	D = η * ( A - Predict( X ) );
 				for ( auto w = layers.rbegin(); w != layers.rend(); w++ ) {
 					auto wPrev = w + 1;
 					D = (*w)->Backward( D, wPrev == layers.rend() ? X : (*wPrev)->output );
 				}
-			}
-			
-			void
-			TrainPartialBatch(
-				const vMatrix< F >&	Xs
-			,	const vMatrix< F >&	As
-			,	F					η									//	Learning rate
-			,	size_t				nSample
-			) {
-				assert( Xs.nR == As.nR );
-				Clear();
-				for ( auto i = 0; i < nSample; i++ ) {
-					auto wIndex = UniformRandomInt< size_t >( 0, Xs.nR );
-					TrainMain( Xs.Row( wIndex ), As.Row( wIndex ), η );
-				}
 				Update();
 			}
-			void
-			TrainBatch(
-				const vMatrix< F >&	Xs
-			,	const vMatrix< F >&	As
-			,	F					η									//	Learning rate
-			) {
-				assert( Xs.nR == As.nR );
-				Clear();
-				for ( auto i = 0; i < Xs.nR; i++ ) TrainMain( Xs.Row( i ), As.Row( i ), η );
-				Update();
-			}
-			void
-			TrainPartial(
-				const vMatrix< F >&	Xs
-			,	const vMatrix< F >&	As
-			,	F					η									//	Learning rate
-			,	size_t				nSample
-			) {
-				assert( Xs.nR == As.nR );
-				for ( auto i = 0; i < nSample; i++ ) {
-					auto wIndex = UniformRandomInt< size_t >( 0, Xs.nR );
-					Clear();
-					TrainMain( Xs.Row( wIndex ), As.Row( wIndex ), η );
-					Update();
-				}
-			}
-			void
-			Train(
-				const vMatrix< F >&	Xs
-			,	const vMatrix< F >&	As
-			,	F					η									//	Learning rate
-			) {
-				assert( Xs.nR == As.nR );
-				for ( auto i = 0; i < Xs.nR; i++ ) {
-					Clear();
-					TrainMain( Xs.Row( i ), As.Row( i ), η );
-					Update();
-				}
-			}
-
-			template < typename E >	void
-			ForAll(
-				const vMatrix< F >& Xs
-			,	E	p
-			) const {
-				for ( auto iR = 0; iR < Xs.nR; iR++ ) {
-					auto	V = Xs.Row( iR );
-					for ( auto w: layers ) V = w->Forward( V );
-					p( iR, V );
-				}
-			}
-/*
-			Matrix< F >
-			Diff(
-				const vMatrix< F >& Xs
-			,	const vMatrix< F >& As
-			) {
-				assert( Xs.nR == As.nR );
-				Matrix< F >	v( As.nR, As.nC );
-				for ( auto iR = 0; iR < v.nR; iR++ ) {
-					auto	V = Xs.Row( iR );
-					for ( auto w: layers ) V = w->Forward( V );
-					v.SetR( iR, As.Row( iR ) - V );
-				}
-				return v;
-			}
-*/
 			bool
 			Eval(
 				const vMatrix< F >& Xs
@@ -266,13 +186,12 @@ namespace JP {
 			) {
 				assert( Xs.nR == As.nR );
 				pThreshold *= pThreshold;
-				for ( auto iR = 0; iR < Xs.nR; iR++ ) {
-					auto	V = Xs.Row( iR );
-					for ( auto w: layers ) V = w->Forward( V );
-					V = As.Row( iR ) - V;
-					for ( auto iC = 0; iC < V.n; iC++ ) {
-						auto w = V[ iC ];
-						if ( w * w > pThreshold ) return false;
+				Matrix< F > w = Xs;
+				for ( auto wLayers: layers ) w = wLayers->Forward( w );
+				w -= As;
+				for ( auto iR = 0; iR < w.nR; iR++ ) {
+					for ( auto iC = 0; iC < w.nC; iC++ ) {
+						if ( pow( w( iR, iC ), 2 ) > pThreshold ) return false;
 					}
 				}
 				return true;
