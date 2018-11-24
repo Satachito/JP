@@ -93,7 +93,7 @@ namespace JP {
 					for ( auto iR = 0; iR < v.nR; iR++ ) {
 						auto wRow = p.Row( iR );
 						auto w = Exp( wRow - Max( wRow ) );
-						w /= Sum( wRow );
+						w /= Sum( w );
 						v.SetRow( iR, w );
 					}
 					return v;
