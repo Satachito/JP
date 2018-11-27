@@ -47,17 +47,21 @@ namespace JP {
 				virtual	const Matrix< F >&
 				Forward( const vMatrix< F >& p ) {
 					output = Activate( MulAdd( p, weight, theta ) );
-//					std::cerr << weight.Row( 0 ) << std::endl;
-//					std::cerr << theta << std::endl;
-//					std::cerr << output << std::endl;
+//std::cerr << std::endl << "w: " << weight << std::endl;
+//std::cerr << "t: " << theta << std::endl;
+//std::cerr << "o: " << output << std::endl;
 					return output;
 				}
 				virtual	const Matrix< F >
 				Gradient( const vMatrix< F >& ) = 0;
 				virtual	const Matrix< F >
 				Backward( const vMatrix< F >& d, const vMatrix< F >& p ) {
-					auto w = d * Gradient( p );
-					for ( auto iR = 0; iR < d.nR; iR++ ) {
+//std::cerr << "d: " << d << std::endl;
+//std::cerr << "p: " << p << std::endl;
+					auto wG = Gradient( p );
+//std::cerr << "g: " << wG << std::endl;
+					auto w = d * wG;
+					for ( auto iR = 0; iR < w.nR; iR++ ) {
 						auto wRow = w.Row( iR );
 						deltaT += wRow;
 						deltaW += MulVH( p.Row( iR ), wRow );
@@ -186,6 +190,7 @@ namespace JP {
 				}
 				Update();
 			}
+			/*
 			bool
 			Eval(
 				const vMatrix< F >& Xs
@@ -204,6 +209,7 @@ namespace JP {
 				}
 				return true;
 			}
+			*/
 		};
 	}
 }

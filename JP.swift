@@ -49,7 +49,7 @@ ShuffledIndices( _ p: Int ) -> [ Int ] {
 
 func
 ToArray<T>( _ start: UnsafePointer<T>, _ count: Int ) -> [ T ] {
-	return Array( UnsafeBufferPointer( start: UnsafePointer<T>( start ), count: count ) )
+	return Array( UnsafeBufferPointer( start: start, count: count ) )
 }
 //	USAGE: let wArray : [ Int16 ] = ToArray( data.bytes, data.length / sizeof( Int16 ) )
 
