@@ -563,3 +563,4 @@ NormalRandom() -> Double {
 		sqrt( -2 * log( Double.random( in: 0 ..< 1 ) ) )
 	*	sin( 2 * .pi * Double.random( in: 0 ..< 1 ) )
 }
+
