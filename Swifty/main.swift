@@ -309,7 +309,7 @@ JPMatrixTestD()
 
 print( "Over" )
 
-
+/*
 import	Accelerate
 
 func sum( _ p: ArraySlice<Float>) -> Float {
@@ -331,3 +331,5 @@ func sum<N: Numeric>(_ p: ArraySlice<N>, summer: (UnsafePointer<N>, vDSP_Stride,
 }
 
 print( sum( [ 1.0, 2.0, 3.0 ] ) )
+*/
+print( Sum( [ 1.0, 2.0, 3.0 ] ) )
