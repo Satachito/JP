@@ -91,12 +91,12 @@ namespace JP {
 		}
 	};
 
-	template	< typename T >	struct
-	Range {
-		T	min;
-		T	max;
-		Range( T pMin, T pMax ) : min( pMin ), max( pMax ) {}
-	};
+//	template	< typename N >	struct
+//	Range {
+//		N	min;
+//		N	max;
+//		Range( T pMin, T pMax ) : min( pMin ), max( pMax ) {}
+//	};
 	
 	template	< typename I >	I
 	UniformRandomInt( I l = 0, I h = 1 ) {
@@ -110,9 +110,9 @@ namespace JP {
 		return	std::uniform_real_distribution< F >( l, h )( sMT );
 	}
 	
-	template	< typename T >	T
-	NormalRandom( T l = 0, T h = 1 ) {
+	template	< typename F >	F
+	NormalRandom( F l = 0, F h = 1 ) {
 		static	std::mt19937_64 sMT( (std::random_device())() );
-		return	std::normal_distribution< T >( l, h )( sMT );
+		return	std::normal_distribution< F >( l, h )( sMT );
 	}
 };

@@ -1,7 +1,21 @@
+namespace JP {
+	namespace Accelerate {
+	}
+	namespace CPU {
+	}
+}
+using namespace JP;
+
+#define	USE_ACCELERATE
+#ifdef USE_ACCELERATE
+using namespace JP::Accelerate;
+#endif
+#ifdef USE_CPU
+using namespace JP::CPU;
+#endif
+
 #include	"JPVector.h"
 #include	"JPMatrix.h"
-using namespace JP::Accelerate;
-using namespace JP;
 
 #include	<iostream>
 #include	<vector>
@@ -25,32 +39,38 @@ v() {
 	vector< double >	vD { 1, 2, 3 };
 	
 
-	assert( vS + vS	== vectorS( 2, 4, 6 ) );
-	assert( vD + vD	== vectorD( 2, 4, 6 ) );
+	assert( vS + vS		== vectorS( 2, 4, 6 ) );
+	assert( vD + vD		== vectorD( 2, 4, 6 ) );
 	assert( vS + 1.0f	== vectorS( 2, 3, 4 ) );
 	assert( vD + 1.0	== vectorD( 2, 3, 4 ) );
 	assert( 1.0f + vS	== vectorS( 2, 3, 4 ) );
 	assert( 1.0 + vD	== vectorD( 2, 3, 4 ) );
 	
-	assert( vS - vS	== vectorS( 0, 0, 0 ) );
-	assert( vD - vD	== vectorD( 0, 0, 0 ) );
+	assert( vS - vS		== vectorS( 0, 0, 0 ) );
+	assert( vD - vD		== vectorD( 0, 0, 0 ) );
 	assert( vS - 1.0f	== vectorS( 0, 1, 2 ) );
 	assert( vD - 1.0	== vectorD( 0, 1, 2 ) );
 	assert( 1.0f - vS	== vectorS( 0, -1, -2 ) );
 	assert( 1.0 - vD	== vectorD( 0, -1, -2 ) );
 	
-	assert( vS * vS	== vectorS( 1, 4, 9 ) );
-	assert( vD * vD	== vectorD( 1, 4, 9 ) );
+	assert( vS * vS		== vectorS( 1, 4, 9 ) );
+	assert( vD * vD		== vectorD( 1, 4, 9 ) );
 	assert( vS * 1.0f	== vectorS( 1, 2, 3 ) );
 	assert( vD * 1.0	== vectorD( 1, 2, 3 ) );
 	assert( 1.0f * vS	== vectorS( 1, 2, 3 ) );
 	assert( 1.0 * vD	== vectorD( 1, 2, 3 ) );
-	
-	assert( vS / vS	== vectorS( 0.99999994, 0.99999994, 0.99999994 ) );
-	assert( vD / vD	== vectorD( 1, 1, 1 ) );
+
+#ifdef	USE_CPU	
+	assert( vS / vS		== vectorS( 1, 1, 1 ) );
+	assert( 1.0f / vS	== vectorS( 1, 0.5, 1.0 / 3.0 ) );
+#endif
+#ifdef	USE_ACCELERATE
+	assert( 1.0f / vS	== vectorS( 0.99999994, 0.49999997, 0.333333313 ) );
+	assert( vS / vS		== vectorS( 0.99999994, 0.99999994, 0.99999994 ) );
+#endif
+	assert( vD / vD		== vectorD( 1, 1, 1 ) );
 	assert( vS / 1.0f	== vectorS( 1, 2, 3 ) );
 	assert( vD / 1.0	== vectorD( 1, 2, 3 ) );
-	assert( 1.0f / vS	== vectorS( 0.99999994, 0.49999997, 0.333333313 ) );
 	assert( 1.0 / vD	== vectorD( 1, 0.5, 0.33333333333333331 ) );
 
 	assert( RampArray< float >( 3, 1, 2 ) == vectorS( 1, 3, 5 ) );
@@ -111,7 +131,12 @@ V() {
 	{ Vector< double > wD = vD2;	wD -= vD3;	assert( wD == Vector1< double >( 0, 0, 0 ) ); }
 	{ Vector< float  > wS = vS2;	wS *= vS3;	assert( wS == Vector1< float  >( 1, 4, 9 ) ); }
 	{ Vector< double > wD = vD2;	wD *= vD3;	assert( wD == Vector1< double >( 1, 4, 9 ) ); }
+#ifdef	USE_CPU	
+	{ Vector< float  > wS = vS2;	wS /= vS3;	assert( wS == Vector1< float  >( 1, 1, 1 ) ); }
+#endif
+#ifdef	USE_ACCELERATE
 	{ Vector< float  > wS = vS2;	wS /= vS3;	assert( wS == Vector1< float  >( 0.99999994, 0.99999994, 0.99999994 ) ); }
+#endif
 	{ Vector< double > wD = vD2;	wD /= vD3;	assert( wD == Vector1< double >( 1, 1, 1 ) ); }
 	{ Vector< float  > wS = vS2;	wS += 1;	assert( wS == Vector1< float  >( 2, 3, 4 ) ); }
 	{ Vector< double > wD = vD2;	wD += 1;	assert( wD == Vector1< double >( 2, 3, 4 ) ); }
@@ -143,11 +168,17 @@ V() {
 	assert( 1.0f * vS2	== Vector1< float  >( 1, 2, 3 ) );
 	assert( 1.0 * vD2	== Vector1< double >( 1, 2, 3 ) );
 	
+#ifdef	USE_CPU	
+	assert( vS2 / vS3	== Vector1< float  >( 1, 1, 1 ) );
+	assert( 1.0f / vS2	== Vector1< float  >( 1, 0.5, 1.0 / 3.0 ) );
+#endif
+#ifdef	USE_ACCELERATE
 	assert( vS2 / vS3	== Vector1< float  >( 0.99999994, 0.99999994, 0.99999994 ) );
+	assert( 1.0f / vS2	== Vector1< float  >( 0.99999994, 0.49999997, 0.333333313 ) );
+#endif
 	assert( vD2 / vD3	== Vector1< double >( 1, 1, 1 ) );
 	assert( vS2 / 1.0f	== Vector1< float  >( 1, 2, 3 ) );
 	assert( vD2 / 1.0	== Vector1< double >( 1, 2, 3 ) );
-	assert( 1.0f / vS2	== Vector1< float  >( 0.99999994, 0.49999997, 0.333333313 ) );
 	assert( 1.0 / vD2	== Vector1< double >( 1, 0.5, 0.33333333333333331 ) );
 
 	assert( RampVector< float  >( 3, 1, 2 ) == Vector1< float  >( 1, 3, 5 ) );

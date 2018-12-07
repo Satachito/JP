@@ -37,6 +37,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		5E02242621B86C3B0000D86B /* JPFloat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = JPFloat.h; sourceTree = "<group>"; };
 		5E751C7C21AE90A90036A897 /* Swifty */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Swifty; sourceTree = BUILT_PRODUCTS_DIR; };
 		5E751C7E21AE90A90036A897 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		5E751C8721AE90D40036A897 /* cppy */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = cppy; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -77,6 +78,7 @@
 				5E751C9221AE91280036A897 /* JPVector.swift */,
 				5E751C9121AE91280036A897 /* JPMatrix.swift */,
 				5E751C8E21AE910D0036A897 /* JP.h */,
+				5E02242621B86C3B0000D86B /* JPFloat.h */,
 				5E751C8F21AE910D0036A897 /* JPVector.h */,
 				5E751C9021AE910D0036A897 /* JPMatrix.h */,
 				5E751C9721AE92BE0036A897 /* JPNeural.h */,

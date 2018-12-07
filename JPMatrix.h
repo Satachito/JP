@@ -131,7 +131,7 @@ namespace JP {
 			}
 			void
 			Clear() {
-				Accelerate::Clear( vMatrix< F >::m, 1, vMatrix< F >::nR * vMatrix< F >::nC );
+				Clr( vMatrix< F >::m, 1, vMatrix< F >::nR * vMatrix< F >::nC );
 			}
 		};
 		

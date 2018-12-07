@@ -8,13 +8,7 @@ Matrix< N: Numeric > {
 	var	nC	:	Int
 	var	m	:	ArraySlice< N >
 
-	init( _ nR: Int, _ nC: Int ) {
-		self.nR = nR
-		self.nC = nC
-		self.m = ArraySlice( [ N ]( repeating: 0, count: nR * nC ) )
-	}
-
-	init( _ initial: N, _ nR: Int, _ nC: Int ) {
+	init( _ nR: Int, _ nC: Int, _ initial: N = 0 ) {
 		self.nR = nR
 		self.nC = nC
 		self.m = ArraySlice( [ N ]( repeating: initial, count: nR * nC ) )
@@ -38,7 +32,7 @@ Matrix< N: Numeric > {
 	}
 
 	func
-	ToString() -> String {
+	S() -> String {
 		var	v = ""
 		for iR in 0 ..< nR {
 			for iC in 0 ..< nC { v += "\t\( m[ m.startIndex + iR * nC + iC ] )" }
@@ -212,6 +206,26 @@ func
 /( _ l: Matrix<Double>, _ r: Matrix<Double> ) -> Matrix<Double> {
 	guard l.nR == r.nR && l.nC == r.nC else { fatalError() }
 	return Matrix( ArraySlice( l.m ) / ArraySlice( r.m ), l.nR, l.nC )
+}
+
+func
+HSum( _ p: Matrix<Float> ) -> Vector< Float > {
+	var	v = ArraySlice< Float >( repeating: 0, count: p.nC )
+	for iR in 0 ..< p.nR {
+		let	wOffset = p.nC * iR
+		vDSP_vadd( p.m.withUnsafeBufferPointer { $0.baseAddress! } + wOffset, 1, v.withUnsafeBufferPointer { $0.baseAddress! }, 1, v.withUnsafeMutableBufferPointer { $0.baseAddress! }, 1, vDSP_Length( v.count ) )
+	}
+	return Vector( v )
+}
+
+func
+HSum( _ p: Matrix<Double> ) -> Vector< Double > {
+	var	v = ArraySlice< Double >( repeating: 0, count: p.nC )
+	for iR in 0 ..< p.nR {
+		let	wOffset = p.nC * iR
+		vDSP_vaddD( p.m.withUnsafeBufferPointer { $0.baseAddress! } + wOffset, 1, v.withUnsafeBufferPointer { $0.baseAddress! }, 1, v.withUnsafeMutableBufferPointer { $0.baseAddress! }, 1, vDSP_Length( v.count ) )
+	}
+	return Vector( v )
 }
 
 func

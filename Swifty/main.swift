@@ -176,7 +176,7 @@ TestMatrix() {
 //	print( Matrix<Float>( nR: 1, nC: 1, u: [ 3 ] ).u[ 0 ] )
 
 	guard Matrix<Float>( [ 1, 2, 3, 4, 5, 6 ], 2, 3 ).m[ 4 ] == 5 else { fatalError() }
-	guard Matrix<Float>( 5, 2, 3 ).m[ 4 ] == 5 else { fatalError() }
+	guard Matrix<Float>( 2, 3, 5 ).m[ 4 ] == 5 else { fatalError() }
 	
 	guard MakeMatrix( [ [ 1, 2, 3 ], [ 4, 5, 6 ] ] ).m[ 4 ] == 5 else { fatalError() }
 	guard MakeMatrix( [ [ 1, 2, 3 ], [ 4, 5, 6 ] ] )[ 1 , 1 ] == 5 else { fatalError() }
