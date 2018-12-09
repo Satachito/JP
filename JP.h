@@ -90,13 +90,6 @@ namespace JP {
 			return v;
 		}
 	};
-
-//	template	< typename N >	struct
-//	Range {
-//		N	min;
-//		N	max;
-//		Range( T pMin, T pMax ) : min( pMin ), max( pMax ) {}
-//	};
 	
 	template	< typename I >	I
 	UniformRandomInt( I l = 0, I h = 1 ) {

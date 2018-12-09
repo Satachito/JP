@@ -1,26 +1,13 @@
-namespace JP {
-	namespace Accelerate {
-	}
-	namespace CPU {
-	}
-}
-using namespace JP;
-
-#define	USE_ACCELERATE
-#ifdef USE_ACCELERATE
-using namespace JP::Accelerate;
-#endif
-#ifdef USE_CPU
-using namespace JP::CPU;
-#endif
-
-#include	"JPVector.h"
-#include	"JPMatrix.h"
 
 #include	<iostream>
 #include	<vector>
 #include	<set>
 using namespace std;
+
+#define	USE_CPU
+#include	"JPVector.h"
+#include	"JPMatrix.h"
+using namespace JP;
 
 vector< float >
 vectorS( float p1, float p2, float p3 ) {
@@ -60,11 +47,10 @@ v() {
 	assert( 1.0f * vS	== vectorS( 1, 2, 3 ) );
 	assert( 1.0 * vD	== vectorD( 1, 2, 3 ) );
 
-#ifdef	USE_CPU	
+#ifdef	USE_CPU
 	assert( vS / vS		== vectorS( 1, 1, 1 ) );
 	assert( 1.0f / vS	== vectorS( 1, 0.5, 1.0 / 3.0 ) );
-#endif
-#ifdef	USE_ACCELERATE
+#else
 	assert( 1.0f / vS	== vectorS( 0.99999994, 0.49999997, 0.333333313 ) );
 	assert( vS / vS		== vectorS( 0.99999994, 0.99999994, 0.99999994 ) );
 #endif
@@ -94,18 +80,33 @@ v() {
 	assert( Abs( vS ) == vectorS( 1, 2, 3 ) );
 	assert( Abs( vD ) == vectorD( 1, 2, 3 ) );
 
+	assert( Rec( vS ) == vectorS( 1, 0.5, 1.0/3.0 ) );
+	assert( Rec( vD ) == vectorD( 1, 0.5, 1.0/3.0 ) );
+
+	assert( Exp( vS ) == vectorS( exp( 1 ), exp( 2 ), exp( 3 ) ) );
+	assert( Exp( vD ) == vectorD( exp( 1 ), exp( 2 ), exp( 3 ) ) );
+
 	assert( UnitVector( vS ) == vectorS( 0.267261237, 0.534522474, 0.80178368 ) );
 	assert( UnitVector( vD ) == vectorD( 0.2672612419124244, 0.53452248382484879, 0.80178372573727319 ) );
 
 	assert( Dot( vS, vS ) == 14 );
 	assert( Dot( vD, vD ) == 14 );
+
+	assert( DistanceQ( vS, vS ) == 0 );
+	assert( DistanceQ( vD, vD ) == 0 );
 }
+
+float	sS1[ 3 ] = { 1, 2, 3 };
+vVector< float >	vS1( sS1, 3, 1 );
 
 float	sS2[ 6 ] = { 1, 0, 2, 0, 3, 0 };
 vVector< float >	vS2( sS2, 3, 2 );
 
 float	sS3[ 9 ] = { 1, 0, 0, 2, 0, 0, 3, 0, 0 };
 vVector< float >	vS3( sS3, 3, 3 );
+
+double	sD1[ 3 ] = { 1, 2, 3 };
+vVector< double >	vD1( sD1, 3, 1 );
 
 double	sD2[ 6 ] = { 1, 0, 2, 0, 3, 0 };
 vVector< double >	vD2( sD2, 3, 2 );
@@ -131,10 +132,9 @@ V() {
 	{ Vector< double > wD = vD2;	wD -= vD3;	assert( wD == Vector1< double >( 0, 0, 0 ) ); }
 	{ Vector< float  > wS = vS2;	wS *= vS3;	assert( wS == Vector1< float  >( 1, 4, 9 ) ); }
 	{ Vector< double > wD = vD2;	wD *= vD3;	assert( wD == Vector1< double >( 1, 4, 9 ) ); }
-#ifdef	USE_CPU	
+#ifdef	USE_CPU
 	{ Vector< float  > wS = vS2;	wS /= vS3;	assert( wS == Vector1< float  >( 1, 1, 1 ) ); }
-#endif
-#ifdef	USE_ACCELERATE
+#else
 	{ Vector< float  > wS = vS2;	wS /= vS3;	assert( wS == Vector1< float  >( 0.99999994, 0.99999994, 0.99999994 ) ); }
 #endif
 	{ Vector< double > wD = vD2;	wD /= vD3;	assert( wD == Vector1< double >( 1, 1, 1 ) ); }
@@ -168,11 +168,10 @@ V() {
 	assert( 1.0f * vS2	== Vector1< float  >( 1, 2, 3 ) );
 	assert( 1.0 * vD2	== Vector1< double >( 1, 2, 3 ) );
 	
-#ifdef	USE_CPU	
+#ifdef	USE_CPU
 	assert( vS2 / vS3	== Vector1< float  >( 1, 1, 1 ) );
 	assert( 1.0f / vS2	== Vector1< float  >( 1, 0.5, 1.0 / 3.0 ) );
-#endif
-#ifdef	USE_ACCELERATE
+#else
 	assert( vS2 / vS3	== Vector1< float  >( 0.99999994, 0.99999994, 0.99999994 ) );
 	assert( 1.0f / vS2	== Vector1< float  >( 0.99999994, 0.49999997, 0.333333313 ) );
 #endif
@@ -205,14 +204,23 @@ V() {
 	assert( UnitVector( vS2 ) == Vector1< float  >( 0.267261237		, 0.534522474			, 0.80178368			) );
 	assert( UnitVector( vD2 ) == Vector1< double >( 0.2672612419124244	, 0.53452248382484879	, 0.80178372573727319	) );
 
-	assert( Abs( vS2 ) == Vector1< float  >( 1, 2, 3 ) );
-	assert( Abs( vD2 ) == Vector1< double >( 1, 2, 3 ) );
-
 	assert( -vS2 == Vector1< float  >( -1, -2, -3 ) );
 	assert( -vD2 == Vector1< double >( -1, -2, -3 ) );
 
+	assert( Abs( vS2 ) == Vector1< float  >( 1, 2, 3 ) );
+	assert( Abs( vD2 ) == Vector1< double >( 1, 2, 3 ) );
+
+	assert( Rec( vS1 ) == Vector1< float  >( 1, 0.5, 1.0/3.0 ) );
+	assert( Rec( vD1 ) == Vector1< double >( 1, 0.5, 1.0/3.0 ) );
+
+	assert( Exp( vS1 ) == Vector1< float  >( exp( 1 ), exp( 2 ), exp( 3 ) ) );
+	assert( Exp( vD1 ) == Vector1< double >( exp( 1 ), exp( 2 ), exp( 3 ) ) );
+
 	assert( Dot( vS2, vS3 ) == 14 );
 	assert( Dot( vD2, vD3 ) == 14 );
+
+	assert( DistanceQ( vS2, vS3 ) == 0 );
+	assert( DistanceQ( vD2, vD3 ) == 0 );
 }
 
 template	< typename T >	vector< T >
@@ -235,7 +243,94 @@ Sigmoid( const vVector< T >& p ) {
 	return v;
 }
 
-int main(int argc, const char * argv[]) {
+
+template	< typename F >	Matrix< F >
+MM22( F p00, F p01, F p10, F p11 ) {
+	Matrix< F >	v( 2, 2 );
+	v( 0, 0 ) = p00;
+	v( 0, 1 ) = p01;
+	v( 1, 0 ) = p10;
+	v( 1, 1 ) = p11;
+	return v;
+}
+template	< typename F >	Matrix< F >
+MM23( F p00, F p01, F p02, F p10, F p11, F p12 ) {
+	Matrix< F >	v( 2, 3 );
+	v( 0, 0 ) = p00;
+	v( 0, 1 ) = p01;
+	v( 0, 2 ) = p02;
+	v( 1, 0 ) = p10;
+	v( 1, 1 ) = p11;
+	v( 1, 2 ) = p12;
+	return v;
+}
+
+void
+TestMatrix() {
+//	print( Matrix<Float>( nR: 1, nC: 1, u: [ 3 ] ).u[ 0 ] )
+
+	double	w[ 6 ] = { 1, 2, 3, 4, 5, 6 };
+	assert( vMatrix<double>( w, 2, 3 ).m[ 4 ] == 5 );
+	assert( Matrix<double>( 2, 3, 5 )( 1, 1 ) == 5 );
+	
+	assert( T( vMatrix<double>( w, 3, 2 ) ) == MM23<double>( 1, 3, 5, 2, 4, 6 ) );
+
+	assert( vMatrix<double>( w, 2, 3 ).Row( 1 ) == vVector<double>( w + 3, 3 ) );
+	assert( vMatrix<double>( w, 2, 3 ).Col( 1 ) == vVector<double>( w + 1, 2, 3 ) );
+}
+
+void
+JPMatrixTestF() {
+
+	float	w[ 6 ] = { 1, 2, 3, 4, 5, 6 };
+	auto	wM = vMatrix<float>( w, 2, 3 );
+	assert( wM +  (float)2 == MM23<float>(   3  ,  4  ,  5  ,  6  ,  7  ,  8 ) );
+	assert( wM -  (float)2 == MM23<float>(  -1  ,  0  ,  1  ,  2  ,  3  ,  4 ) );
+	assert( wM *  (float)2 == MM23<float>(   2  ,  4  ,  6  ,  8  , 10  , 12 ) );
+#ifdef	USE_CPU
+	assert( wM /  (float)2 == MM23<float>(   0.5, 1, 1.5, 2, 2.5, 3 ) );
+	assert(  (float)2 / wM == MM23<float>(   2  ,  1  ,  2.0/3.0,  0.5, 0.4, 1.0/3.0 ) );
+	assert( wM / wM == MM23<float>(   1, 1, 1, 1, 1, 1 ) );
+#else
+	assert( wM /  (float)2 == MM23<float>(   0.49999997,  0.99999994  ,  1.49999988,  1.99999988  ,  2.49999976,  2.99999976 ) );
+	assert(  (float)2 / wM == MM23<float>(   1.9999999  ,  0.99999994  ,  0.6666666,  0.49999997, 0.39999998, 0.3333333 ) );
+	assert( wM / wM == MM23<float>(   0.99999994  ,  0.99999994  ,  0.99999994  ,  0.99999994  ,  0.99999994  ,  0.99999994 ) );
+#endif
+	assert(  (float)2 + wM == MM23<float>(   3  ,  4  ,  5  ,  6  ,  7  ,  8 ) );
+	assert(  (float)2 - wM == MM23<float>(   1  ,  0  , -1  , -2  , -3  , -4 ) );
+	assert(  (float)2 * wM == MM23<float>(   2  ,  4  ,  6  ,  8  , 10  , 12 ) );
+	assert( wM + wM == MM23<float>(   2  ,  4  ,  6  ,  8  , 10  , 12 ) );
+	assert( wM - wM == MM23<float>(   0  ,  0  ,  0  ,  0  ,  0  ,  0 ) );
+	assert( wM * wM == MM23<float>(   1  ,  4  ,  9  , 16  , 25  , 36 ) );
+	
+	assert( Mul( wM, vMatrix<float>( w, 3, 2 ) ) == MM22<float>( 22, 28, 49, 64 ) );
+//	assert( VDiv( wM, vVector<float>( w, 2 ) ) == MM23<float>( 1, 2, 3, 2, 2.5, 3 ) );
+//	assert( HDiv( wM, vVector<float>( w, 3 ) ) == MM23<float>( 0.99999994, 0.99999994, 0.99999994, 3.9999998, 2.4999998, 1.9999999 ) );
+
+}
+
+void
+JPMatrixTestD() {
+	double	w[ 6 ] = { 1, 2, 3, 4, 5, 6 };
+	auto	wM = vMatrix<double>( w, 2, 3 );
+	assert( wM +  (double)2 == MM23<double>(   3  ,  4  ,  5  ,  6  ,  7  ,  8 ) );
+	assert( wM -  (double)2 == MM23<double>(  -1  ,  0  ,  1  ,  2  ,  3  ,  4 ) );
+	assert( wM *  (double)2 == MM23<double>(   2  ,  4  ,  6  ,  8  , 10  , 12 ) );
+	assert( wM /  (double)2 == MM23<double>(   0.5, 1, 1.5, 2, 2.5, 3 ) );
+	assert(  (double)2 + wM == MM23<double>(   3  ,  4  ,  5  ,  6  ,  7  ,  8 ) );
+	assert(  (double)2 - wM == MM23<double>(   1  ,  0  , -1  , -2  , -3  , -4 ) );
+	assert(  (double)2 * wM == MM23<double>(   2  ,  4  ,  6  ,  8  , 10  , 12 ) );
+	assert(  (double)2 / wM == MM23<double>(   2  ,  1  ,  2.0/3.0,  0.5, 0.4, 1.0/3.0 ) );
+	assert( wM + wM == MM23<double>(   2  ,  4  ,  6  ,  8  , 10  , 12 ) );
+	assert( wM - wM == MM23<double>(   0  ,  0  ,  0  ,  0  ,  0  ,  0 ) );
+	assert( wM * wM == MM23<double>(   1  ,  4  ,  9  , 16  , 25  , 36 ) );
+	assert( wM / wM == MM23<double>(   1, 1, 1, 1, 1, 1 ) );
+	
+	assert( Mul( wM, vMatrix<double>( w, 3, 2 ) ) == MM22<double>( 22, 28, 49, 64 ) );
+}
+
+void
+Main() {
 //	for ( auto i = 0; i < 10; i++ ) cerr << UniformRandomFloat< float >() << endl;
 //	cerr << endl;
 //	for ( auto i = 0; i < 10; i++ ) cerr << NormalRandom< float >() << endl;
@@ -260,6 +355,24 @@ int main(int argc, const char * argv[]) {
 	v();
 	cerr << "Test V start" <<  endl;
 	V();
+	cerr << "TestMatrix start" <<  endl;
+	TestMatrix();
+	cerr << "JPMatrixTestF start" <<  endl;
+	JPMatrixTestF();
+	cerr << "JPMatrixTestD start" <<  endl;
+	JPMatrixTestD();
+
 	cerr << "over" <<  endl;
+}
+
+int
+main(int argc, const char * argv[]) {
+	Main();
 	return 0;
 }
+
+//	1 2
+//	3 4
+//   5 6
+//	1 3 5
+//	2 4 6
