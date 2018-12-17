@@ -2,7 +2,7 @@
 //
 #pragma once
 
-#ifdef	USE_CPU
+#ifdef	JP_USE_CPU
 namespace JP {
 
 	template < typename F >	void	_Clr		( F* p, long sP, unsigned long pLength )																{ for ( auto i = 0; i < pLength; i++ ) p[ i * sP ] = 0; }
@@ -17,6 +17,7 @@ namespace JP {
 	template < typename F >	void	_Abs		( const F* p, long sP, F* v, long sV, unsigned long pLength )											{ for ( auto i = 0; i < pLength; i++ ) v[ i * sV ] = p[ i * sP ] < 0 ? -p[ i * sP ] : p[ i * sP ]; }
 	template < typename F >	void	_Rec		( const F* p, F* v, int pLength )																		{ for ( auto i = 0; i < pLength; i++ ) v[ i ] = 1 / p[ i ]; }
 	template < typename F >	void	_Exp		( const F* p, F* v, int pLength )																		{ for ( auto i = 0; i < pLength; i++ ) v[ i ] = exp( p[ i ] ); }
+	template < typename F >	void	_Log		( const F* p, F* v, int pLength )																		{ for ( auto i = 0; i < pLength; i++ ) v[ i ] = log( p[ i ] ); }
 	template < typename F >	void	_Dot		( const F* l, long sL, const F* r, long sR, F& v, unsigned long pLength )								{ v = 0; for ( auto i = 0; i < pLength; i++ ) v += l[ i * sL ] * r[ i * sR ]; }
 	template < typename F >	void	_Distancesq	( const F* l, long sL, const F* r, long sR, F& v, unsigned long pLength )								{ v = 0; for ( auto i = 0; i < pLength; i++ ) { auto w = l[ i * sL ] - r[ i * sR ]; v += w * w; } }
 	template < typename F >	void	_Trans		( const F* p, long sP, F* v, long sV, unsigned long nR, unsigned long nC )								{ for ( auto iR = 0; iR < nR; iR++ ) for ( auto iC = 0; iC < nC; iC++ ) v[ iR * 3 + iC ] = p[ iC * 2 + iR ]; }
@@ -59,6 +60,8 @@ namespace JP {
 	inline	void	_Rec		( const double* p, double* v, int pLength )																				{ vvrec				( v, p, &pLength ); }
 	inline	void	_Exp		( const float * p, float * v, int pLength )																				{ vvexpf			( v, p, &pLength ); }
 	inline	void	_Exp		( const double* p, double* v, int pLength )																				{ vvexp				( v, p, &pLength ); }
+	inline	void	_Log		( const float * p, float * v, int pLength )																				{ vvlogf			( v, p, &pLength ); }
+	inline	void	_Log		( const double* p, double* v, int pLength )																				{ vvlog				( v, p, &pLength ); }
 	inline	void	_Dot		( const float * l, vDSP_Stride sL, const float * r, vDSP_Stride sR, float & v, vDSP_Length pLength )					{ vDSP_dotpr		( r, sR, l, sL, &v, pLength ); }
 	inline	void	_Dot		( const double* l, vDSP_Stride sL, const double* r, vDSP_Stride sR, double& v, vDSP_Length pLength )					{ vDSP_dotprD		( r, sR, l, sL, &v, pLength ); }
 	inline	void	_Distancesq	( const float * l, vDSP_Stride sL, const float * r, vDSP_Stride sR, float & v, vDSP_Length pLength )					{ vDSP_distancesq	( l, sL, r, sR, &v, pLength ); }

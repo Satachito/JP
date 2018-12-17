@@ -13,6 +13,7 @@
 		5E751C9521AE91280036A897 /* JPVector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E751C9221AE91280036A897 /* JPVector.swift */; };
 		5E751C9621AE91280036A897 /* JP.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E751C9321AE91280036A897 /* JP.swift */; };
 		5E751C9A21AE941B0036A897 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5E751C9921AE941B0036A897 /* Accelerate.framework */; };
+		5E9527DA21BFD4FC00133111 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5E9527D921BFD4FC00133111 /* main.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -26,6 +27,15 @@
 			runOnlyForDeploymentPostprocessing = 1;
 		};
 		5E751C8521AE90D40036A897 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		5E9527D521BFD4FC00133111 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = /usr/share/man/man1/;
@@ -50,6 +60,8 @@
 		5E751C9321AE91280036A897 /* JP.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JP.swift; sourceTree = "<group>"; };
 		5E751C9721AE92BE0036A897 /* JPNeural.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = JPNeural.h; sourceTree = "<group>"; };
 		5E751C9921AE941B0036A897 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
+		5E9527D721BFD4FC00133111 /* Survey */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Survey; sourceTree = BUILT_PRODUCTS_DIR; };
+		5E9527D921BFD4FC00133111 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -65,6 +77,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				5E751C9A21AE941B0036A897 /* Accelerate.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5E9527D421BFD4FC00133111 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -84,6 +103,7 @@
 				5E751C9721AE92BE0036A897 /* JPNeural.h */,
 				5E751C7D21AE90A90036A897 /* Swifty */,
 				5E751C8821AE90D40036A897 /* cppy */,
+				5E9527D821BFD4FC00133111 /* Survey */,
 				5E751C6F21AE8FFD0036A897 /* Products */,
 				5E751C9821AE941B0036A897 /* Frameworks */,
 			);
@@ -94,6 +114,7 @@
 			children = (
 				5E751C7C21AE90A90036A897 /* Swifty */,
 				5E751C8721AE90D40036A897 /* cppy */,
+				5E9527D721BFD4FC00133111 /* Survey */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -120,6 +141,14 @@
 				5E751C9921AE941B0036A897 /* Accelerate.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		5E9527D821BFD4FC00133111 /* Survey */ = {
+			isa = PBXGroup;
+			children = (
+				5E9527D921BFD4FC00133111 /* main.cpp */,
+			);
+			path = Survey;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -159,6 +188,23 @@
 			productReference = 5E751C8721AE90D40036A897 /* cppy */;
 			productType = "com.apple.product-type.tool";
 		};
+		5E9527D621BFD4FC00133111 /* Survey */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5E9527DD21BFD4FC00133111 /* Build configuration list for PBXNativeTarget "Survey" */;
+			buildPhases = (
+				5E9527D321BFD4FC00133111 /* Sources */,
+				5E9527D421BFD4FC00133111 /* Frameworks */,
+				5E9527D521BFD4FC00133111 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Survey;
+			productName = Survey;
+			productReference = 5E9527D721BFD4FC00133111 /* Survey */;
+			productType = "com.apple.product-type.tool";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -173,6 +219,9 @@
 						CreatedOnToolsVersion = 10.1;
 					};
 					5E751C8621AE90D40036A897 = {
+						CreatedOnToolsVersion = 10.1;
+					};
+					5E9527D621BFD4FC00133111 = {
 						CreatedOnToolsVersion = 10.1;
 					};
 				};
@@ -191,6 +240,7 @@
 			targets = (
 				5E751C7B21AE90A90036A897 /* Swifty */,
 				5E751C8621AE90D40036A897 /* cppy */,
+				5E9527D621BFD4FC00133111 /* Survey */,
 			);
 		};
 /* End PBXProject section */
@@ -212,6 +262,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				5E751C8A21AE90D40036A897 /* main.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5E9527D321BFD4FC00133111 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5E9527DA21BFD4FC00133111 /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -371,6 +429,24 @@
 			};
 			name = Release;
 		};
+		5E9527DB21BFD4FC00133111 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 42D35TL6R9;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		5E9527DC21BFD4FC00133111 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 42D35TL6R9;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -397,6 +473,15 @@
 			buildConfigurations = (
 				5E751C8C21AE90D40036A897 /* Debug */,
 				5E751C8D21AE90D40036A897 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5E9527DD21BFD4FC00133111 /* Build configuration list for PBXNativeTarget "Survey" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5E9527DB21BFD4FC00133111 /* Debug */,
+				5E9527DC21BFD4FC00133111 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -44,7 +44,7 @@ namespace JP {
 			Activate( const vMatrix< F >& ) = 0;
 			virtual	const Matrix< F >&
 			Forward( const vMatrix< F >& p ) {
-				output = Activate( MulAdd( p, weight, theta ) );
+				output = Activate( DotAdd( p, weight, theta ) );
 //std::cerr << std::endl << "w: " << weight << std::endl;
 //std::cerr << "t: " << theta << std::endl;
 //std::cerr << "o: " << output << std::endl;
@@ -62,9 +62,9 @@ namespace JP {
 				for ( auto iR = 0; iR < w.nR; iR++ ) {
 					auto wRow = w.Row( iR );
 					deltaT += wRow;
-					deltaW += MulVH( p.Row( iR ), wRow );
+					deltaW += DotVH( p.Row( iR ), wRow );
 				}
-				return T( Mul( weight, T( w ) ) );
+				return T( Dot( weight, T( w ) ) );
 			}
 		};
 		struct
