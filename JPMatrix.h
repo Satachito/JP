@@ -44,6 +44,7 @@ namespace JP {
 	Matrix	: vMatrix< F > {
 	~	Matrix() { delete[] vMatrix< F >::m; }
 		
+		Matrix(									)			: vMatrix< F >( 0					, 0		, 0		) {																				}
 		Matrix( size_t nR, size_t nC			)			: vMatrix< F >( new F[ nR * nC ]()	, nR	, nC	) {																				}
 		Matrix( size_t nR, size_t nC, F p		)			: vMatrix< F >( new F[ nR * nC ]	, nR	, nC	) { for ( auto i = 0; i < nR * nC;		i++ ) vMatrix< F >::m[ i ] = p;			}
 		Matrix( size_t nR, size_t nC, F* p	 	)			: vMatrix< F >( new F[ nR * nC ]	, nR	, nC	) { for ( auto i = 0; i < nR * nC;		i++ ) vMatrix< F >::m[ i ] = p[ i ];	}

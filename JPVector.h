@@ -40,6 +40,7 @@ namespace JP {
 	Vector 	: vVector< F > {
 	~	Vector() { delete[] vVector< F >::m; }
 
+		Vector(							)			: vVector< F >( 0				, 0		) {																		}
 		Vector( size_t n				)			: vVector< F >( new F[ n ]()	, n		) {																		}
 		Vector( size_t n, F p			)			: vVector< F >( new F[ n ]		, n		) { for ( auto i = 0; i < n;	i ++ ) vVector< F >::m[ i ] = p;		}
 		Vector( size_t n, F* p			)			: vVector< F >( new F[ n ]		, n		) { for ( auto i = 0; i < n;	i ++ ) vVector< F >::m[ i ] = p[ i ];	}
