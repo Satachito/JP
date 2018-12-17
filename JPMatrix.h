@@ -34,8 +34,8 @@ namespace JP {
 	template	< typename F >	std::ostream&
 	operator << ( std::ostream& s, const vMatrix< F >& p ) {
 		for ( auto r = 0; r < p.nR; r++ ) {
-			for ( auto c = 0; c < p.nC; c++ ) std::cerr << '\t' << p( r, c );
-			std::cerr << std::endl;
+			for ( auto c = 0; c < p.nC; c++ ) s << '\t' << p( r, c );
+			s << std::endl;
 		}
 		return s;
 	}
