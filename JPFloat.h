@@ -2,6 +2,20 @@
 //
 #pragma once
 
+#include	<random>
+namespace JP {
+	template	< typename F >	F
+	UniformRandomFloat( F l = 0, F h = 1 ) {
+		static	std::mt19937_64 sMT( (std::random_device())() );
+		return	std::uniform_real_distribution< F >( l, h )( sMT );
+	}
+	template	< typename F >	F
+	NormalRandom( F l = 0, F h = 1 ) {
+		static	std::mt19937_64 sMT( (std::random_device())() );
+		return	std::normal_distribution< F >( l, h )( sMT );
+	}
+}
+
 #ifdef	JP_USE_CPU
 namespace JP {
 

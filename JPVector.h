@@ -2,7 +2,6 @@
 //
 #pragma once
 
-#include	"JP.h"
 #include	"JPFloat.h"
 
 #include	<cmath>
