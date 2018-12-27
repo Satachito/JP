@@ -9,36 +9,6 @@ using namespace std;
 #include	"JPMatrix.h"
 using namespace JP;
 
-template	< typename F >	Vector< F >
-NewVector() {
-	Vector< F >	v( 3 );
-	v.m[ 0 ] = 0;
-	v.m[ 1 ] = 1;
-	v.m[ 2 ] = 2;
-	return v;
-}
-
-template	< typename F >	void
-Test() {
-	F	w[ 3 ] = { 1, 2, 3 };
-	vVector< F >	wv3( w, 3 );
-	Vector< F >		w1( wv3 );
-	Vector< F >		w2 = wv3;
-	Vector< F >		w3( vVector< F >( w, 3 ) );
-	Vector< F >		w4 = vVector< F >( w, 3 );
-	Vector< F >		w5( w3 );
-	Vector< F >		w6 = w4;
-	vVector< F >	wv2( w, 2 );
-	w1 = Vector< F >( wv2 );
-	w2 = move( w1 );
-	w1 = wv3;
-	w2 = w1;
-
-	Vector< F >	w7 = NewVector< F >();
-	Vector< F >	w8 = move( w7 );
-	w8 = vVector< F >( w, 1 );
-}
-
 vector< float >
 vectorS( float p1, float p2, float p3 ) {
 	return vector< float > { p1, p2, p3 };
@@ -125,6 +95,33 @@ v() {
 	assert( DistanceQ( vD, vD ) == 0 );
 }
 
+template	< typename F >	Vector< F >
+NewVector() {
+	Vector< F >	v{ 0, 1, 2 };
+	return v;
+}
+
+template	< typename F >	void
+Test() {
+	F	w[ 3 ] = { 1, 2, 3 };
+	vVector< F >	wv3( w, 3 );
+	Vector< F >		w1( wv3 );
+	Vector< F >		w2 = wv3;
+	Vector< F >		w3( vVector< F >( w, 3 ) );
+	Vector< F >		w4 = vVector< F >( w, 3 );
+	Vector< F >		w5( w3 );
+	Vector< F >		w6 = w4;
+	vVector< F >	wv2( w, 2 );
+	w1 = Vector< F >( wv2 );
+	w2 = move( w1 );
+	w1 = wv3;
+	w2 = w1;
+
+	Vector< F >	w7 = NewVector< F >();
+	Vector< F >	w8 = move( w7 );
+	w8 = vVector< F >( w, 1 );
+}
+
 float	sS1[ 3 ] = { 1, 2, 3 };
 vVector< float >	vS1( sS1, 3, 1 );
 
@@ -145,18 +142,18 @@ vVector< double >	vD3( sD3, 3, 3 );
 
 template	< typename T >	Vector< T >
 Vector2( T p1, T p2 ) {
-	T	v[] = { p1, p2 };
-	return Vector< T >( 2, v );
+	return Vector< T >{ p1, p2 };
 }
 template	< typename T >	Vector< T >
 Vector3( T p1, T p2, T p3 ) {
-	T	v[] = { p1, p2, p3 };
-	return Vector< T >( 3, v );
+	return Vector< T >{ p1, p2, p3 };
 }
 
 
 void
 V() {
+	Test< float >();
+	Test< double >();
 	assert( vS2 == vS3 );
 	{ Vector< float  > wS = vS2;	wS.Clear();	assert( wS == Vector3< float  >( 0, 0, 0 ) ); }
 	{ Vector< double > wD = vD2;	wD.Clear();	assert( wD == Vector3< double >( 0, 0, 0 ) ); }
@@ -235,7 +232,7 @@ V() {
 	assert( L2NormQ( vS2 ) == 14 );
 	assert( L2NormQ( vD2 ) == 14 );
 
-	assert( UnitVector( vS2 ) == Vector3< float  >( 0.267261237		, 0.534522474			, 0.80178368			) );
+	assert( UnitVector( vS2 ) == Vector3< float  >( 0.267261237			, 0.534522474			, 0.80178368			) );
 	assert( UnitVector( vD2 ) == Vector3< double >( 0.2672612419124244	, 0.53452248382484879	, 0.80178372573727319	) );
 
 	assert( -vS2 == Vector3< float  >( -1, -2, -3 ) );
@@ -249,6 +246,9 @@ V() {
 
 	assert( Exp( vS1 ) == Vector3< float  >( exp( 1 ), exp( 2 ), exp( 3 ) ) );
 	assert( Exp( vD1 ) == Vector3< double >( exp( 1 ), exp( 2 ), exp( 3 ) ) );
+
+	assert( Log( vS1 ) == Vector3< float  >( log( 1 )	, log( 2 )	, log( 3 ) ) );
+	assert( Log( vD1 ) == Vector3< double >( log( 1.0 )	, log( 2.0 ), 1.0986122886681096 ) );
 
 	assert( Dot( vS2, vS3 ) == 14 );
 	assert( Dot( vD2, vD3 ) == 14 );
@@ -280,22 +280,12 @@ Sigmoid( const vVector< T >& p ) {
 
 template	< typename F >	Matrix< F >
 MM22( F p00, F p01, F p10, F p11 ) {
-	Matrix< F >	v( 2, 2 );
-	v( 0, 0 ) = p00;
-	v( 0, 1 ) = p01;
-	v( 1, 0 ) = p10;
-	v( 1, 1 ) = p11;
+	Matrix< F >	v( 2, 2, { p00, p01, p10, p11 } );
 	return v;
 }
 template	< typename F >	Matrix< F >
 MM23( F p00, F p01, F p02, F p10, F p11, F p12 ) {
-	Matrix< F >	v( 2, 3 );
-	v( 0, 0 ) = p00;
-	v( 0, 1 ) = p01;
-	v( 0, 2 ) = p02;
-	v( 1, 0 ) = p10;
-	v( 1, 1 ) = p11;
-	v( 1, 2 ) = p12;
+	Matrix< F >	v( 2, 3, { p00, p01, p02, p10, p11, p12 } );
 	return v;
 }
 
@@ -305,7 +295,7 @@ TestMatrix() {
 
 	double	w[ 6 ] = { 1, 2, 3, 4, 5, 6 };
 	assert( vMatrix<double>( w, 2, 3 ).m[ 4 ] == 5 );
-	assert( Matrix<double>( 2, 3, 5 )( 1, 1 ) == 5 );
+	assert( Matrix<double>( 2, 3, { 5, 5, 5, 5, 5, 5 } ) ( 1, 1 ) == 5 );
 	
 	assert( T( vMatrix<double>( w, 3, 2 ) ) == MM23<double>( 1, 3, 5, 2, 4, 6 ) );
 

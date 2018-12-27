@@ -14,9 +14,9 @@ namespace JP {
 
 		vMatrix( F* p, size_t nR, size_t nC ) : m( p ), nR( nR ), nC( nC ) {}
 
-		F		operator		()	( size_t pR, size_t pC	) const { return m[ pR * nC + pC ];						}
-		const	vVector< F >	Row	( size_t p				) const { return vVector< F >( (F*)&m[ p * nC ], nC );	}
-		const	vVector< F >	Col	( size_t p				) const { return vVector< F >( (F*)&m[ p ], nR, nC );	}
+		F				operator()	( size_t pR, size_t pC	) const { return m[ pR * nC + pC ];						}
+		vVector< F >	Row			( size_t p				) const { return vVector< F >( (F*)&m[ p * nC ], nC );	}
+		vVector< F >	Col			( size_t p				) const { return vVector< F >( (F*)&m[ p ], nR, nC );	}
 	};
 	
 	template	< typename F >	bool
@@ -44,14 +44,19 @@ namespace JP {
 	Matrix	: vMatrix< F > {
 	~	Matrix() { delete[] vMatrix< F >::m; }
 		
-		Matrix(									)			: vMatrix< F >( 0					, 0		, 0		) {																				}
-		Matrix( size_t nR, size_t nC			)			: vMatrix< F >( new F[ nR * nC ]()	, nR	, nC	) {																				}
-		Matrix( size_t nR, size_t nC, F p		)			: vMatrix< F >( new F[ nR * nC ]	, nR	, nC	) { for ( auto i = 0; i < nR * nC;		i++ ) vMatrix< F >::m[ i ] = p;			}
-		Matrix( size_t nR, size_t nC, F* p	 	)			: vMatrix< F >( new F[ nR * nC ]	, nR	, nC	) { for ( auto i = 0; i < nR * nC;		i++ ) vMatrix< F >::m[ i ] = p[ i ];	}
-		Matrix( size_t nR, size_t nC, F( *p )() )			: vMatrix< F >( new F[ nR * nC ]	, nR	, nC	) { for ( auto i = 0; i < nR * nC;		i++ ) vMatrix< F >::m[ i ] = p();		}
-		Matrix( Matrix&& p						) noexcept	: vMatrix< F >( p.m					, p.nR	, p.nC	) { p.m = 0; p.nR = 0; p.nC = 0;												}
-		Matrix( const Matrix& p					)			: vMatrix< F >( new F[ p.nR * p.nC ], p.nR	, p.nC	) { for ( auto i = 0; i < p.nR * p.nC;	i++ ) vMatrix< F >::m[ i ] = p.m[ i ];	}
-		Matrix( const vMatrix< F >& p			)			: vMatrix< F >( new F[ p.nR * p.nC ], p.nR	, p.nC	) { for ( auto i = 0; i < p.nR * p.nC;	i++ ) vMatrix< F >::m[ i ] = p.m[ i ];	}
+		Matrix(									)	: vMatrix< F >( 0					, 0		, 0		) {																				}
+		Matrix( size_t nR, size_t nC			)	: vMatrix< F >( new F[ nR * nC ]()	, nR	, nC	) {																				}
+		Matrix( size_t nR, size_t nC, F p		)	: vMatrix< F >( new F[ nR * nC ]	, nR	, nC	) { for ( auto i = 0; i < nR * nC;		i++ ) vMatrix< F >::m[ i ] = p;			}
+		Matrix( size_t nR, size_t nC, F* p	 	)	: vMatrix< F >( new F[ nR * nC ]	, nR	, nC	) { for ( auto i = 0; i < nR * nC;		i++ ) vMatrix< F >::m[ i ] = p[ i ];	}
+		Matrix( size_t nR, size_t nC, F( *p )() )	: vMatrix< F >( new F[ nR * nC ]	, nR	, nC	) { for ( auto i = 0; i < nR * nC;		i++ ) vMatrix< F >::m[ i ] = p();		}
+		Matrix( Matrix&& p				) noexcept	: vMatrix< F >( p.m					, p.nR	, p.nC	) { p.m = 0; p.nR = 0; p.nC = 0;												}
+		Matrix( const Matrix& p					)	: vMatrix< F >( new F[ p.nR * p.nC ], p.nR	, p.nC	) { for ( auto i = 0; i < p.nR * p.nC;	i++ ) vMatrix< F >::m[ i ] = p.m[ i ];	}
+		Matrix( const vMatrix< F >& p			)	: vMatrix< F >( new F[ p.nR * p.nC ], p.nR	, p.nC	) { for ( auto i = 0; i < p.nR * p.nC;	i++ ) vMatrix< F >::m[ i ] = p.m[ i ];	}
+		Matrix( size_t nR, size_t nC, std::initializer_list< F > p )
+		:	vMatrix< F >( new F[ nR * nC ], nR, nC ) {
+			assert( nR * nC == p.size() );
+			for ( auto i = 0; i < p.size();	i++ ) vMatrix< F >::m[ i ] = p.begin()[ i ];
+		}
 
 		Matrix&
 		_Substitution( const vMatrix< F >& p ) {
@@ -68,10 +73,10 @@ namespace JP {
 		}
 		Matrix&	operator =	( Matrix&& p ) noexcept {
 			if ( this != &p ) {
-				delete[] vVector< F >::m;
-				vVector< F >::m = p.m;		p.m = 0;
-				vVector< F >::nR = p.nR;	p.nR = 0;
-				vVector< F >::nC = p.nC;	p.nC = 0;
+				delete[] vMatrix< F >::m;
+				vMatrix< F >::m = p.m;		p.m = 0;
+				vMatrix< F >::nR = p.nR;	p.nR = 0;
+				vMatrix< F >::nC = p.nC;	p.nC = 0;
 			}
 			return *this;
 		}
@@ -131,14 +136,14 @@ namespace JP {
 	Dot( const vMatrix< F >& l, const vVector< F >& r ) {	//	treat vector as vertical
 		assert( l.nC == r.n );
 		Vector< F >	v( l.nR );
-		for ( auto iR = 0; iR < v.nR; iR++ ) v[ iR ] = Dot( l.Row( iR ), r );
+		for ( auto i = 0; i < v.n; i++ ) v[ i ] = Dot( l.Row( i ), r );
 		return v;
 	}
 	template	< typename F >	Vector< F >
 	Dot( const vVector< F >& l, const vMatrix< F >& r ) {	//	treat vector as horizontal
 		assert( l.n == r.nR );
 		Vector< F >	v( r.nC );
-		for ( auto iC = 0; iC < v.nC; iC++ ) v[ iC ] += Dot( l, r.Col( iC ) );
+		for ( auto i = 0; i < v.n; i++ ) v[ i ] += Dot( l, r.Col( i ) );
 		return v;
 	}
 

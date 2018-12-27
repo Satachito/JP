@@ -17,7 +17,20 @@ namespace JP {
 
 		vVector( F* p, size_t n, size_t s = 1 ) : m( p ), n( n ), s( s ) {}
 
-		F	operator []( size_t p ) const { return m[ p * s ]; }
+		F	operator []( size_t p ) const	{ return m[ p * s ]; }
+		F&	operator []( size_t p )			{ return m[ p * s ]; }
+
+		struct
+		I {
+			const	vVector&	m;
+					size_t		index = 0;
+								I( const vVector& p, size_t index ) : m( p ), index( index ) {}
+					I&			operator ++	()						{ ++index; return *this; }
+					F			operator *	()				const	{ return m[ index ]; }
+					bool		operator !=	( const I& p )	const	{ return index != p.index; }
+		};
+		const	I	begin()	const { return I( *this, 0 ); }
+		const	I	end()	const { return I( *this, n ); }
 	};
 
 	template	< typename F >	bool
@@ -40,15 +53,24 @@ namespace JP {
 	Vector 	: vVector< F > {
 	~	Vector() { delete[] vVector< F >::m; }
 
-		Vector(							)			: vVector< F >( 0				, 0		) {																		}
-		Vector( size_t n				)			: vVector< F >( new F[ n ]()	, n		) {																		}
-		Vector( size_t n, F p			)			: vVector< F >( new F[ n ]		, n		) { for ( auto i = 0; i < n;	i ++ ) vVector< F >::m[ i ] = p;		}
-		Vector( size_t n, F* p			)			: vVector< F >( new F[ n ]		, n		) { for ( auto i = 0; i < n;	i ++ ) vVector< F >::m[ i ] = p[ i ];	}
-		Vector( size_t n, F( *p )()		)			: vVector< F >( new F[ n ]		, n		) { for ( auto i = 0; i < n;	i ++ ) vVector< F >::m[ i ] = p();		}
-		Vector( Vector&& p				) noexcept	: vVector< F >( p.m				, p.n	) { p.m = 0; p.n = 0;													}
-		Vector( const Vector& p			)			: vVector< F >( new F[ p.n ]	, p.n	) { for ( auto i = 0; i < p.n;	i ++ ) vVector< F >::m[ i ] = p[ i ];	}
-		Vector( const vVector< F >& p	)			: vVector< F >( new F[ p.n ]	, p.n	) { for ( auto i = 0; i < p.n;	i ++ ) vVector< F >::m[ i ] = p[ i ];	}
+		Vector(									)			: vVector< F >( 0					, 0			) {																					}
+		Vector( size_t n						)			: vVector< F >( new F[ n ]()		, n			) {																					}
+		Vector( size_t n, F p					)			: vVector< F >( new F[ n ]			, n			) { for ( auto i = 0; i < n;		i ++ ) vVector< F >::m[ i ] = p;				}
+		Vector( size_t n, F* p					)			: vVector< F >( new F[ n ]			, n			) { for ( auto i = 0; i < n;		i ++ ) vVector< F >::m[ i ] = p[ i ];			}
+		Vector( size_t n, F( *p )()				)			: vVector< F >( new F[ n ]			, n			) { for ( auto i = 0; i < n;		i ++ ) vVector< F >::m[ i ] = p();				}
+		Vector( std::initializer_list< F > p	)			: vVector< F >( new F[ p.size() ]	, p.size()	) { for ( auto i = 0; i < p.size();	i ++ ) vVector< F >::m[ i ] = p.begin()[ i ];	}
+		Vector( Vector&& p						) noexcept	: vVector< F >( p.m					, p.n		) { p.m = 0; p.n = 0;																}
+		Vector( const Vector& p					)			: vVector< F >( new F[ p.n ]		, p.n		) { for ( auto i = 0; i < p.n;		i ++ ) vVector< F >::m[ i ] = p.m[ i ];			}
+		Vector( const vVector< F >& p			)			: vVector< F >( new F[ p.n ]		, p.n		) { for ( auto i = 0; i < p.n;		i ++ ) vVector< F >::m[ i ] = p[ i ];			}
 
+		Vector&	operator =	( Vector&& p ) noexcept {
+			if ( this != &p ) {
+				delete[] vVector< F >::m;
+				vVector< F >::m = p.m;	p.m = 0;
+				vVector< F >::n = p.n;	p.n = 0;
+			}
+			return *this;
+		}
 		Vector&
 		_Substitution( const vVector< F >& p ) {
 			if ( vVector< F >::n != p.n ) {
@@ -60,17 +82,8 @@ namespace JP {
 			for ( auto i = 0; i < p.n; i++ ) vVector< F >::m[ i ] = p[ i ];
 			return *this;
 		}
-		Vector&	operator =	( Vector&& p ) noexcept {
-			if ( this != &p ) {
-				delete[] vVector< F >::m;
-				vVector< F >::m = p.m;	p.m = 0;
-				vVector< F >::n = p.n;	p.n = 0;
-			}
-			return *this;
-		}
 		Vector&	operator =	( const Vector& p		) { return _Substitution( p );																								}
 		Vector&	operator =	( const vVector< F >& p	) { return _Substitution( p );																								}
-		F&		operator []	( size_t p				) { return vVector< F >::m[ p * vVector< F >::s ];																			}
 		void	Clear		(						) { _Clr( vVector< F >::m, vVector< F >::s, vVector< F >::n );																}
 		Vector&	operator +=	( const vVector< F >& p	) { _Add( vVector< F >::m, vVector< F >::s, p.m, p.s, vVector< F >::m, vVector< F >::s, vVector< F >::n );	return *this;	}
 		Vector&	operator -=	( const vVector< F >& p	) { _Sub( vVector< F >::m, vVector< F >::s, p.m, p.s, vVector< F >::m, vVector< F >::s, vVector< F >::n );	return *this;	}
@@ -106,11 +119,11 @@ namespace JP {
 	template	< typename F >	F					L2NormQ			( const std::vector< F >& p								) { F v = 0;							_Svesq		( &p[ 0 ], 1, v, p.size() );						return v;	}
 	template	< typename F >	F					L2Norm			( const std::vector< F >& p								) {	return sqrt( L2NormQ( p ) );																					}
 	template	< typename F >	std::vector< F >	UnitVector		( const std::vector< F >& p								) {	return p / L2Norm( p );																							}
+	template	< typename F >	std::vector< F >	operator -		( const std::vector< F >& p								) { std::vector< F > v( p.size() );		_Neg		( &p[ 0 ], 1, &v[ 0 ], 1, v.size() );				return v;	}
 	template	< typename F >	std::vector< F >	Abs				( const std::vector< F >& p								) { std::vector< F > v( p.size() );		_Abs		( &p[ 0 ], 1, &v[ 0 ], 1, v.size() );				return v;	}
 	template	< typename F >	std::vector< F >	Rec				( const std::vector< F >& p								) { std::vector< F > v( p.size() );		_Rec		( &p[ 0 ], &v[ 0 ], (int)v.size() );				return v;	}
 	template	< typename F >	std::vector< F >	Exp				( const std::vector< F >& p								) { std::vector< F > v( p.size() );		_Exp		( &p[ 0 ], &v[ 0 ], (int)v.size() );				return v;	}
 	template	< typename F >	std::vector< F >	Log				( const std::vector< F >& p								) { std::vector< F > v( p.size() );		_Log		( &p[ 0 ], &v[ 0 ], (int)v.size() );				return v;	}
-	template	< typename F >	std::vector< F >	operator -		( const std::vector< F >& p								) { std::vector< F > v( p.size() );		_Neg		( &p[ 0 ], 1, &v[ 0 ], 1, v.size() );				return v;	}
 	template	< typename F >	F					Dot				( const std::vector< F >& l	, const std::vector< F >& r	) { F v = 0;							_Dot		( &l[ 0 ], 1, &r[ 0 ], 1, v, l.size() );			return v;	}
 	template	< typename F >	F					DistanceQ		( const std::vector< F >& l	, const std::vector< F >& r	) { F v = 0;							_Distancesq	( &l[ 0 ], 1, &r[ 0 ], 1, v, l.size() );			return v;	}
 
@@ -140,11 +153,11 @@ namespace JP {
 	template	< typename F >	F					L2NormQ			( const vVector< F >& p									) { F v = 0;							_Svesq		( p.m, p.s, v, p.n );								return v;	}
 	template	< typename F >	F					L2Norm			( const vVector< F >& p									) { return sqrt( L2NormQ( p ) );																					}
 	template	< typename F >	Vector< F >			UnitVector		( const vVector< F >& p									) { return p / L2Norm( p );																							}
+	template	< typename F >	Vector< F >			operator -		( const vVector< F >& p									) {	Vector< F > v( p );					_Neg		( p.m, p.s, v.m, v.s, v.n );						return v;	}
 	template	< typename F >	Vector< F >			Abs				( const vVector< F >& p									) {	Vector< F > v( p );					_Abs		( p.m, p.s, v.m, v.s, v.n );						return v;	}
 	template	< typename F >	Vector< F >			Rec				( const vVector< F >& p									) {	Vector< F > v( p );					_Rec		( p.m, v.m, (int)v.n );	assert( p.s == 1 );			return v;	}
 	template	< typename F >	Vector< F >			Exp				( const vVector< F >& p									) {	Vector< F > v( p );					_Exp		( p.m, v.m, (int)v.n );	assert( p.s == 1 );			return v;	}
 	template	< typename F >	Vector< F >			Log				( const vVector< F >& p									) {	Vector< F > v( p );					_Log		( p.m, v.m, (int)v.n );	assert( p.s == 1 );			return v;	}
-	template	< typename F >	Vector< F >			operator -		( const vVector< F >& p									) {	Vector< F > v( p );					_Neg		( p.m, p.s, v.m, v.s, v.n );						return v;	}
 	template	< typename F >	F					Dot				( const vVector< F >& l		, const vVector< F >& r		) { F v = 0;							_Dot		( l.m, l.s, r.m, r.s, v, l.n );						return v;	}
 	template	< typename F >	F					DistanceQ		( const vVector< F >& l		, const vVector< F >& r		) { F v = 0;							_Distancesq	( l.m, l.s, r.m, r.s, v, l.n );						return v;	}
 }

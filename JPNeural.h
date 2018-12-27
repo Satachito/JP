@@ -25,7 +25,7 @@ namespace JP {
 			}
 			vLayer( size_t nI, size_t nN )
 			:	output( 0, 0 )
-			,	theta( Random, nN )
+			,	theta( nN, Random )
 			,	weight( nI, nN )
 			,	deltaT( nN )
 			,	deltaW( nI, nN ) {
@@ -44,7 +44,9 @@ namespace JP {
 			Activate( const vMatrix< F >& ) = 0;
 			virtual	const Matrix< F >&
 			Forward( const vMatrix< F >& p ) {
-				output = Activate( DotAdd( p, weight, theta ) );
+				auto v = DotAdd( p, weight, theta );
+//printf( "%zu:%zu:%f\n", v.nR, v.nC, v( v.nR - 1, v.nC - 1 ) );
+				output = Activate( v );
 //std::cerr << std::endl << "w: " << weight << std::endl;
 //std::cerr << "t: " << theta << std::endl;
 //std::cerr << "o: " << output << std::endl;
@@ -59,14 +61,50 @@ namespace JP {
 				auto wG = Gradient( p );
 //std::cerr << "g: " << wG << std::endl;
 				auto w = d * wG;
+//std::cerr << "w: " << w << std::endl;
 				for ( auto iR = 0; iR < w.nR; iR++ ) {
 					auto wRow = w.Row( iR );
 					deltaT += wRow;
-					deltaW += DotVH( p.Row( iR ), wRow );
+					deltaW += Spread( p.Row( iR ), wRow );
 				}
-				return T( Dot( weight, T( w ) ) );
+//std::cerr << "weight: " << weight << std::endl;
+//				std::cerr << T( Dot( weight, T( w ) ) ) << std::endl;
+				assert( weight.nC == w.nC );
+				Matrix< F >	v( w.nR, weight.nR );
+				for ( auto iR = 0; iR < v.nR; iR++ ) {
+					auto wR = w.Row( iR );
+					for ( auto iC = 0; iC < v.nC; iC++ ) v( iR, iC ) = Dot( weight.Row( iC ), wR );
+				}
+				return v;
 			}
 		};
+/*
+weight:
+	w0	w1
+	w2	w3
+	w4	w5
+
+d * wG:
+	d0	d1
+	d2	d3
+	d4	d5
+	d6	d7
+
+T( d * wG ):
+	d0	d2	d4	d6
+	d1	d3	d5	d7
+
+Dot( weight, T( d * wG ) )
+	0011	0213	0415	0617
+	2031	2233	2435	2637
+	4051	4253	4455	4657
+
+T( Dot( weight, T( d * wG ) ) )
+	0011	2031	4051
+	0213	2233	4253
+	0415	2435	4455
+	0617	2637	4657
+*/
 		struct
 		SigmoidLayer: vLayer {
 			SigmoidLayer( size_t nI, size_t nN )
@@ -74,14 +112,8 @@ namespace JP {
 			}
 			const Matrix< F >
 			Activate( const vMatrix< F >& p ) {
-				Matrix< F >	v( p.nR, p.nC );
-				for ( auto iR = 0; iR < v.nR; iR++ ) {
-					auto wRow = p.Row( iR );
-					auto w = Exp( wRow );
-					v.SetRow( iR, w / ( F( 1 ) + w ) );
-				}
-				return v;
-		//		return Rec( Exp( - p ) + F( 1 ) );
+        		auto v = Exp( p );
+				return v / ( F( 1 ) + v );
 			}
 			const Matrix< F >
 			Gradient( const vMatrix< F >& p ) {
@@ -103,6 +135,10 @@ namespace JP {
 					v.SetRow( iR, w );
 				}
 				return v;
+			}
+			void
+			CrossEntropy( const vMatrix< F >& t ) {
+				vLayer::output = -Log( vLayer::output + 1e-7 ) * t;
 			}
 			const Matrix< F >
 			Gradient( const vMatrix< F >& p ) {
