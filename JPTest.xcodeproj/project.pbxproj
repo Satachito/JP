@@ -10,12 +10,12 @@
 		5E3EBC4D21CC07830002B6CB /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E3EBC4C21CC07830002B6CB /* main.swift */; };
 		5E3EBC7021CC09780002B6CB /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5E3EBC6F21CC09780002B6CB /* main.cpp */; };
 		5E3EBC7421CC09FA0002B6CB /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5E751C9921AE941B0036A897 /* Accelerate.framework */; };
-		5E3EBC8321CC0A9E0002B6CB /* GradientDesent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5E3EBC8121CC0A9E0002B6CB /* GradientDesent.cpp */; };
 		5E5D5D5321D3E1EA00F5C9B7 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5E751C9921AE941B0036A897 /* Accelerate.framework */; };
 		5E751C7F21AE90A90036A897 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E751C7E21AE90A90036A897 /* main.swift */; };
 		5E751C9421AE91280036A897 /* JPMatrix.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E751C9121AE91280036A897 /* JPMatrix.swift */; };
 		5E751C9521AE91280036A897 /* JPVector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E751C9221AE91280036A897 /* JPVector.swift */; };
 		5E751C9621AE91280036A897 /* JP.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E751C9321AE91280036A897 /* JP.swift */; };
+		5EC3C8B821EF2FE100D5A941 /* GEO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5EC3C8B721EF2FE100D5A941 /* GEO.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -76,6 +76,7 @@
 		5E751C9321AE91280036A897 /* JP.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JP.swift; sourceTree = "<group>"; };
 		5E751C9721AE92BE0036A897 /* JPNeural.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = JPNeural.h; sourceTree = "<group>"; };
 		5E751C9921AE941B0036A897 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
+		5EC3C8B721EF2FE100D5A941 /* GEO.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GEO.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -133,6 +134,7 @@
 			children = (
 				5E3EBC8021CC0A9E0002B6CB /* BezierLength.cpp */,
 				5E3EBC8121CC0A9E0002B6CB /* GradientDesent.cpp */,
+				5EC3C8B721EF2FE100D5A941 /* GEO.cpp */,
 			);
 			path = CppySurvey;
 			sourceTree = "<group>";
@@ -320,7 +322,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5E3EBC8321CC0A9E0002B6CB /* GradientDesent.cpp in Sources */,
+				5EC3C8B821EF2FE100D5A941 /* GEO.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -379,8 +381,11 @@
 		5E3EBC7E21CC0A790002B6CB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_X86_VECTOR_INSTRUCTIONS = avx;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 42D35TL6R9;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -388,8 +393,11 @@
 		5E3EBC7F21CC0A790002B6CB /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_X86_VECTOR_INSTRUCTIONS = avx;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 42D35TL6R9;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;

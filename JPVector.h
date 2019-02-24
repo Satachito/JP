@@ -11,40 +11,52 @@ namespace JP {
 
 	template	< typename F >	struct
 	vVector {
-		F*		m;
-		size_t	n;
-		size_t	s;	//	Stride
+				F*						m;
+				size_t					n;
+				size_t					s;	//	Stride
 
-		vVector( F* p, size_t n, size_t s = 1 ) : m( p ), n( n ), s( s ) {}
+										vVector	( F* p, size_t n, size_t s = 1 ) : m( p ), n( n ), s( s ) {}
 
-		F	operator []( size_t p ) const	{ return m[ p * s ]; }
-		F&	operator []( size_t p )			{ return m[ p * s ]; }
+				F			operator	[]		( size_t p			) const	{ return m[ p * s ];								}
+				F&			operator	[]		( size_t p			)		{ return m[ p * s ];								}
+
+				void					Clear	(					) const	{ _Clr( m, s, n );									}
+		const	vVector&	operator	+=		( const vVector& p	) const	{ _Add( m, s, p.m, p.s	, m, s, n ); return *this;	}
+		const	vVector&	operator	-=		( const vVector& p	) const	{ _Sub( m, s, p.m, p.s	, m, s, n ); return *this;	}
+		const	vVector&	operator	*=		( const vVector& p	) const	{ _Mul( m, s, p.m, p.s	, m, s, n ); return *this;	}
+		const	vVector&	operator	/=		( const vVector& p	) const	{ _Div( m, s, p.m, p.s	, m, s, n ); return *this;	}
+		const	vVector&	operator	+=		( F p				) const	{ _Add( m, s,  p		, m, s, n ); return *this;	}
+		const	vVector&	operator	-=		( F p				) const	{ _Add( m, s, -p		, m, s, n ); return *this;	}
+		const	vVector&	operator	*=		( F p				) const	{ _Mul( m, s,  p		, m, s, n ); return *this;	}
+		const	vVector&	operator	/=		( F p				) const	{ _Div( m, s,  p		, m, s, n ); return *this;	}
 
 		struct
 		I {
 			const	vVector&	m;
 					size_t		index = 0;
-								I( const vVector& p, size_t index ) : m( p ), index( index ) {}
-					I&			operator ++	()						{ ++index; return *this; }
-					F			operator *	()				const	{ return m[ index ]; }
-					bool		operator !=	( const I& p )	const	{ return index != p.index; }
+
+			I( const vVector& p, size_t index ) : m( p ), index( index ) {}
+
+			I&			operator ++	()						{ ++index; return *this; }
+			F			operator *	()						{ return m[ index ]; }
+			bool		operator !=	( const I& p )	const	{ return index != p.index; }
 		};
-		const	I	begin()	const { return I( *this, 0 ); }
-		const	I	end()	const { return I( *this, n ); }
+		I	begin()	const { return I( *this, 0 ); }
+		I	end()	const { return I( *this, n ); }
 	};
 
-	template	< typename F >	bool
-	operator ==	( const vVector< F >& l, const vVector< F >& r ) {
+	template	< typename F >	bool			operator
+	==	( const vVector< F >& l, const vVector< F >& r ) {
 		if ( l.n != r.n ) return false;
 		for ( auto i = 0; i < l.n; i++ ) if ( l[ i ] != r[ i ] ) return false;
 		return true;
 	}
-	template	< typename F >	bool
-	operator !=	( const vVector< F >& l, const vVector< F >& r ) {
+	template	< typename F >	bool			operator
+	!=	( const vVector< F >& l, const vVector< F >& r ) {
 		return !( l == r );
 	}
-	template	< typename F >	std::ostream&
-	operator << ( std::ostream& s, const vVector< F >& p ) {
+	template	< typename F >	std::ostream&	operator
+	<<	( std::ostream& s, const vVector< F >& p ) {
 		for ( auto i = 0; i < p.n; i ++ ) s << '\t' << p[ i ];
 		return s;
 	}
@@ -60,10 +72,11 @@ namespace JP {
 		Vector( size_t n, F( *p )()				)			: vVector< F >( new F[ n ]			, n			) { for ( auto i = 0; i < n;		i ++ ) vVector< F >::m[ i ] = p();				}
 		Vector( std::initializer_list< F > p	)			: vVector< F >( new F[ p.size() ]	, p.size()	) { for ( auto i = 0; i < p.size();	i ++ ) vVector< F >::m[ i ] = p.begin()[ i ];	}
 		Vector( Vector&& p						) noexcept	: vVector< F >( p.m					, p.n		) { p.m = 0; p.n = 0;																}
-		Vector( const Vector& p					)			: vVector< F >( new F[ p.n ]		, p.n		) { for ( auto i = 0; i < p.n;		i ++ ) vVector< F >::m[ i ] = p.m[ i ];			}
+		Vector( const Vector& p					)			: vVector< F >( new F[ p.n ]		, p.n		) { for ( auto i = 0; i < p.n;		i ++ ) vVector< F >::m[ i ] = p[ i ];			}
 		Vector( const vVector< F >& p			)			: vVector< F >( new F[ p.n ]		, p.n		) { for ( auto i = 0; i < p.n;		i ++ ) vVector< F >::m[ i ] = p[ i ];			}
 
-		Vector&	operator =	( Vector&& p ) noexcept {
+		Vector&	operator
+		=	( Vector&& p ) noexcept {
 			if ( this != &p ) {
 				delete[] vVector< F >::m;
 				vVector< F >::m = p.m;	p.m = 0;
@@ -71,8 +84,12 @@ namespace JP {
 			}
 			return *this;
 		}
-		Vector&
-		_Substitution( const vVector< F >& p ) {
+		Vector&	operator
+		=	( const Vector& p ) {
+			return operator= ( (const vVector< F >&)p );
+		}
+		Vector&	operator
+		=	( const vVector< F >& p ) {
 			if ( vVector< F >::n != p.n ) {
 				auto w = vVector< F >::m;
 				vVector< F >::m = new F[ p.n ];
@@ -82,17 +99,6 @@ namespace JP {
 			for ( auto i = 0; i < p.n; i++ ) vVector< F >::m[ i ] = p[ i ];
 			return *this;
 		}
-		Vector&	operator =	( const Vector& p		) { return _Substitution( p );																								}
-		Vector&	operator =	( const vVector< F >& p	) { return _Substitution( p );																								}
-		void	Clear		(						) { _Clr( vVector< F >::m, vVector< F >::s, vVector< F >::n );																}
-		Vector&	operator +=	( const vVector< F >& p	) { _Add( vVector< F >::m, vVector< F >::s, p.m, p.s, vVector< F >::m, vVector< F >::s, vVector< F >::n );	return *this;	}
-		Vector&	operator -=	( const vVector< F >& p	) { _Sub( vVector< F >::m, vVector< F >::s, p.m, p.s, vVector< F >::m, vVector< F >::s, vVector< F >::n );	return *this;	}
-		Vector&	operator *=	( const vVector< F >& p	) { _Mul( vVector< F >::m, vVector< F >::s, p.m, p.s, vVector< F >::m, vVector< F >::s, vVector< F >::n );	return *this;	}
-		Vector&	operator /=	( const vVector< F >& p	) { _Div( vVector< F >::m, vVector< F >::s, p.m, p.s, vVector< F >::m, vVector< F >::s, vVector< F >::n );	return *this;	}
-		Vector&	operator +=	( F p					) { _Add( vVector< F >::m, vVector< F >::s,  p		, vVector< F >::m, vVector< F >::s, vVector< F >::n );	return *this;	}
-		Vector&	operator -=	( F p					) { _Add( vVector< F >::m, vVector< F >::s, -p		, vVector< F >::m, vVector< F >::s, vVector< F >::n );	return *this;	}
-		Vector&	operator *=	( F p					) { _Mul( vVector< F >::m, vVector< F >::s,  p		, vVector< F >::m, vVector< F >::s, vVector< F >::n );	return *this;	}
-		Vector&	operator /=	( F p					) { _Div( vVector< F >::m, vVector< F >::s,  p		, vVector< F >::m, vVector< F >::s, vVector< F >::n );	return *this;	}
 	};
 
 	template	< typename F >	std::vector< F >	operator +		( const std::vector< F >& l	, const std::vector< F >& r	) { std::vector< F > v( l.size() );		_Add		( &l[ 0 ], 1, &r[ 0 ], 1, &v[ 0 ], 1, v.size() );	return v;	}

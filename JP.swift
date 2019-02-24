@@ -44,7 +44,7 @@ RandomData( _ p: Int ) -> Data {
 
 func
 ShuffledIndices( _ p: Int ) -> [ Int ] {
-	return ( 0 ..< p ).map{ $0 }.shuffled()
+	return ( 0 ..< p ).shuffled()
 }
 
 func
@@ -52,6 +52,11 @@ ToArray<T>( _ start: UnsafePointer<T>, _ count: Int ) -> [ T ] {
 	return Array( UnsafeBufferPointer( start: start, count: count ) )
 }
 //	USAGE: let wArray : [ Int16 ] = ToArray( data.bytes, data.length / sizeof( Int16 ) )
+
+func
+Size( file path: String ) -> Int? {
+	return ( try? FileManager.default.attributesOfItem( atPath: path ) )?[ .size ] as? Int
+}
 
 func
 LengthByUTF8( _ p: String ) -> Int {
@@ -198,18 +203,16 @@ JPTest() {
 
 class
 Reader< T > {
-	enum
-	ReaderError	: Error {
-	case		eod
-	}
 	var
 	_unread : Chain< T >?
 	func
-	_Read() throws -> T { throw ReaderError.eod }
+	_Read() -> T? {
+		fatalError()
+	}
 	func
-	Read() throws -> T {
+	Read() -> T? {
 		if let v = _unread { _unread = v.next ; return v.m }
-		return try _Read()
+		return _Read()
 	}
 	func
 	Unread( _ p: T ) { _unread = Chain< T >( p, _unread ) }
@@ -218,9 +221,9 @@ Reader< T > {
 class
 UnicodeReader: Reader< UnicodeScalar > {
 	func
-	SkipWhite() throws {
+	SkipWhite() {
 		while true {
-			let w = try Read()
+			guard let w = Read() else { break }
 			if !CharacterSet.whitespacesAndNewlines.contains( w ) {
 				Unread( w )
 				break
@@ -234,10 +237,10 @@ StdinUnicodeReader: UnicodeReader {
 	var
 	m		: String.UnicodeScalarView.Iterator?
 	override func
-	_Read() throws -> UnicodeScalar {
+	_Read() -> UnicodeScalar? {
 		repeat {
 			if m == nil {
-				guard let w = readLine( strippingNewline: false ) else { throw ReaderError.eod }
+				guard let w = readLine( strippingNewline: false ) else { return nil }
 				m = w.unicodeScalars.makeIterator()
 			}
 			if let v = m!.next() { return v }
@@ -256,9 +259,8 @@ StringUnicodeReader: UnicodeReader {
 	}
 
 	override func
-	_Read() throws -> UnicodeScalar {
-		guard let v = m.next() else { throw ReaderError.eod }
-		return v
+	_Read() -> UnicodeScalar? {
+		return m.next()
 	}
 }
 

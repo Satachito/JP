@@ -4,7 +4,9 @@
 #include	<set>
 using namespace std;
 
+
 //#define	JP_USE_CPU
+#define	COL_ROW
 #include	"JPVector.h"
 #include	"JPMatrix.h"
 using namespace JP;
@@ -278,29 +280,27 @@ Sigmoid( const vVector< T >& p ) {
 }
 
 
-template	< typename F >	Matrix< F >
-MM22( F p00, F p01, F p10, F p11 ) {
-	Matrix< F >	v( 2, 2, { p00, p01, p10, p11 } );
-	return v;
-}
-template	< typename F >	Matrix< F >
-MM23( F p00, F p01, F p02, F p10, F p11, F p12 ) {
-	Matrix< F >	v( 2, 3, { p00, p01, p02, p10, p11, p12 } );
-	return v;
-}
-
 void
 TestMatrix() {
 //	print( Matrix<Float>( nR: 1, nC: 1, u: [ 3 ] ).u[ 0 ] )
 
 	double	w[ 6 ] = { 1, 2, 3, 4, 5, 6 };
 	assert( vMatrix<double>( w, 2, 3 ).m[ 4 ] == 5 );
-	assert( Matrix<double>( 2, 3, { 5, 5, 5, 5, 5, 5 } ) ( 1, 1 ) == 5 );
-	
-	assert( T( vMatrix<double>( w, 3, 2 ) ) == MM23<double>( 1, 3, 5, 2, 4, 6 ) );
-
+#ifndef	COL_ROW
+	assert( Matrix<double>( 2, 3, { 1, 2, 3, 4, 5, 6 } ) ( 1, 1 ) == 4 );
+	assert( ~vMatrix<double>( w, 3, 2 ) == Matrix<double>( 2, 3, { 1, 4, 2, 5, 3, 6 } ) );
+	assert( vMatrix<double>( w, 2, 3 ).Row( 1 ) == vVector<double>( w + 1, 3, 2 ) );
+	assert( vMatrix<double>( w, 2, 3 ).Col( 1 ) == vVector<double>( w + 2, 2 ) );
+#else
+	assert( Matrix<double>( 2, 3, { 1, 2, 3, 4, 5, 6 } ) ( 1, 1 ) == 5 );
+	assert( ~vMatrix<double>( w, 3, 2 ) == Matrix<double>( 2, 3, { 1, 3, 5, 2, 4, 6 } ) );
+//	1 2 3
+//	4 5 6
 	assert( vMatrix<double>( w, 2, 3 ).Row( 1 ) == vVector<double>( w + 3, 3 ) );
 	assert( vMatrix<double>( w, 2, 3 ).Col( 1 ) == vVector<double>( w + 1, 2, 3 ) );
+#endif
+
+
 }
 
 void
@@ -308,55 +308,67 @@ JPMatrixTestF() {
 
 	float	w[ 6 ] = { 1, 2, 3, 4, 5, 6 };
 	auto	wM = vMatrix<float>( w, 2, 3 );
-	assert( wM +  (float)2 == MM23<float>(   3  ,  4  ,  5  ,  6  ,  7  ,  8 ) );
-	assert( wM -  (float)2 == MM23<float>(  -1  ,  0  ,  1  ,  2  ,  3  ,  4 ) );
-	assert( wM *  (float)2 == MM23<float>(   2  ,  4  ,  6  ,  8  , 10  , 12 ) );
+	assert( wM +  (float)2	== Matrix<float>( 2, 3, {   3  ,  4  ,  5  ,  6  ,  7  ,  8 } ) );
+	assert( wM -  (float)2	== Matrix<float>( 2, 3, {  -1  ,  0  ,  1  ,  2  ,  3  ,  4 } ) );
+	assert( wM *  (float)2	== Matrix<float>( 2, 3, {   2  ,  4  ,  6  ,  8  , 10  , 12 } ) );
 #ifdef	USE_CPU
-	assert( wM /  (float)2 == MM23<float>(   0.5, 1, 1.5, 2, 2.5, 3 ) );
-	assert(  (float)2 / wM == MM23<float>(   2  ,  1  ,  2.0/3.0,  0.5, 0.4, 1.0/3.0 ) );
-	assert( wM / wM == MM23<float>(   1, 1, 1, 1, 1, 1 ) );
+	assert( wM /  (float)2	== Matrix<float>( 2, 3, {   0.5, 1, 1.5, 2, 2.5, 3 } ) );
+	assert(  (float)2 / wM	== Matrix<float>( 2, 3, {   2  ,  1  ,  2.0/3.0,  0.5, 0.4, 1.0/3.0 } ) );
+	assert( wM / wM			== Matrix<float>( 2, 3, {   1, 1, 1, 1, 1, 1 } ) );
 #else
-	assert( wM /  (float)2 == MM23<float>(   0.49999997,  0.99999994  ,  1.49999988,  1.99999988  ,  2.49999976,  2.99999976 ) );
-	assert(  (float)2 / wM == MM23<float>(   1.9999999  ,  0.99999994  ,  0.6666666,  0.49999997, 0.39999998, 0.3333333 ) );
-	assert( wM / wM == MM23<float>(   0.99999994  ,  0.99999994  ,  0.99999994  ,  0.99999994  ,  0.99999994  ,  0.99999994 ) );
+	assert( wM /  (float)2	== Matrix<float>( 2, 3, {   0.49999997,  0.99999994  ,  1.49999988,  1.99999988  ,  2.49999976,  2.99999976 } ) );
+	assert(  (float)2 / wM	== Matrix<float>( 2, 3, {   1.9999999  ,  0.99999994  ,  0.6666666,  0.49999997, 0.39999998, 0.3333333 } ) );
+	assert( wM / wM			== Matrix<float>( 2, 3, {   0.99999994  ,  0.99999994  ,  0.99999994  ,  0.99999994  ,  0.99999994  ,  0.99999994 } ) );
 #endif
-	assert( (float)2 + wM == MM23<float>(   3  ,  4  ,  5  ,  6  ,  7  ,  8 ) );
-	assert( (float)2 - wM == MM23<float>(   1  ,  0  , -1  , -2  , -3  , -4 ) );
-	assert( (float)2 * wM == MM23<float>(   2  ,  4  ,  6  ,  8  , 10  , 12 ) );
-	assert( wM + wM == MM23<float>(   2  ,  4  ,  6  ,  8  , 10  , 12 ) );
-	assert( wM - wM == MM23<float>(   0  ,  0  ,  0  ,  0  ,  0  ,  0 ) );
-	assert( wM * wM == MM23<float>(   1  ,  4  ,  9  , 16  , 25  , 36 ) );
-	
-	assert( Dot( wM, vMatrix<float>( w, 3, 2 ) ) == MM22<float>( 22, 28, 49, 64 ) );
+	assert( (float)2 + wM	== Matrix<float>( 2, 3, {   3  ,  4  ,  5  ,  6  ,  7  ,  8 } ) );
+	assert( (float)2 - wM	== Matrix<float>( 2, 3, {   1  ,  0  , -1  , -2  , -3  , -4 } ) );
+	assert( (float)2 * wM	== Matrix<float>( 2, 3, {   2  ,  4  ,  6  ,  8  , 10  , 12 } ) );
+	assert( wM + wM			== Matrix<float>( 2, 3, {   2  ,  4  ,  6  ,  8  , 10  , 12 } ) );
+	assert( wM - wM			== Matrix<float>( 2, 3, {   0  ,  0  ,  0  ,  0  ,  0  ,  0 } ) );
+	assert( wM * wM			== Matrix<float>( 2, 3, {   1  ,  4  ,  9  , 16  , 25  , 36 } ) );
+
+	assert( Dot( wM, vMatrix<float>( w, 3, 2 ) ) == Matrix<float>( 2, 2, { 22, 28, 49, 64 } ) );
 //	Vector< float > wV = V< float, Sum >( wM );
 //	assert( V<float, []( const vVector& p ) { Exp( p ); }>( wM ) == MM23<float>( 1, 2, 3, 2, 2.5, 3 ) );
 //	assert( HDiv( wM, vVector<float>( w, 3 ) ) == MM23<float>( 0.99999994, 0.99999994, 0.99999994, 3.9999998, 2.4999998, 1.9999999 ) );
-	assert( H( wM, Sum ) == Vector2< float >( 6, 15 ) );
-	assert( V( wM, Sum ) == Vector3< float >( 5, 7, 9 ) );
-	assert( Spread( vVector< float >( w, 2 ), vVector<float>( w, 2 ) ) == MM22<float>( 1, 2, 2, 4 ) );
+#ifndef	COL_ROW
+	assert( ForRow( wM, Sum ) == Vector2< float >( 9, 12 ) );
+	assert( ForCol( wM, Sum ) == Vector3< float >( 3, 7, 11 ) );
+	assert( AddRow( wM, Vector3< float >( 7, 8, 9 ) ) == Matrix< float >( 3, 3, { 1, 2, 3, 4, 5, 6, 7, 8, 9 } ) );
+#else
+	assert( ForRow( wM, Sum ) == Vector2< float >( 6, 15 ) );
+	assert( ForCol( wM, Sum ) == Vector3< float >( 5, 7, 9 ) );
+	assert( AddCol( wM, Vector2< float >( 7, 8 ) ) == Matrix< float >( 2, 4, { 1, 2, 3, 4, 5, 6, 7, 8 } ) );
+#endif
+	assert( Spread( vVector< float >( w, 2 ), vVector<float>( w, 2 ) ) == Matrix<float>( 2, 2, { 1, 2, 2, 4 } ) );
 }
 
 void
 JPMatrixTestD() {
 	double	w[ 6 ] = { 1, 2, 3, 4, 5, 6 };
 	auto	wM = vMatrix<double>( w, 2, 3 );
-	assert( wM +  (double)2 == MM23<double>(   3  ,  4  ,  5  ,  6  ,  7  ,  8 ) );
-	assert( wM -  (double)2 == MM23<double>(  -1  ,  0  ,  1  ,  2  ,  3  ,  4 ) );
-	assert( wM *  (double)2 == MM23<double>(   2  ,  4  ,  6  ,  8  , 10  , 12 ) );
-	assert( wM /  (double)2 == MM23<double>(   0.5, 1, 1.5, 2, 2.5, 3 ) );
-	assert(  (double)2 + wM == MM23<double>(   3  ,  4  ,  5  ,  6  ,  7  ,  8 ) );
-	assert(  (double)2 - wM == MM23<double>(   1  ,  0  , -1  , -2  , -3  , -4 ) );
-	assert(  (double)2 * wM == MM23<double>(   2  ,  4  ,  6  ,  8  , 10  , 12 ) );
-	assert(  (double)2 / wM == MM23<double>(   2  ,  1  ,  2.0/3.0,  0.5, 0.4, 1.0/3.0 ) );
-	assert( wM + wM == MM23<double>(   2  ,  4  ,  6  ,  8  , 10  , 12 ) );
-	assert( wM - wM == MM23<double>(   0  ,  0  ,  0  ,  0  ,  0  ,  0 ) );
-	assert( wM * wM == MM23<double>(   1  ,  4  ,  9  , 16  , 25  , 36 ) );
-	assert( wM / wM == MM23<double>(   1, 1, 1, 1, 1, 1 ) );
+	assert( wM +  (double)2 == Matrix<double>( 2, 3, {   3  ,  4  ,  5  ,  6  ,  7  ,  8 } ) );
+	assert( wM -  (double)2 == Matrix<double>( 2, 3, {  -1  ,  0  ,  1  ,  2  ,  3  ,  4 } ) );
+	assert( wM *  (double)2 == Matrix<double>( 2, 3, {   2  ,  4  ,  6  ,  8  , 10  , 12 } ) );
+	assert( wM /  (double)2 == Matrix<double>( 2, 3, {   0.5,  1  , 1.5 ,  2  , 2.5 ,  3 } ) );
+	assert(  (double)2 + wM == Matrix<double>( 2, 3, {   3  ,  4  ,  5  ,  6  ,  7  ,  8 } ) );
+	assert(  (double)2 - wM == Matrix<double>( 2, 3, {   1  ,  0  , -1  , -2  , -3  , -4 } ) );
+	assert(  (double)2 * wM == Matrix<double>( 2, 3, {   2  ,  4  ,  6  ,  8  , 10  , 12 } ) );
+	assert(  (double)2 / wM == Matrix<double>( 2, 3, {   2  ,  1  ,  2.0/3.0,  0.5, 0.4, 1.0/3.0 } ) );
+	assert( wM + wM == Matrix<double>( 2, 3, {   2  ,  4  ,  6  ,  8  , 10  , 12 } ) );
+	assert( wM - wM == Matrix<double>( 2, 3, {   0  ,  0  ,  0  ,  0  ,  0  ,  0 } ) );
+	assert( wM * wM == Matrix<double>( 2, 3, {   1  ,  4  ,  9  , 16  , 25  , 36 } ) );
+	assert( wM / wM == Matrix<double>( 2, 3, {   1, 1, 1, 1, 1, 1 } ) );
 	
-	assert( Dot( wM, vMatrix<double>( w, 3, 2 ) ) == MM22<double>( 22, 28, 49, 64 ) );
-	assert( H( wM, Sum ) == Vector2< double >( 6, 15 ) );
-	assert( V( wM, Sum ) == Vector3< double >( 5, 7, 9 ) );
-	assert( Spread( vVector< double >( w, 2 ), vVector<double>( w, 2 ) ) == MM22<double>( 1, 2, 2, 4 ) );
+	assert( Dot( wM, vMatrix<double>( w, 3, 2 ) ) == Matrix<double>( 2, 2, { 22, 28, 49, 64 } ) );
+#ifndef	COL_ROW
+	assert( ForRow( wM, Sum ) == Vector2< double >( 9, 12 ) );
+	assert( ForCol( wM, Sum ) == Vector3< double >( 3, 7, 11 ) );
+#else
+	assert( ForRow( wM, Sum ) == Vector2< double >( 6, 15 ) );
+	assert( ForCol( wM, Sum ) == Vector3< double >( 5, 7, 9 ) );
+#endif
+	assert( Spread( vVector< double >( w, 2 ), vVector<double>( w, 2 ) ) == Matrix<double>( 2, 2, { 1, 2, 2, 4 } ) );
 }
 
 void

@@ -3,6 +3,10 @@
 #pragma once
 
 #include	"JPMatrix.h"
+#include	<iostream>
+#include	<fstream>
+
+using namespace std;
 
 namespace JP {
 
@@ -42,15 +46,17 @@ namespace JP {
 			}
 			virtual	const Matrix< F >
 			Activate( const vMatrix< F >& ) = 0;
-			virtual	const Matrix< F >&
+			virtual	const Matrix< F >
 			Forward( const vMatrix< F >& p ) {
-				auto v = DotAdd( p, weight, theta );
+				auto v = Dot( p, weight );
+				for ( auto iR = 0; iR < v.nR; iR++ ) v.Row( iR ) += theta;
 //printf( "%zu:%zu:%f\n", v.nR, v.nC, v( v.nR - 1, v.nC - 1 ) );
-				output = Activate( v );
+				v = Activate( v );
+				output = v;
 //std::cerr << std::endl << "w: " << weight << std::endl;
 //std::cerr << "t: " << theta << std::endl;
 //std::cerr << "o: " << output << std::endl;
-				return output;
+				return v;
 			}
 			virtual	const Matrix< F >
 			Gradient( const vMatrix< F >& ) = 0;
@@ -200,11 +206,11 @@ T( Dot( weight, T( d * wG ) ) )
 			layers.emplace_back( new ReLULayer( layers.size() ? layers.back()->theta.n : nInput, p ) );
 		}
 		
-		const vMatrix< F >&
+		const Matrix< F >
 		Predict( const vMatrix< F >& p ) const {
-			const vMatrix< F >*	v = &p;
-			for ( auto w: layers ) v = &w->Forward( *v );
-			return *v;
+			Matrix< F >	v = p;
+			for ( auto w: layers ) v = w->Forward( v );
+			return v;
 		}
 
 		void
