@@ -225,49 +225,36 @@ MakeBigInteger( _ p: Int ) -> BigInteger {
 }
 
 func
+Digit( _ p: UnicodeScalar ) -> Int? {
+	switch p {
+	case "0" ... "9"	: return Int( p.value ) - Int( ( "0" as UnicodeScalar ).value )
+	case "A" ... "Z"	: return Int( p.value ) - Int( ( "A" as UnicodeScalar ).value ) + 10
+	case "a" ... "z"	: return Int( p.value ) - Int( ( "a" as UnicodeScalar ).value ) + 10
+	default				: return nil
+	}
+}
+
+func
 MakeBigInteger( _ p: String, _ radix: Int = 10 ) -> BigInteger? {
 
 	let	wR = StringUnicodeReader( p )
 
 	var	wMinus = false
-	do {
-		let w = try wR.Read()
-		switch w {
-		case "0" ... "9"	: wR.Unread( w )
-		case "+"			: break
-		case "-"			: wMinus = true
-		default				: return nil
-		}
-	} catch {
-		return nil
+
+	guard let w = wR.Read() else { return nil }
+	switch w {
+	case "0" ... "9"	: wR.Unread( w )
+	case "+"			: break
+	case "-"			: wMinus = true
+	default				: return nil
 	}
 
 	let	wEU = EsUtil();
-	repeat {
-		do {
-			let w = try wR.Read()
-			switch w {
-			case "0" ... "9":
-				let	w = Int( w.value ) - Int( ( "0" as UnicodeScalar ).value )
-				guard w < radix else { return nil }
-				wEU.AddDigit( w, radix )
-			case "A" ... "Z":
-				let	w = Int( w.value ) - Int( ( "A" as UnicodeScalar ).value ) + 10
-				guard w < radix else { return nil }
-				wEU.AddDigit( w, radix )
-			case "a" ... "z":
-				let	w = Int( w.value ) - Int( ( "a" as UnicodeScalar ).value ) + 10
-				guard w < radix else { return nil }
-				wEU.AddDigit( w, radix )
-			default:
-				return nil
-			}
-		} catch ReaderError.eod {
-			return BigInteger( wEU.m, wMinus )
-		} catch {
-			return nil
-		}
-	} while true
+	while let u = wR.Read() {
+		guard let w = Digit( u ), w < radix else { return nil }
+		wEU.AddDigit( w, radix )
+	}
+	return wEU.m.count > 0 ? BigInteger( wEU.m, wMinus ) : nil
 }
 
 func
