@@ -15,6 +15,7 @@
 		5E751C9421AE91280036A897 /* JPMatrix.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E751C9121AE91280036A897 /* JPMatrix.swift */; };
 		5E751C9521AE91280036A897 /* JPVector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E751C9221AE91280036A897 /* JPVector.swift */; };
 		5E751C9621AE91280036A897 /* JP.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E751C9321AE91280036A897 /* JP.swift */; };
+		5E8C3BFC2246108B00CEBB24 /* JPInspectable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E8C3BFB2246108B00CEBB24 /* JPInspectable.swift */; };
 		5EC3C8B821EF2FE100D5A941 /* GEO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5EC3C8B721EF2FE100D5A941 /* GEO.cpp */; };
 /* End PBXBuildFile section */
 
@@ -76,6 +77,7 @@
 		5E751C9321AE91280036A897 /* JP.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JP.swift; sourceTree = "<group>"; };
 		5E751C9721AE92BE0036A897 /* JPNeural.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = JPNeural.h; sourceTree = "<group>"; };
 		5E751C9921AE941B0036A897 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
+		5E8C3BFB2246108B00CEBB24 /* JPInspectable.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JPInspectable.swift; sourceTree = "<group>"; };
 		5EC3C8B721EF2FE100D5A941 /* GEO.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GEO.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -143,6 +145,7 @@
 			isa = PBXGroup;
 			children = (
 				5E751C9321AE91280036A897 /* JP.swift */,
+				5E8C3BFB2246108B00CEBB24 /* JPInspectable.swift */,
 				5E751C9221AE91280036A897 /* JPVector.swift */,
 				5E751C9121AE91280036A897 /* JPMatrix.swift */,
 				5E751C8E21AE910D0036A897 /* JP.h */,
@@ -331,6 +334,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5E751C9421AE91280036A897 /* JPMatrix.swift in Sources */,
+				5E8C3BFC2246108B00CEBB24 /* JPInspectable.swift in Sources */,
 				5E751C9621AE91280036A897 /* JP.swift in Sources */,
 				5E751C7F21AE90A90036A897 /* main.swift in Sources */,
 				5E751C9521AE91280036A897 /* JPVector.swift in Sources */,
