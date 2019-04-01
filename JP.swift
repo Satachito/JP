@@ -30,6 +30,7 @@ HexString( _ p: Data ) -> String {
 		v = HexString( q, p.count )
 	}
 	return v
+//	return p.withUnsafeBytes { HexString( $0.load( as: UnsafePointer<UInt8>.self ) ) }
 }
 
 func
@@ -166,10 +167,13 @@ func
 JPTest() {
 	let	wData = RandomData( 16 )
 
+/*
 	var	wArray = [ UInt8 ]();
 	wData.withUnsafeBytes { ( p: UnsafePointer<UInt8> ) in
 		wArray = ToArray( p, 16 )
 	}
+*/
+	var	wArray = wData.withUnsafeBytes{ ToArray( $0.load( as: [ UInt8 ].self ), 16 ) }
 	var	wStr = ""
 	for i in 0 ..< 16 { wStr += String( format: "%02x", wArray[ i ] ) }
 	assert( wStr == HexString( wData ) )

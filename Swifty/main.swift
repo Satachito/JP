@@ -1,5 +1,6 @@
 import Foundation
 
+JPTest()
 
 func
 Equal< N: Numeric > ( _ l: ArraySlice< N >, _ r: ArraySlice< N > ) {
