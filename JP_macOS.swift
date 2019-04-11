@@ -22,22 +22,18 @@ Error( _ p: Error ) {
 
 func
 Input(
-	_ pMessage: String = ""
+	_ pView: NSView
+,	_ pMessage: String = ""
 ,	_ pInfomative: String = ""
-,	_ pDefault: String = ""
-,	_ pPlaceholder: String = ""
-) -> String? {
+) -> Bool {
 	let	w = NSAlert()
 	w.messageText = pMessage
 	w.informativeText = pInfomative
-	w.alertStyle = .warning
+	w.alertStyle = .informational
 	w.addButton( withTitle: "OK" )
-    let wTF = NSTextField( frame: NSRect(x: 0, y: 0, width: 200, height: 24 ) )
-    wTF.stringValue = pDefault
-    wTF.placeholderString = pPlaceholder
-	wTF.translatesAutoresizingMaskIntoConstraints = true
-    w.accessoryView = wTF
-	return w.runModal() == .alertFirstButtonReturn ? wTF.stringValue : nil
+	w.addButton( withTitle: "Cancel" )
+    w.accessoryView = pView
+	return w.runModal() == .alertFirstButtonReturn
 }
 
 func
