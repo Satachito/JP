@@ -222,22 +222,19 @@ Reader< T > {
 	Unread( _ p: T ) { _unread = Chain< T >( p, _unread ) }
 }
 
-class
-UnicodeReader: Reader< UnicodeScalar > {
-	func
-	SkipWhite() {
-		while true {
-			guard let w = Read() else { break }
-			if !CharacterSet.whitespacesAndNewlines.contains( w ) {
-				Unread( w )
-				break
-			}
+func
+SkipWhite( _ p: Reader< UnicodeScalar > ) {
+	while true {
+		guard let w = p.Read() else { break }
+		if !CharacterSet.whitespacesAndNewlines.contains( w ) {
+			p.Unread( w )
+			break
 		}
 	}
 }
 
 class
-StdinUnicodeReader: UnicodeReader {
+StdinUnicodeReader: Reader< UnicodeScalar > {
 	var
 	m		: String.UnicodeScalarView.Iterator?
 	override func
@@ -254,7 +251,7 @@ StdinUnicodeReader: UnicodeReader {
 }
 
 class
-StringUnicodeReader: UnicodeReader {
+StringUnicodeReader: Reader< UnicodeScalar > {
 	var
 	m		: String.UnicodeScalarView.Iterator
 
