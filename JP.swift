@@ -9,28 +9,17 @@ JPError: Error {
 }
 
 func
-HexChar( _ p: Int ) -> Character {
-	return [ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f" ][ p ]
-}
-
-func
-HexString( _ p: UnsafePointer<UInt8>, _ count: Int ) -> String {
+HexString( _ p: [ UInt8 ] ) -> String {
+	func
+	HexChar( _ p: Int ) -> Character {
+		return [ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f" ][ p ]
+	}
 	var	v = ""
-	for i in 0 ..< count {
+	for i in 0 ..< p.count {
 		v.append( HexChar( Int( p[ i ] ) >> 4 ) )
 		v.append( HexChar( Int( p[ i ] ) ) )
 	}
 	return v
-}
-
-func
-HexString( _ p: Data ) -> String {
-	var	v = ""
-	p.withUnsafeBytes { q in
-		v = HexString( q, p.count )
-	}
-	return v
-//	return p.withUnsafeBytes { HexString( $0.load( as: UnsafePointer<UInt8>.self ) ) }
 }
 
 func
@@ -166,7 +155,6 @@ BinarySearch< T: Comparable >( _ a: T, _ b: [ T ] ) -> [ Int ] {
 func
 JPTest() {
 	let	wData = RandomData( 16 )
-
 /*
 	var	wArray = [ UInt8 ]();
 	wData.withUnsafeBytes { ( p: UnsafePointer<UInt8> ) in
@@ -176,7 +164,6 @@ JPTest() {
 	var	wArray = wData.withUnsafeBytes{ ToArray( $0.load( as: [ UInt8 ].self ), 16 ) }
 	var	wStr = ""
 	for i in 0 ..< 16 { wStr += String( format: "%02x", wArray[ i ] ) }
-	assert( wStr == HexString( wData ) )
 	
 	wStr = "今日は、Alberto López.☕️";
 	assert( wStr == UTF8String( DataByUTF8( wStr )! ) )
