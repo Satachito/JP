@@ -288,3 +288,312 @@ RGBIntColorValues = [
 ,	"yellow"				: ( 255, 255, 0 )
 ,	"yellowgreen"			: ( 154, 205, 50 )
 ]
+
+
+func
+-( l: NSPoint, r: NSPoint ) -> NSSize {
+	return NSSize( width: l.x - r.x, height: l.y - r.y )
+}
+
+func
++( p: NSPoint, s: NSSize ) -> NSPoint {
+	return NSPoint( x: p.x + s.width, y: p.y + s.height )
+}
+
+func
+-( p: NSPoint, s: NSSize ) -> NSPoint {
+	return NSPoint( x: p.x - s.width, y: p.y - s.height )
+}
+
+extension
+NSBezierPath {
+	func
+	quad( to endPoint: NSPoint, controlPoint: NSPoint ) {
+		func
+		ToT( _ c: NSPoint, _ a: NSPoint ) -> NSPoint {
+			return NSPoint( x:( c.x * 2 + a.x ) / 3, y: ( c.y * 2 + a.y ) / 3 )
+		}
+		curve( to: endPoint, controlPoint1: ToT( controlPoint, currentPoint ), controlPoint2: ToT( controlPoint, endPoint ) )
+	}
+}
+
+class
+SVGBezierPath: NSBezierPath {
+	
+	required init?(coder aDecoder: NSCoder) {
+		fatalError("init(coder:) has not been implemented")
+	}
+
+	let	props	: [ String: String ]
+	func
+	ReadCGFloat( _ r: Reader< UnicodeScalar > ) throws -> CGFloat {
+		func
+		Valid( _ us: UnicodeScalar ) -> Bool {
+			switch us {
+			case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "-":
+				return true
+			default:
+				return false
+			}
+		}
+		var	v = ""
+		while let w = r.Read() {
+			if Valid( w ) {
+				r.Unread( w )
+				break
+			}
+		}
+		while let w = r.Read() {
+			if !Valid( w ) || ( w == "-" && v.count > 0 ) {
+				r.Unread( w )
+				break
+			}
+			v += String( w )
+		}
+		enum ERR: Error { case EOF }
+		guard let w = Double( v ) else { throw ERR.EOF }
+		return CGFloat( w )
+	}
+	func
+	ReadPoint( _ r: Reader< UnicodeScalar > ) throws -> NSPoint {
+		return NSPoint( x: try ReadCGFloat( r ), y: try ReadCGFloat( r ) )
+	}
+	func
+	ReadSize( _ r: Reader< UnicodeScalar > ) throws -> NSSize {
+		return NSSize( width: try ReadCGFloat( r ), height: try ReadCGFloat( r ) )
+	}
+	
+	init( _ props: [ String: String ] ) {
+		self.props = props
+		super.init()
+	}
+
+	convenience init( points: String, _ props: [ String: String ] ) throws {
+		self.init( props )
+		let	r = StringUnicodeReader( points )
+
+		enum ERR: Error { case Invalid }
+		guard let wMT = try? ReadPoint( r ) else { throw ERR.Invalid }
+		move( to: wMT )
+		while let w = try? ReadPoint( r ) { line( to: w ) }
+	}
+
+	convenience init( d: String, _ props: [ String: String ] ) throws {
+		self.init( props )
+
+		let	r	= StringUnicodeReader( d )
+		var	wC	: NSPoint?
+
+		func
+		Body( _ us: UnicodeScalar ) throws {
+			switch us {
+			case "Z", "z"	: wC = nil; close()
+			case "M"		: wC = nil; move( to: try ReadPoint( r ) )
+			case "m"		: wC = nil; move( to: try isEmpty ? ReadPoint( r ) : currentPoint + ReadSize( r ) )
+			case "L"		: wC = nil; line( to: try ReadPoint( r ) )
+			case "l"		: wC = nil; line( to: try currentPoint + ReadSize( r ) )
+			case "H"		: wC = nil; line( to: NSPoint( x: try ReadCGFloat( r ), y: currentPoint.y ) )
+			case "h"		: wC = nil; line( to: NSPoint( x: try currentPoint.x + ReadCGFloat( r ), y: currentPoint.y ) )
+			case "V"		: wC = nil; line( to: NSPoint( x: currentPoint.x, y: try ReadCGFloat( r ) ) )
+			case "v"		: wC = nil; line( to: NSPoint( x: currentPoint.x, y: try currentPoint.y + ReadCGFloat( r ) ) )
+			case "C":
+				let	wC1 = try ReadPoint( r )
+				wC = try ReadPoint( r )
+				curve( to: try ReadPoint( r ), controlPoint1: wC1, controlPoint2: wC! )
+			case "Q":
+				wC = try ReadPoint( r )
+				quad( to: try ReadPoint( r ), controlPoint: wC! )
+			case "S":
+				var	wC1 = currentPoint
+				if let w = wC { wC1 = currentPoint + ( currentPoint - w ) }
+				wC = try ReadPoint( r )
+				curve( to: try ReadPoint( r ), controlPoint1: wC1, controlPoint2: wC! )
+			case "T":
+				if let w = wC { wC = currentPoint + ( currentPoint - w ) } else { wC = currentPoint }
+				quad( to: try ReadPoint( r ), controlPoint: wC! )
+			case "c":
+				let	wC1 = try currentPoint + ReadSize( r )
+				wC = try currentPoint + ReadSize( r )
+				curve( to: try currentPoint + ReadSize( r ), controlPoint1: wC1, controlPoint2: wC! )
+			case "q":
+				wC = try currentPoint + ReadSize( r )
+				quad( to: try currentPoint + ReadSize( r ), controlPoint: wC! )
+			case "s":
+				var	wC1 = currentPoint
+				if let w = wC { wC1 = currentPoint + ( currentPoint - w ) }
+				wC = try currentPoint + ReadSize( r )
+				curve( to: try currentPoint + ReadSize( r ), controlPoint1: wC1, controlPoint2: wC! )
+			case "t":
+				if let w = wC { wC = currentPoint + ( currentPoint - w ) } else { wC = currentPoint }
+				quad( to: try currentPoint + ReadSize( r ), controlPoint: wC! )
+			default:
+				fatalError()
+			}
+		}
+
+		var	wLastCommand	: UnicodeScalar?
+		while true {
+			SkipWhite( r )
+			guard let w = r.Read() else { break }
+			switch w {
+			case "Z", "z", "M", "m", "L", "l", "H", "h", "V", "v", "C", "c", "Q", "q", "S", "s", "T", "t":
+				try Body( w )
+				wLastCommand = w
+			default:
+				r.Unread( w )
+				if let wLC = wLastCommand {
+					switch wLC {
+					case "m": try Body( "l" )
+					case "M": try Body( "L" )
+					default	: try Body( wLC )
+					}
+				}
+			}
+		}
+		enum ERR: Error { case NoPath }
+		guard elementCount > 0 else { throw ERR.NoPath }
+		guard !isEmpty else { throw ERR.NoPath }
+	}
+	
+	func
+	Draw() {
+		var	wDashArray		: [ CGFloat ]?
+		var	wDashOffset		= CGFloat( 0 )
+		var	wFillColor		= "black"
+		var	wFillOpacity	= CGFloat( 1 )
+		var	wStrokeColor	= "none"
+		var	wStrokeOpacity	= CGFloat( 1 )
+		for ( key, value ) in props {
+			switch key {
+			case "fill":
+				wFillColor = value
+			case "fill-opacity":
+				wFillOpacity = CGFloat( Double( value ) ?? 1 )
+			case "fill-rule":
+				switch value {
+				case "nonzero"	: windingRule = .nonZero
+				case "evenodd"	: windingRule = .evenOdd
+				default			: break
+				}
+			case "stroke":
+				wStrokeColor = value
+			case "stroke-opacity":
+				wStrokeOpacity = CGFloat( Double( value ) ?? 1 )
+			case "stroke-width":
+				lineWidth = CGFloat( Double( value ) ?? 1 )
+			case "stroke-linecap":
+				switch value {
+				case "butt"		: lineCapStyle = .butt
+				case "round"	: lineCapStyle = .round
+				case "square"	: lineCapStyle = .square
+				default			: break
+				}
+			case "stroke-linejoin":
+				switch value {
+				case "miter"	: lineJoinStyle = .miter
+				case "round"	: lineJoinStyle = .round
+				case "bevel"	: lineJoinStyle = .bevel
+				default			: break
+				}
+			case "stroke-dasharray":
+				wDashArray = value.components( separatedBy: .whitespaces ).map { CGFloat( Double( $0 ) ?? 0 ) }
+			case "stroke-dashoffset":
+				wDashOffset = CGFloat( Double( value ) ?? 0 )
+			default:
+				break
+			}
+		}
+		if let w = wDashArray { setLineDash( w, count: w.count, phase: wDashOffset ) }
+		if let w = NSColor( wFillColor, alpha: wFillOpacity )		{ w.set(); fill() }
+		if let w = NSColor( wStrokeColor, alpha: wStrokeOpacity )	{ w.set(); stroke() }
+	}
+
+	class func
+	Parse( _ p: String ) throws -> [ SVGBezierPath ] {
+		func
+		Attributes( _ p: XMLElement ) -> [ String: String ] {
+			return ( p.attributes ?? [] ).reduce( [ String: String ]() ) {
+				$0.merging( [ $1.name!.lowercased(): $1.stringValue! ] ) { $1 }
+			}
+		}
+		func
+		Crawl(
+			_ p: XMLElement
+		,	_ a: [ String: String ]
+		,	_ path: ( [ String: String ] ) -> ()
+		,	_ polygon: ( [ String: String ] ) -> ()
+		,	_ polyline: ( [ String: String ] ) -> ()
+		) {
+			let	wA = a.merging( Attributes( p ) ) { $1 }
+
+			switch p.name {
+			case "path"		: path( wA )
+			case "polygon"	: polygon( wA )
+			case "polyline"	: polyline( wA )
+			default			: break
+			}
+			for c in p.children ?? [] {
+				if let w = c as? XMLElement { Crawl( w, wA, path, polygon, polyline ) }
+			}
+		}
+		enum ERR: Error {
+			case	NoUTF8
+			case	NoXML
+			case	NoRoot
+			case	NoSVG
+		}
+		guard let wData = DataByUTF8( p ) else { throw ERR.NoUTF8 }
+		guard let wDOC = try? XMLDocument( data: wData ) else { throw ERR.NoXML }
+		guard let wRoot = wDOC.rootElement() else { throw ERR.NoRoot }
+		guard wRoot.name == "svg" else { throw ERR.NoSVG }
+		var	v = [ SVGBezierPath ]()
+		Crawl(
+			wRoot
+		,	[:]
+		,	{	if let wS = $0[ "d" ], let w = try? SVGBezierPath( d: wS, $0.filter{ $0.key != "points" } ), w.elementCount > 0 {
+					v.append( w )
+				}
+			}
+		,	{	if let wS = $0[ "points" ], let w = try? SVGBezierPath( points: wS, $0.filter{ $0.key != "points" } ), w.elementCount > 0 {
+					w.close()
+					v.append( w )
+				}
+			}
+		,	{	if let wS = $0[ "points" ], let w = try? SVGBezierPath( points: wS, $0.filter{ $0.key != "points" } ), w.elementCount > 0 {
+					v.append( w )
+				}
+			}
+		)
+		return v
+	}
+}
+
+import	WebKit
+
+class
+SVGGetter: NSObject, WKNavigationDelegate {
+	var wv	= WKWebView()
+	override init() {
+		super.init()
+		wv.navigationDelegate = self
+	}
+	var	cb	= { ( _: String ) in }
+	func
+	LoadFileURL( _ url: URL, _ cb: @escaping ( String ) -> () ) {
+		self.cb = cb
+		wv.loadFileURL( url, allowingReadAccessTo: url )
+	}
+	func
+	LoadHTMLString( _ p: String, _ cb: @escaping ( String ) -> () ) {
+		self.cb = cb
+		wv.loadHTMLString( p, baseURL: nil )
+	}
+	func
+	webView(_ webView: WKWebView, didFinish navigation: WKNavigation! ) {
+		wv.evaluateJavaScript( "document.querySelector( 'svg' ).outerHTML" ) { a, e in
+			if let w = e { Error( w ) }
+			if let w = a as? String { self.cb( w ) }
+		}
+	}
+}
+
