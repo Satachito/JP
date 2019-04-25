@@ -11,15 +11,10 @@ JPError: Error {
 func
 HexString( _ p: [ UInt8 ] ) -> String {
 	func
-	HexChar( _ p: Int ) -> Character {
+	HexChar( _ p: Int ) -> String {
 		return [ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f" ][ p ]
 	}
-	var	v = ""
-	for i in 0 ..< p.count {
-		v.append( HexChar( Int( p[ i ] ) >> 4 ) )
-		v.append( HexChar( Int( p[ i ] ) ) )
-	}
-	return v
+	return p.reduce( "" ) {  $0 + HexChar( Int( $1 ) >> 4 ) + HexChar( Int( $1 ) ) }
 }
 
 func
@@ -160,12 +155,14 @@ JPTest() {
 	wData.withUnsafeBytes { ( p: UnsafePointer<UInt8> ) in
 		wArray = ToArray( p, 16 )
 	}
-*/
+
 	var	wArray = wData.withUnsafeBytes{ ToArray( $0.load( as: [ UInt8 ].self ), 16 ) }
 	var	wStr = ""
 	for i in 0 ..< 16 { wStr += String( format: "%02x", wArray[ i ] ) }
-	
-	wStr = "今日は、Alberto López.☕️";
+*/
+
+
+	let wStr = "今日は、Alberto López.☕️";
 	assert( wStr == UTF8String( DataByUTF8( wStr )! ) )
 	assert( wData == DataByBase64( Base64String( wData ) )! )
 	
@@ -215,7 +212,7 @@ SkipWhite( _ p: Reader< UnicodeScalar > ) {
 		guard let w = p.Read() else { break }
 		if !CharacterSet.whitespacesAndNewlines.contains( w ) {
 			p.Unread( w )
-			break
+			return
 		}
 	}
 }
