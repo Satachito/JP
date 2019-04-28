@@ -551,3 +551,22 @@ NormalRandom() -> Double {
 	*	sin( 2 * .pi * Double.random( in: 0 ..< 1 ) )
 }
 
+func
+|<T>( _ l: Set< T >, _ r: Set< T > ) -> Set< T > {
+	return l.union( r )
+}
+
+func
+|<T>( _ l: Set< T >, _ r: T ) -> Set< T > {
+	var v = l
+	v.insert( r )
+	return v
+}
+
+func
+|<T>( _ l: T, _ r: Set< T > ) -> Set< T > {
+	var v = r
+	v.insert( l )
+	return v
+}
+

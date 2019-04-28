@@ -74,7 +74,8 @@ V	: NSView {
 
 extension
 NSColor {
-	convenience init?( _ p: String, alpha: CGFloat ) {
+	convenience
+	init?( _ p: String, alpha: CGFloat ) {
 		if p.hasPrefix( "#" ) {
 			let w = p.dropFirst()
 			switch w.count {
@@ -305,6 +306,48 @@ func
 	return NSPoint( x: p.x - s.width, y: p.y - s.height )
 }
 
+func
+!=( l: NSPoint, r: NSPoint ) -> Bool {
+//print( abs( l.x - r.x ), abs( l.y - r.y ) )
+	return NSEqualPoints( l, r )
+}
+
+//
+
+extension
+NSRect {
+	init( _ p: NSPoint ) {
+		self.init( origin: p, size: NSSize.zero )
+	}
+}
+
+func
+Fatten( _ r: NSRect, _ dx: CGFloat, _ dy: CGFloat ) -> NSRect {
+	return r.insetBy( dx: -dx, dy: -dy )
+}
+
+func
+|( _ l: NSRect, _ r: NSRect ) -> NSRect {
+	return l.union( r )
+}
+
+func
+|( _ r: NSRect, _ c: NSPoint ) -> NSRect {
+	return r | NSRect( c )
+}
+
+func
+|( _ c: NSPoint, _ r: NSRect ) -> NSRect {
+	return NSRect( c ) | r
+}
+
+func
+Mid( _ l: NSPoint, _ r: NSPoint ) -> NSPoint {
+	return NSPoint( x: ( l.x + r.x ) / 2, y: ( l.y + r.y ) / 2 )
+}
+
+//
+
 extension
 NSBezierPath {
 	func
@@ -317,14 +360,8 @@ NSBezierPath {
 	}
 }
 
-class
-SVGBezierPath: NSBezierPath {
-	
-	required init?(coder aDecoder: NSCoder) {
-		fatalError("init(coder:) has not been implemented")
-	}
-
-	let	props	: [ String: String ]
+extension
+NSBezierPath {
 	func
 	ReadCGFloat( _ r: Reader< UnicodeScalar > ) throws -> CGFloat {
 		func
@@ -363,13 +400,10 @@ SVGBezierPath: NSBezierPath {
 		return NSSize( width: try ReadCGFloat( r ), height: try ReadCGFloat( r ) )
 	}
 	
-	init( _ props: [ String: String ] ) {
-		self.props = props
-		super.init()
-	}
+	convenience
+	init( points: String ) throws {
+		self.init()
 
-	convenience init( points: String, _ props: [ String: String ] ) throws {
-		self.init( props )
 		let	r = StringUnicodeReader( points )
 
 		enum ERR: Error { case Invalid }
@@ -378,8 +412,9 @@ SVGBezierPath: NSBezierPath {
 		while let w = try? ReadPoint( r ) { line( to: w ) }
 	}
 
-	convenience init( d: String, _ props: [ String: String ] ) throws {
-		self.init( props )
+	convenience
+	init( d: String ) throws {
+		self.init()
 
 		let	r	= StringUnicodeReader( d )
 		var	wC	: NSPoint?
@@ -450,13 +485,10 @@ SVGBezierPath: NSBezierPath {
 				}
 			}
 		}
-		enum ERR: Error { case NoPath }
-		guard elementCount > 0 else { throw ERR.NoPath }
-		guard !isEmpty else { throw ERR.NoPath }
 	}
-	
+
 	func
-	Draw() {
+	Draw( _ props: [ String: String ] ) {
 		var	wDashArray		: [ CGFloat ]?
 		var	wDashOffset		= CGFloat( 0 )
 		var	wFillColor		= "black"
@@ -506,65 +538,6 @@ SVGBezierPath: NSBezierPath {
 		if let w = wDashArray { setLineDash( w, count: w.count, phase: wDashOffset ) }
 		if let w = NSColor( wFillColor, alpha: wFillOpacity )		{ w.set(); fill() }
 		if let w = NSColor( wStrokeColor, alpha: wStrokeOpacity )	{ w.set(); stroke() }
-	}
-
-	class func
-	Parse( _ p: String ) throws -> [ SVGBezierPath ] {
-		func
-		Attributes( _ p: XMLElement ) -> [ String: String ] {
-			return ( p.attributes ?? [] ).reduce( [ String: String ]() ) {
-				$0.merging( [ $1.name!.lowercased(): $1.stringValue! ] ) { $1 }
-			}
-		}
-		func
-		Crawl(
-			_ p: XMLElement
-		,	_ a: [ String: String ]
-		,	_ path: ( [ String: String ] ) -> ()
-		,	_ polygon: ( [ String: String ] ) -> ()
-		,	_ polyline: ( [ String: String ] ) -> ()
-		) {
-			let	wA = a.merging( Attributes( p ) ) { $1 }
-
-			switch p.name {
-			case "path"		: path( wA )
-			case "polygon"	: polygon( wA )
-			case "polyline"	: polyline( wA )
-			default			: break
-			}
-			for c in p.children ?? [] {
-				if let w = c as? XMLElement { Crawl( w, wA, path, polygon, polyline ) }
-			}
-		}
-		enum ERR: Error {
-			case	NoUTF8
-			case	NoXML
-			case	NoRoot
-			case	NoSVG
-		}
-		guard let wData = DataByUTF8( p ) else { throw ERR.NoUTF8 }
-		guard let wDOC = try? XMLDocument( data: wData ) else { throw ERR.NoXML }
-		guard let wRoot = wDOC.rootElement() else { throw ERR.NoRoot }
-		guard wRoot.name == "svg" else { throw ERR.NoSVG }
-		var	v = [ SVGBezierPath ]()
-		Crawl(
-			wRoot
-		,	[:]
-		,	{	if let wS = $0[ "d" ], let w = try? SVGBezierPath( d: wS, $0.filter{ $0.key != "points" } ), w.elementCount > 0 {
-					v.append( w )
-				}
-			}
-		,	{	if let wS = $0[ "points" ], let w = try? SVGBezierPath( points: wS, $0.filter{ $0.key != "points" } ), w.elementCount > 0 {
-					w.close()
-					v.append( w )
-				}
-			}
-		,	{	if let wS = $0[ "points" ], let w = try? SVGBezierPath( points: wS, $0.filter{ $0.key != "points" } ), w.elementCount > 0 {
-					v.append( w )
-				}
-			}
-		)
-		return v
 	}
 }
 
