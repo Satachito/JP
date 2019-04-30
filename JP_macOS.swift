@@ -347,7 +347,7 @@ NSBezierPath {
 extension
 StringUnicodeReader {
 	func
-	CGFloat() throws -> CGFloat {
+	CGFloatValue() throws -> CGFloat {
 		func
 		Valid( _ us: UnicodeScalar ) -> Bool {
 			switch us {
@@ -373,15 +373,15 @@ StringUnicodeReader {
 		}
 		enum ERR: Error { case Invalid }
 		guard let w = Double( v ) else { throw ERR.Invalid }
-		return Swift.CGFloat( w )
+		return CGFloat( w )
 	}
 	func
-	NSPoint() throws -> NSPoint {
-		return NSPoint( x: try CGFloat(), y: try CGFloat() )
+	NSPointValue() throws -> NSPoint {
+		return NSPoint( x: try CGFloatValue(), y: try CGFloatValue() )
 	}
 	func
-	NSSize() throws -> NSSize {
-		return NSSize( width: try CGFloat(), height: try CGFloat() )
+	NSSizeValue() throws -> NSSize {
+		return NSSize( width: try CGFloatValue(), height: try CGFloatValue() )
 	}
 }
 
@@ -393,8 +393,8 @@ NSBezierPath {
 	init( points: String ) throws {
 		self.init()
 		let	r = StringUnicodeReader( points )
-		move( to: try r.CGFloat() )
-		while let w = try? r.CGFloat() { line( to: w ) }
+		move( to: try r.NSPointValue() )
+		while let w = try? r.NSPointValue() { line( to: w ) }
 	}
 
 	convenience
@@ -408,44 +408,44 @@ NSBezierPath {
 		Body( _ us: UnicodeScalar ) throws {
 			switch us {
 			case "Z", "z"	: wC = nil; close()
-			case "M"		: wC = nil; move( to: try r.NSPoint() )
-			case "m"		: wC = nil; move( to: try isEmpty ? r.NSPoint() : currentPoint + r.NSSize() )
-			case "L"		: wC = nil; line( to: try r.NSPoint() )
-			case "l"		: wC = nil; line( to: try currentPoint + r.NSSize() )
-			case "H"		: wC = nil; line( to: NSPoint( x: try r.CGFloat(), y: currentPoint.y ) )
-			case "h"		: wC = nil; line( to: NSPoint( x: try currentPoint.x + r.CGFloat(), y: currentPoint.y ) )
-			case "V"		: wC = nil; line( to: NSPoint( x: currentPoint.x, y: try r.CGFloat() ) )
-			case "v"		: wC = nil; line( to: NSPoint( x: currentPoint.x, y: try currentPoint.y + r.CGFloat() ) )
+			case "M"		: wC = nil; move( to: try r.NSPointValue() )
+			case "m"		: wC = nil; move( to: try isEmpty ? r.NSPointValue() : currentPoint + r.NSSizeValue() )
+			case "L"		: wC = nil; line( to: try r.NSPointValue() )
+			case "l"		: wC = nil; line( to: try currentPoint + r.NSSizeValue() )
+			case "H"		: wC = nil; line( to: NSPoint( x: try r.CGFloatValue(), y: currentPoint.y ) )
+			case "h"		: wC = nil; line( to: NSPoint( x: try currentPoint.x + r.CGFloatValue(), y: currentPoint.y ) )
+			case "V"		: wC = nil; line( to: NSPoint( x: currentPoint.x, y: try r.CGFloatValue() ) )
+			case "v"		: wC = nil; line( to: NSPoint( x: currentPoint.x, y: try currentPoint.y + r.CGFloatValue() ) )
 			case "C":
-				let	wC1 = try r.NSPoint()
-				wC = try r.NSPoint()
-				curve( to: try r.NSPoint(), controlPoint1: wC1, controlPoint2: wC! )
+				let	wC1 = try r.NSPointValue()
+				wC = try r.NSPointValue()
+				curve( to: try r.NSPointValue(), controlPoint1: wC1, controlPoint2: wC! )
 			case "Q":
-				wC = try r.NSPoint()
-				quad( to: try r.NSPoint(), controlPoint: wC! )
+				wC = try r.NSPointValue()
+				quad( to: try r.NSPointValue(), controlPoint: wC! )
 			case "S":
 				var	wC1 = currentPoint
 				if let w = wC { wC1 = currentPoint + ( currentPoint - w ) }
-				wC = try r.NSPoint()
-				curve( to: try r.NSPoint(), controlPoint1: wC1, controlPoint2: wC! )
+				wC = try r.NSPointValue()
+				curve( to: try r.NSPointValue(), controlPoint1: wC1, controlPoint2: wC! )
 			case "T":
 				if let w = wC { wC = currentPoint + ( currentPoint - w ) } else { wC = currentPoint }
-				quad( to: try r.NSPoint(), controlPoint: wC! )
+				quad( to: try r.NSPointValue(), controlPoint: wC! )
 			case "c":
-				let	wC1 = try currentPoint + r.NSSize()
-				wC = try currentPoint + r.NSSize()
-				curve( to: try currentPoint + r.NSSize(), controlPoint1: wC1, controlPoint2: wC! )
+				let	wC1 = try currentPoint + r.NSSizeValue()
+				wC = try currentPoint + r.NSSizeValue()
+				curve( to: try currentPoint + r.NSSizeValue(), controlPoint1: wC1, controlPoint2: wC! )
 			case "q":
-				wC = try currentPoint + r.NSSize()
-				quad( to: try currentPoint + r.NSSize(), controlPoint: wC! )
+				wC = try currentPoint + r.NSSizeValue()
+				quad( to: try currentPoint + r.NSSizeValue(), controlPoint: wC! )
 			case "s":
 				var	wC1 = currentPoint
 				if let w = wC { wC1 = currentPoint + ( currentPoint - w ) }
-				wC = try currentPoint + r.NSSize()
-				curve( to: try currentPoint + r.NSSize(), controlPoint1: wC1, controlPoint2: wC! )
+				wC = try currentPoint + r.NSSizeValue()
+				curve( to: try currentPoint + r.NSSizeValue(), controlPoint1: wC1, controlPoint2: wC! )
 			case "t":
 				if let w = wC { wC = currentPoint + ( currentPoint - w ) } else { wC = currentPoint }
-				quad( to: try currentPoint + r.NSSize(), controlPoint: wC! )
+				quad( to: try currentPoint + r.NSSizeValue(), controlPoint: wC! )
 			default:
 				enum ERR: Error { case Invalid }
 				throw ERR.Invalid
