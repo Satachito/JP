@@ -147,85 +147,45 @@ BinarySearch< T: Comparable >( _ a: T, _ b: [ T ] ) -> [ Int ] {
 	
 }
 
-func
-JPTest() {
-	let	wData = RandomData( 16 )
-/*
-	var	wArray = [ UInt8 ]();
-	wData.withUnsafeBytes { ( p: UnsafePointer<UInt8> ) in
-		wArray = ToArray( p, 16 )
-	}
-
-	var	wArray = wData.withUnsafeBytes{ ToArray( $0.load( as: [ UInt8 ].self ), 16 ) }
-	var	wStr = ""
-	for i in 0 ..< 16 { wStr += String( format: "%02x", wArray[ i ] ) }
-*/
-
-
-	let wStr = "今日は、Alberto López.☕️";
-	assert( wStr == UTF8String( DataByUTF8( wStr )! ) )
-	assert( wData == DataByBase64( Base64String( wData ) )! )
-	
-	assert( IsNull( nil ) )
-	assert( IsNull( NSNull() ) )
-
-	assert( AsInt( "123" ) == 123 )
-	assert( AsInt( 123 ) == 123 )
-	assert( AsInt( NSNumber( value: 123 ) ) == 123 )
-	
-	assert( BinarySearch( 1, [ 2, 4 ] ) == [] )
-	assert( BinarySearch( 2, [ 2, 4 ] ) == [ 0 ] )
-	assert( BinarySearch( 3, [ 2, 4 ] ) == [ 0, 1 ] )
-	assert( BinarySearch( 4, [ 2, 4 ] ) == [ 1 ] )
-	assert( BinarySearch( 5, [ 2, 4 ] ) == [] )
-	assert( BinarySearch( 1, [ 2, 4, 6 ] ) == [] )
-	assert( BinarySearch( 2, [ 2, 4, 6 ] ) == [ 0 ] )
-	assert( BinarySearch( 3, [ 2, 4, 6 ] ) == [ 0, 1 ] )
-	assert( BinarySearch( 4, [ 2, 4, 6 ] ) == [ 1 ] )
-	assert( BinarySearch( 5, [ 2, 4, 6 ] ) == [ 1, 2 ] )
-	assert( BinarySearch( 6, [ 2, 4, 6 ] ) == [ 2 ] )
-	assert( BinarySearch( 7, [ 2, 4, 6 ] ) == [] )
-	print( "RandomData, HexString, HexChar, ToArray<T>, UTF8String, UTF8Data, Base64Data, Base64String, IsNull, AsInt" );
-}
-
-
 class
 Reader< T > {
+
 	var
 	_unread : Chain< T >?
+	
+	enum ERR: Error { case EOF }
+
 	func
-	_Read() -> T? {
-		fatalError()
-	}
+	_Read() throws -> T { throw ERR.EOF }
+
 	func
-	Read() -> T? {
+	Read() throws -> T {
 		if let v = _unread { _unread = v.next ; return v.m }
-		return _Read()
+		return try _Read()
 	}
+
 	func
 	Unread( _ p: T ) { _unread = Chain< T >( p, _unread ) }
 }
 
-func
-SkipWhite( _ p: Reader< UnicodeScalar > ) {
-	while true {
-		guard let w = p.Read() else { break }
-		if !CharacterSet.whitespacesAndNewlines.contains( w ) {
-			p.Unread( w )
-			return
-		}
+class
+UnicodeReader: Reader< UnicodeScalar > {
+	func
+	ReadNonWhite() throws -> UnicodeScalar {
+		while let v = try? Read() { if !CharacterSet.whitespacesAndNewlines.contains( v ) { return v } }
+		throw ERR.EOF
 	}
 }
 
 class
-StdinUnicodeReader: Reader< UnicodeScalar > {
+StdinUnicodeReader: UnicodeReader{
 	var
 	m		: String.UnicodeScalarView.Iterator?
 	override func
-	_Read() -> UnicodeScalar? {
+	_Read() throws -> UnicodeScalar {
 		repeat {
 			if m == nil {
-				guard let w = readLine( strippingNewline: false ) else { return nil }
+				guard let w = readLine( strippingNewline: false ) else { throw ERR.EOF }
 				m = w.unicodeScalars.makeIterator()
 			}
 			if let v = m!.next() { return v }
@@ -235,20 +195,18 @@ StdinUnicodeReader: Reader< UnicodeScalar > {
 }
 
 class
-StringUnicodeReader: Reader< UnicodeScalar > {
+StringUnicodeReader: UnicodeReader {
 	var
 	m		: String.UnicodeScalarView.Iterator
-
 	init( _ p: String ) {
 		m = p.unicodeScalars.makeIterator()
 	}
-
 	override func
-	_Read() -> UnicodeScalar? {
-		return m.next()
+	_Read() throws -> UnicodeScalar {
+		guard let v = m.next() else { throw ERR.EOF }
+		return v
 	}
 }
-
 
 func
 Notify( _ name: String, _ p: @escaping ( Notification ) -> () ) -> NSObjectProtocol {
@@ -431,26 +389,19 @@ OnJSON(
 
 func
 ShowSharedCookies() {
-	if let wCs = HTTPCookieStorage.shared.cookies {
-		for w in wCs { print( w ) }
-	}
+	if let w = HTTPCookieStorage.shared.cookies { w.forEach{ print( $0 ) } }
 }
 
 func
 DeleteSharedCookies() {
 	let	wCS = HTTPCookieStorage.shared
-	if let wCs = wCS.cookies {
-		for w in wCs { wCS.deleteCookie( w ) }
-	}
+	if let w = wCS.cookies { w.forEach{ wCS.deleteCookie( $0 ) } }
 }
 
 func
 Request( _ p: String ) -> URLRequest? {
-	if let w = URL( string: p ) {
-		return URLRequest( url: w )
-	} else {
-		return nil
-	}
+	guard let w = URL( string: p ) else { return nil }
+	return URLRequest( url: w )
 }
 
 func

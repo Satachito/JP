@@ -1,5 +1,48 @@
 import Foundation
 
+func
+JPTest() {
+	let	wData = RandomData( 16 )
+/*
+	var	wArray = [ UInt8 ]();
+	wData.withUnsafeBytes { ( p: UnsafePointer<UInt8> ) in
+		wArray = ToArray( p, 16 )
+	}
+
+	var	wArray = wData.withUnsafeBytes{ ToArray( $0.load( as: [ UInt8 ].self ), 16 ) }
+	var	wStr = ""
+	for i in 0 ..< 16 { wStr += String( format: "%02x", wArray[ i ] ) }
+*/
+
+
+	let wStr = "今日は、Alberto López.☕️";
+	assert( wStr == UTF8String( DataByUTF8( wStr )! ) )
+	assert( wData == DataByBase64( Base64String( wData ) )! )
+	
+	assert( IsNull( nil ) )
+	assert( IsNull( NSNull() ) )
+
+	assert( AsInt( "123" ) == 123 )
+	assert( AsInt( 123 ) == 123 )
+	assert( AsInt( NSNumber( value: 123 ) ) == 123 )
+	
+	assert( BinarySearch( 1, [ 2, 4 ] ) == [] )
+	assert( BinarySearch( 2, [ 2, 4 ] ) == [ 0 ] )
+	assert( BinarySearch( 3, [ 2, 4 ] ) == [ 0, 1 ] )
+	assert( BinarySearch( 4, [ 2, 4 ] ) == [ 1 ] )
+	assert( BinarySearch( 5, [ 2, 4 ] ) == [] )
+	assert( BinarySearch( 1, [ 2, 4, 6 ] ) == [] )
+	assert( BinarySearch( 2, [ 2, 4, 6 ] ) == [ 0 ] )
+	assert( BinarySearch( 3, [ 2, 4, 6 ] ) == [ 0, 1 ] )
+	assert( BinarySearch( 4, [ 2, 4, 6 ] ) == [ 1 ] )
+	assert( BinarySearch( 5, [ 2, 4, 6 ] ) == [ 1, 2 ] )
+	assert( BinarySearch( 6, [ 2, 4, 6 ] ) == [ 2 ] )
+	assert( BinarySearch( 7, [ 2, 4, 6 ] ) == [] )
+	print( "RandomData, HexString, HexChar, ToArray<T>, UTF8String, UTF8Data, Base64Data, Base64String, IsNull, AsInt" );
+}
+
+
+
 JPTest()
 
 func

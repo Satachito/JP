@@ -21,11 +21,7 @@ Error( _ p: Error ) {
 }
 
 func
-Input(
-	_ pView: NSView
-,	_ pMessage: String = ""
-,	_ pInfomative: String = ""
-) -> Bool {
+Input( _ pView: NSView, _ pMessage: String = "", _ pInfomative: String = "" ) -> Bool {
 	let	w = NSAlert()
 	w.messageText = pMessage
 	w.informativeText = pInfomative
@@ -37,39 +33,32 @@ Input(
 }
 
 func
-OKCancel( _ pMessage: String, _ pInfomative: String,_ ed: () -> () ) {
+OKCancel( _ pMessage: String, _ pInfomative: String = "" ) -> Bool {
 	let	w = NSAlert()
 	w.messageText = pMessage
 	w.informativeText = pInfomative
-	w.alertStyle = .warning
+	w.alertStyle = .informational
 	w.addButton( withTitle: "OK" )
 	w.addButton( withTitle: "Cancel" )
-	if w.runModal() == .alertFirstButtonReturn { ed() }
+	return w.runModal() == .alertFirstButtonReturn
 }
 
 func
-YesNo( _ pMessage: String, _ pInfomative: String, _ yesed: () -> (), _ noed: () -> () ) {
+YesNo( _ pMessage: String, _ pInfomative: String = "" ) -> Bool {
 	let	w = NSAlert()
 	w.messageText = pMessage
 	w.informativeText = pInfomative
-	w.alertStyle = .warning
-	w.addButton( withTitle: "OK" )
-	w.addButton( withTitle: "Cancel" )
-	switch w.runModal() {
-	case .alertFirstButtonReturn	: yesed()
-	case .alertSecondButtonReturn	: noed()
-	default							: break
-	}
+	w.alertStyle = .informational
+	w.addButton( withTitle: "Yes" )
+	w.addButton( withTitle: "No" )
+	return w.runModal() == .alertFirstButtonReturn
 }
 
 class
 V	: NSView {
-	var drawer	: ( CGRect ) -> () = { _ in }
-	override func
-	draw( _ p: CGRect ) {
-		super.draw( p )
-		drawer( p )
-	}
+				var		drawer	: ( CGRect ) -> () = { _ in }
+	override	func	draw	( _ p: CGRect ) { drawer( p ) }
+	//	If your custom view is a direct NSView subclass, you do not need to call super
 }
 
 extension
@@ -312,6 +301,11 @@ func
 	return NSEqualPoints( l, r )
 }
 
+func
+Mid( _ l: NSPoint, _ r: NSPoint ) -> NSPoint {
+	return NSPoint( x: ( l.x + r.x ) / 2, y: ( l.y + r.y ) / 2 )
+}
+
 //
 
 extension
@@ -319,11 +313,6 @@ NSRect {
 	init( _ p: NSPoint ) {
 		self.init( origin: p, size: NSSize.zero )
 	}
-}
-
-func
-Fatten( _ r: NSRect, _ dx: CGFloat, _ dy: CGFloat ) -> NSRect {
-	return r.insetBy( dx: -dx, dy: -dy )
 }
 
 func
@@ -341,11 +330,6 @@ func
 	return NSRect( c ) | r
 }
 
-func
-Mid( _ l: NSPoint, _ r: NSPoint ) -> NSPoint {
-	return NSPoint( x: ( l.x + r.x ) / 2, y: ( l.y + r.y ) / 2 )
-}
-
 //
 
 extension
@@ -361,9 +345,9 @@ NSBezierPath {
 }
 
 extension
-NSBezierPath {
+StringUnicodeReader {
 	func
-	ReadCGFloat( _ r: Reader< UnicodeScalar > ) throws -> CGFloat {
+	CGFloat() throws -> CGFloat {
 		func
 		Valid( _ us: UnicodeScalar ) -> Bool {
 			switch us {
@@ -374,42 +358,43 @@ NSBezierPath {
 			}
 		}
 		var	v = ""
-		while let w = r.Read() {
+		while let w = try? Read() {
 			if Valid( w ) {
-				r.Unread( w )
+				Unread( w )
 				break
 			}
 		}
-		while let w = r.Read() {
+		while let w = try? Read() {
 			if !Valid( w ) || ( w == "-" && v.count > 0 ) {
-				r.Unread( w )
+				Unread( w )
 				break
 			}
 			v += String( w )
 		}
-		enum ERR: Error { case EOF }
-		guard let w = Double( v ) else { throw ERR.EOF }
-		return CGFloat( w )
+		enum ERR: Error { case Invalid }
+		guard let w = Double( v ) else { throw ERR.Invalid }
+		return Swift.CGFloat( w )
 	}
 	func
-	ReadPoint( _ r: Reader< UnicodeScalar > ) throws -> NSPoint {
-		return NSPoint( x: try ReadCGFloat( r ), y: try ReadCGFloat( r ) )
+	NSPoint() throws -> NSPoint {
+		return NSPoint( x: try CGFloat(), y: try CGFloat() )
 	}
 	func
-	ReadSize( _ r: Reader< UnicodeScalar > ) throws -> NSSize {
-		return NSSize( width: try ReadCGFloat( r ), height: try ReadCGFloat( r ) )
+	NSSize() throws -> NSSize {
+		return NSSize( width: try CGFloat(), height: try CGFloat() )
 	}
+}
+
+
+extension
+NSBezierPath {
 	
 	convenience
 	init( points: String ) throws {
 		self.init()
-
 		let	r = StringUnicodeReader( points )
-
-		enum ERR: Error { case Invalid }
-		guard let wMT = try? ReadPoint( r ) else { throw ERR.Invalid }
-		move( to: wMT )
-		while let w = try? ReadPoint( r ) { line( to: w ) }
+		move( to: try r.CGFloat() )
+		while let w = try? r.CGFloat() { line( to: w ) }
 	}
 
 	convenience
@@ -423,46 +408,47 @@ NSBezierPath {
 		Body( _ us: UnicodeScalar ) throws {
 			switch us {
 			case "Z", "z"	: wC = nil; close()
-			case "M"		: wC = nil; move( to: try ReadPoint( r ) )
-			case "m"		: wC = nil; move( to: try isEmpty ? ReadPoint( r ) : currentPoint + ReadSize( r ) )
-			case "L"		: wC = nil; line( to: try ReadPoint( r ) )
-			case "l"		: wC = nil; line( to: try currentPoint + ReadSize( r ) )
-			case "H"		: wC = nil; line( to: NSPoint( x: try ReadCGFloat( r ), y: currentPoint.y ) )
-			case "h"		: wC = nil; line( to: NSPoint( x: try currentPoint.x + ReadCGFloat( r ), y: currentPoint.y ) )
-			case "V"		: wC = nil; line( to: NSPoint( x: currentPoint.x, y: try ReadCGFloat( r ) ) )
-			case "v"		: wC = nil; line( to: NSPoint( x: currentPoint.x, y: try currentPoint.y + ReadCGFloat( r ) ) )
+			case "M"		: wC = nil; move( to: try r.NSPoint() )
+			case "m"		: wC = nil; move( to: try isEmpty ? r.NSPoint() : currentPoint + r.NSSize() )
+			case "L"		: wC = nil; line( to: try r.NSPoint() )
+			case "l"		: wC = nil; line( to: try currentPoint + r.NSSize() )
+			case "H"		: wC = nil; line( to: NSPoint( x: try r.CGFloat(), y: currentPoint.y ) )
+			case "h"		: wC = nil; line( to: NSPoint( x: try currentPoint.x + r.CGFloat(), y: currentPoint.y ) )
+			case "V"		: wC = nil; line( to: NSPoint( x: currentPoint.x, y: try r.CGFloat() ) )
+			case "v"		: wC = nil; line( to: NSPoint( x: currentPoint.x, y: try currentPoint.y + r.CGFloat() ) )
 			case "C":
-				let	wC1 = try ReadPoint( r )
-				wC = try ReadPoint( r )
-				curve( to: try ReadPoint( r ), controlPoint1: wC1, controlPoint2: wC! )
+				let	wC1 = try r.NSPoint()
+				wC = try r.NSPoint()
+				curve( to: try r.NSPoint(), controlPoint1: wC1, controlPoint2: wC! )
 			case "Q":
-				wC = try ReadPoint( r )
-				quad( to: try ReadPoint( r ), controlPoint: wC! )
+				wC = try r.NSPoint()
+				quad( to: try r.NSPoint(), controlPoint: wC! )
 			case "S":
 				var	wC1 = currentPoint
 				if let w = wC { wC1 = currentPoint + ( currentPoint - w ) }
-				wC = try ReadPoint( r )
-				curve( to: try ReadPoint( r ), controlPoint1: wC1, controlPoint2: wC! )
+				wC = try r.NSPoint()
+				curve( to: try r.NSPoint(), controlPoint1: wC1, controlPoint2: wC! )
 			case "T":
 				if let w = wC { wC = currentPoint + ( currentPoint - w ) } else { wC = currentPoint }
-				quad( to: try ReadPoint( r ), controlPoint: wC! )
+				quad( to: try r.NSPoint(), controlPoint: wC! )
 			case "c":
-				let	wC1 = try currentPoint + ReadSize( r )
-				wC = try currentPoint + ReadSize( r )
-				curve( to: try currentPoint + ReadSize( r ), controlPoint1: wC1, controlPoint2: wC! )
+				let	wC1 = try currentPoint + r.NSSize()
+				wC = try currentPoint + r.NSSize()
+				curve( to: try currentPoint + r.NSSize(), controlPoint1: wC1, controlPoint2: wC! )
 			case "q":
-				wC = try currentPoint + ReadSize( r )
-				quad( to: try currentPoint + ReadSize( r ), controlPoint: wC! )
+				wC = try currentPoint + r.NSSize()
+				quad( to: try currentPoint + r.NSSize(), controlPoint: wC! )
 			case "s":
 				var	wC1 = currentPoint
 				if let w = wC { wC1 = currentPoint + ( currentPoint - w ) }
-				wC = try currentPoint + ReadSize( r )
-				curve( to: try currentPoint + ReadSize( r ), controlPoint1: wC1, controlPoint2: wC! )
+				wC = try currentPoint + r.NSSize()
+				curve( to: try currentPoint + r.NSSize(), controlPoint1: wC1, controlPoint2: wC! )
 			case "t":
 				if let w = wC { wC = currentPoint + ( currentPoint - w ) } else { wC = currentPoint }
-				quad( to: try currentPoint + ReadSize( r ), controlPoint: wC! )
+				quad( to: try currentPoint + r.NSSize(), controlPoint: wC! )
 			default:
-				fatalError()
+				enum ERR: Error { case Invalid }
+				throw ERR.Invalid
 			}
 		}
 
@@ -550,14 +536,14 @@ SVGGetter: NSObject, WKNavigationDelegate {
 		super.init()
 		wv.navigationDelegate = self
 	}
-	var	cb	= { ( _: String ) in }
+	var	cb	= { ( _: XMLElement?, _ : Error? ) in }
 	func
-	LoadFileURL( _ url: URL, _ cb: @escaping ( String ) -> () ) {
+	LoadFileURL( _ url: URL, _ cb: @escaping ( XMLElement?, Error? ) -> () ) {
 		self.cb = cb
 		wv.loadFileURL( url, allowingReadAccessTo: url )
 	}
 	func
-	LoadHTMLString( _ p: String, _ cb: @escaping ( String ) -> () ) {
+	LoadHTMLString( _ p: String, _ cb: @escaping ( XMLElement?, Error? ) -> () ) {
 		self.cb = cb
 		wv.loadHTMLString( p, baseURL: nil )
 	}
@@ -565,8 +551,83 @@ SVGGetter: NSObject, WKNavigationDelegate {
 	webView(_ webView: WKWebView, didFinish navigation: WKNavigation! ) {
 		wv.evaluateJavaScript( "document.querySelector( 'svg' ).outerHTML" ) { a, e in
 			if let w = e { Error( w ) }
-			if let w = a as? String { self.cb( w ) }
+			if let w = a as? String {
+				enum ERR: Error {
+					case	NoUTF8
+					case	NoXML
+					case	NoRoot
+					case	NoSVG
+				}
+				guard let wData = DataByUTF8( w ) else { self.cb( nil, ERR.NoUTF8 ); return }
+				guard let wDOC = try? XMLDocument( data: wData ) else { self.cb( nil,  ERR.NoXML ); return }
+				guard let w = wDOC.rootElement() else { self.cb( nil, ERR.NoRoot ); return }
+				guard w.name == "svg" else { self.cb( nil, ERR.NoSVG ); return }
+				self.cb( w, nil )
+			}
 		}
 	}
 }
 
+func
+CrawlSVG(
+	_ p: XMLElement
+,	_ a: [ String: String ]
+,	_ path: ( [ String: String ] ) -> ()
+,	_ polygon: ( [ String: String ] ) -> ()
+,	_ polyline: ( [ String: String ] ) -> ()
+) {
+	func
+	AttrDict( _ p: XMLElement ) -> [ String: String ] {
+		return ( p.attributes ?? [] ).reduce( [ String: String ]() ) {
+			$0.merging( [ $1.name!.lowercased(): $1.stringValue! ] ) { $1 }
+		}
+	}
+	let	wA = a.merging( AttrDict( p ) ) { $1 }
+
+	switch p.name {
+	case "path"		: path( wA )
+	case "polygon"	: polygon( wA )
+	case "polyline"	: polyline( wA )
+	default			: break
+	}
+	for c in p.children ?? [] {
+		if let w = c as? XMLElement { CrawlSVG( w, wA, path, polygon, polyline ) }
+	}
+}
+
+func
+DrawSVG( _ p: XMLElement, _ r: CGRect, _ a: AffineTransform ) {
+	CrawlSVG(
+		p
+	,	[:]
+	,	{	if let wD = $0[ "d" ], let w = try? NSBezierPath( d: wD ) {
+				w.transform( using: a )
+				if r.intersects( w.bounds ) { w.Draw( $0 ) } //else { print( NSDate(), "SKIP" ) }
+			}
+		}
+	,	{	if let wPoints = $0[ "points" ], let w = try? NSBezierPath( points: wPoints ) {
+				w.close()
+				w.transform( using: a )
+				if r.intersects( w.bounds ) { w.Draw( $0 ) } //else { print( NSDate(), "SKIP" ) }
+			}
+		}
+	,	{	if let wPoints = $0[ "points" ], let w = try? NSBezierPath( points: wPoints ) {
+				w.transform( using: a )
+				if r.intersects( w.bounds ) { w.Draw( $0 ) } //else { print( NSDate(), "SKIP" ) }
+			}
+		}
+	)
+}
+
+func
+BBoxSVG( _ p: XMLElement ) -> NSRect {
+	var	v = NSRect.null
+	CrawlSVG(
+		p
+	,	[:]
+	,	{ if let wS = $0[ "d" ]		, let w = try? NSBezierPath( d		: wS ) { v = v | w.bounds } }
+	,	{ if let wS = $0[ "points" ], let w = try? NSBezierPath( points	: wS ) { v = v | w.bounds } }
+	,	{ if let wS = $0[ "points" ], let w = try? NSBezierPath( points	: wS ) { v = v | w.bounds } }
+	)
+	return v
+}
