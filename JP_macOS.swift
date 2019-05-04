@@ -453,9 +453,7 @@ NSBezierPath {
 		}
 
 		var	wLastCommand	: UnicodeScalar?
-		while true {
-			SkipWhite( r )
-			guard let w = r.Read() else { break }
+		while let w = try? r.ReadNonWhite() {
 			switch w {
 			case "Z", "z", "M", "m", "L", "l", "H", "h", "V", "v", "C", "c", "Q", "q", "S", "s", "T", "t":
 				try Body( w )
