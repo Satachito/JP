@@ -385,6 +385,41 @@ StringUnicodeReader {
 	}
 }
 
+import	WebKit
+
+class
+JSEvaluator: NSObject, WKNavigationDelegate {
+	var wv	= WKWebView()
+	override init() {
+		super.init()
+		wv.navigationDelegate = self
+	}
+	var	js	= ""
+	var	cb	= { ( _: Any?, _: Error? ) in }
+	func
+	LoadFileURL(
+		_ url	: URL
+	,	_ js	: String
+	,	_ cb	: @escaping ( Any?, Error? ) -> ()
+	) {
+		self.cb = cb
+		self.js = js
+		wv.loadFileURL( url, allowingReadAccessTo: url )
+	}
+	func
+	LoadHTMLString(
+		_ p		: String
+	,	_ js	: String
+	,	_ cb	: @escaping ( Any?, Error? ) -> () ) {
+		self.cb = cb
+		self.js = js
+		wv.loadHTMLString( p, baseURL: nil )
+	}
+	func
+	webView(_ webView: WKWebView, didFinish navigation: WKNavigation! ) {
+		wv.evaluateJavaScript( js, completionHandler: cb )
+	}
+}
 
 extension
 NSBezierPath {
@@ -525,10 +560,8 @@ NSBezierPath {
 	}
 }
 
-import	WebKit
-
 func
-AsXML( _ p: Data ) throws -> XMLElement {
+AsSVG( _ p: Data ) throws -> XMLElement {
 	enum ERR: Error {
 		case	NoXML
 		case	NoRoot
@@ -538,36 +571,6 @@ AsXML( _ p: Data ) throws -> XMLElement {
 	guard let v = wDOC.rootElement() else { throw ERR.NoRoot }
 	guard v.name == "svg" else { throw ERR.NoSVG }
 	return v
-}
- 
-class
-SVGGetter: NSObject, WKNavigationDelegate {
-	var wv	= WKWebView()
-	override init() {
-		super.init()
-		wv.navigationDelegate = self
-	}
-	var	cb	= { ( _: XMLElement?, _ : Error? ) in }
-	func
-	LoadFileURL( _ url: URL, _ cb: @escaping ( XMLElement?, Error? ) -> () ) {
-		self.cb = cb
-		wv.loadFileURL( url, allowingReadAccessTo: url )
-	}
-	func
-	LoadHTMLString( _ p: String, _ cb: @escaping ( XMLElement?, Error? ) -> () ) {
-		self.cb = cb
-		wv.loadHTMLString( p, baseURL: nil )
-	}
-	func
-	webView(_ webView: WKWebView, didFinish navigation: WKNavigation! ) {
-		wv.evaluateJavaScript( "document.querySelector( 'svg' ).outerHTML" ) { a, e in
-			if let w = e { Error( w ) }
-			if let w = a as? String {
-				guard let wData = DataByUTF8( w ) else { fatalError() }
-				do { self.cb( AsXML( wData ), nil ) } catch ( e: Error ) { self.cb( nil, e ) }
-			}
-		}
-	}
 }
 
 func
