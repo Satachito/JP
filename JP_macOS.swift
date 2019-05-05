@@ -527,6 +527,19 @@ NSBezierPath {
 
 import	WebKit
 
+func
+AsXML( _ p: Data ) throws -> XMLElement {
+	enum ERR: Error {
+		case	NoXML
+		case	NoRoot
+		case	NoSVG
+	}
+	guard let wDOC = try? XMLDocument( data: p ) else { throw ERR.NoXML }
+	guard let v = wDOC.rootElement() else { throw ERR.NoRoot }
+	guard v.name == "svg" else { throw ERR.NoSVG }
+	return v
+}
+ 
 class
 SVGGetter: NSObject, WKNavigationDelegate {
 	var wv	= WKWebView()
@@ -550,17 +563,8 @@ SVGGetter: NSObject, WKNavigationDelegate {
 		wv.evaluateJavaScript( "document.querySelector( 'svg' ).outerHTML" ) { a, e in
 			if let w = e { Error( w ) }
 			if let w = a as? String {
-				enum ERR: Error {
-					case	NoUTF8
-					case	NoXML
-					case	NoRoot
-					case	NoSVG
-				}
-				guard let wData = DataByUTF8( w ) else { self.cb( nil, ERR.NoUTF8 ); return }
-				guard let wDOC = try? XMLDocument( data: wData ) else { self.cb( nil,  ERR.NoXML ); return }
-				guard let w = wDOC.rootElement() else { self.cb( nil, ERR.NoRoot ); return }
-				guard w.name == "svg" else { self.cb( nil, ERR.NoSVG ); return }
-				self.cb( w, nil )
+				guard let wData = DataByUTF8( w ) else { fatalError() }
+				do { self.cb( AsXML( wData ), nil ) } catch ( e: Error ) { self.cb( nil, e ) }
 			}
 		}
 	}
