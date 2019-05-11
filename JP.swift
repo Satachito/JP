@@ -14,7 +14,7 @@ HexString( _ p: [ UInt8 ] ) -> String {
 	HexChar( _ p: Int ) -> String {
 		return [ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f" ][ p ]
 	}
-	return p.reduce( "" ) {  $0 + HexChar( Int( $1 ) >> 4 ) + HexChar( Int( $1 ) ) }
+	return p.reduce( "" ) { $0 + HexChar( Int( $1 ) >> 4 ) + HexChar( Int( $1 ) & 0x0f ) }
 }
 
 func
@@ -33,10 +33,18 @@ ShuffledIndices( _ p: Int ) -> [ Int ] {
 }
 
 func
-ToArray<T>( _ start: UnsafePointer<T>, _ count: Int ) -> [ T ] {
+AsArray<T>( _ start: UnsafePointer<T>, _ count: Int ) -> [ T ] {
 	return Array( UnsafeBufferPointer( start: start, count: count ) )
 }
 //	USAGE: let wArray : [ Int16 ] = ToArray( data.bytes, data.length / sizeof( Int16 ) )
+func
+AsArray<T>( _ p: UnsafeRawBufferPointer ) -> [ T ] {
+	return AsArray( 
+		p.baseAddress!.assumingMemoryBound( to: T.self )
+	,	p.count / MemoryLayout< T >.size
+	)
+}
+//	USAGE: let wArray : [ Int16 ] = data.withUnsafeBytes{ ToArray( $0 ) }
 
 func
 Size( file path: String ) -> Int? {

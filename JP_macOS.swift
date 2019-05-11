@@ -403,6 +403,41 @@ StringUnicodeReader {
 	}
 }
 
+import	WebKit
+
+class
+JSEvaluator: NSObject, WKNavigationDelegate {
+	var wv	= WKWebView()
+	override init() {
+		super.init()
+		wv.navigationDelegate = self
+	}
+	var	js	= ""
+	var	cb	= { ( _: Any?, _: Error? ) in }
+	func
+	LoadFileURL(
+		_ url	: URL
+	,	_ js	: String
+	,	_ cb	: @escaping ( Any?, Error? ) -> ()
+	) {
+		self.cb = cb
+		self.js = js
+		wv.loadFileURL( url, allowingReadAccessTo: url )
+	}
+	func
+	LoadHTMLString(
+		_ p		: String
+	,	_ js	: String
+	,	_ cb	: @escaping ( Any?, Error? ) -> () ) {
+		self.cb = cb
+		self.js = js
+		wv.loadHTMLString( p, baseURL: nil )
+	}
+	func
+	webView(_ webView: WKWebView, didFinish navigation: WKNavigation! ) {
+		wv.evaluateJavaScript( js, completionHandler: cb )
+	}
+}
 
 extension
 NSBezierPath {
@@ -543,45 +578,17 @@ NSBezierPath {
 	}
 }
 
-import	WebKit
-
-class
-SVGGetter: NSObject, WKNavigationDelegate {
-	var wv	= WKWebView()
-	override init() {
-		super.init()
-		wv.navigationDelegate = self
+func
+AsSVG( _ p: Data ) throws -> XMLElement {
+	enum ERR: Error {
+		case	NoXML
+		case	NoRoot
+		case	NoSVG
 	}
-	var	cb	= { ( _: XMLElement?, _ : Error? ) in }
-	func
-	LoadFileURL( _ url: URL, _ cb: @escaping ( XMLElement?, Error? ) -> () ) {
-		self.cb = cb
-		wv.loadFileURL( url, allowingReadAccessTo: url )
-	}
-	func
-	LoadHTMLString( _ p: String, _ cb: @escaping ( XMLElement?, Error? ) -> () ) {
-		self.cb = cb
-		wv.loadHTMLString( p, baseURL: nil )
-	}
-	func
-	webView(_ webView: WKWebView, didFinish navigation: WKNavigation! ) {
-		wv.evaluateJavaScript( "document.querySelector( 'svg' ).outerHTML" ) { a, e in
-			if let w = e { Error( w ) }
-			if let w = a as? String {
-				enum ERR: Error {
-					case	NoUTF8
-					case	NoXML
-					case	NoRoot
-					case	NoSVG
-				}
-				guard let wData = DataByUTF8( w ) else { self.cb( nil, ERR.NoUTF8 ); return }
-				guard let wDOC = try? XMLDocument( data: wData ) else { self.cb( nil,  ERR.NoXML ); return }
-				guard let w = wDOC.rootElement() else { self.cb( nil, ERR.NoRoot ); return }
-				guard w.name == "svg" else { self.cb( nil, ERR.NoSVG ); return }
-				self.cb( w, nil )
-			}
-		}
-	}
+	guard let wDOC = try? XMLDocument( data: p ) else { throw ERR.NoXML }
+	guard let v = wDOC.rootElement() else { throw ERR.NoRoot }
+	guard v.name == "svg" else { throw ERR.NoSVG }
+	return v
 }
 
 func

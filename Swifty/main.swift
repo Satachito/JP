@@ -1,20 +1,12 @@
 import Foundation
 
+
 func
 JPTest() {
 	let	wData = RandomData( 16 )
-/*
-	var	wArray = [ UInt8 ]();
-	wData.withUnsafeBytes { ( p: UnsafePointer<UInt8> ) in
-		wArray = ToArray( p, 16 )
-	}
+	let	wUInt8s: [ UInt8 ] = wData.withUnsafeBytes { AsArray( $0 ) }
 
-	var	wArray = wData.withUnsafeBytes{ ToArray( $0.load( as: [ UInt8 ].self ), 16 ) }
-	var	wStr = ""
-	for i in 0 ..< 16 { wStr += String( format: "%02x", wArray[ i ] ) }
-*/
-
-
+	assert( wUInt8s.reduce( "" ) { $0 + String( format: "%02x", $1 ) } == HexString( wUInt8s ) )
 	let wStr = "今日は、Alberto López.☕️";
 	assert( wStr == UTF8String( DataByUTF8( wStr )! ) )
 	assert( wData == DataByBase64( Base64String( wData ) )! )
