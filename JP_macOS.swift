@@ -306,12 +306,17 @@ Mid( _ l: NSPoint, _ r: NSPoint ) -> NSPoint {
 	return NSPoint( x: ( l.x + r.x ) / 2, y: ( l.y + r.y ) / 2 )
 }
 
-//
+extension
+NSPoint {
+	init( _ x: CGFloat, _ y: CGFloat ) {
+		self.init( x: x, y: y )
+	}
+}
 
 extension
-NSRect {
-	init( _ p: NSPoint ) {
-		self.init( origin: p, size: NSSize.zero )
+NSSize {
+	init( _ w: CGFloat, _ h: CGFloat ) {
+		self.init( width: w, height: h )
 	}
 }
 
@@ -329,6 +334,19 @@ func
 |( _ c: NSPoint, _ r: NSRect ) -> NSRect {
 	return NSRect( c ) | r
 }
+
+extension
+NSRect {
+	init( _ p: NSPoint ) {
+		self.init( origin: p, size: NSSize.zero )
+	}
+	init( _ a: ( NSPoint, NSPoint ) ) {
+		let	wX = a.0.x < a.1.x ? ( a.0.x, a.1.x ) : ( a.1.x, a.0.x )
+		let	wY = a.0.y < a.1.y ? ( a.0.y, a.1.y ) : ( a.1.y, a.0.y )
+		self.init( origin: NSPoint( wX.0, wY.0 ), size: NSSize( wX.1 - wX.0, wY.1 - wY.0 ) )
+	}
+}
+
 
 //
 
