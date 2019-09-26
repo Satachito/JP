@@ -24,15 +24,15 @@ namespace JP {
 				vVector< F >			Row		( size_t p				) const	{ return vVector< F >( &m[ p * nC ], nC	);				}
 				vVector< F >			Col		( size_t p				) const	{ return vVector< F >( &m[ p ], nR, nC	);				}
 #endif
-				void					Clear	(						) const	{ _Clr( m, 1, nR * nC );								}
-		const	vMatrix&	operator	+=		( const vMatrix& p		) const	{ _Add( m, 1, p.m, 1, m, 1, nR * nC	); return *this;	}
-		const	vMatrix&	operator	-=		( const vMatrix& p		) const	{ _Sub( m, 1, p.m, 1, m, 1, nR * nC	); return *this;	}
-		const	vMatrix&	operator	*=		( const vMatrix& p		) const	{ _Mul( m, 1, p.m, 1, m, 1, nR * nC	); return *this;	}
-		const	vMatrix&	operator	/=		( const vMatrix& p		) const	{ _Div( m, 1, p.m, 1, m, 1, nR * nC	); return *this;	}
-		const	vMatrix&	operator	+=		( F p					) const	{ _Add( m, 1,  p	, m, 1, nR * nC	); return *this;	}
-		const	vMatrix&	operator	-=		( F p					) const	{ _Add( m, 1, -p	, m, 1, nR * nC	); return *this;	}
-		const	vMatrix&	operator	*=		( F p					) const	{ _Mul( m, 1,  p	, m, 1, nR * nC	); return *this;	}
-		const	vMatrix&	operator	/=		( F p					) const	{ _Div( m, 1,  p	, m, 1, nR * nC	); return *this;	}
+				void					Clear	(						) const	{ Clr( m, 1, nR * nC );									}
+		const	vMatrix&	operator	+=		( const vMatrix& p		) const	{ Add( m, 1, p.m, 1, m, 1, nR * nC	);	return *this;	}
+		const	vMatrix&	operator	-=		( const vMatrix& p		) const	{ Sub( m, 1, p.m, 1, m, 1, nR * nC	);	return *this;	}
+		const	vMatrix&	operator	*=		( const vMatrix& p		) const	{ Mul( m, 1, p.m, 1, m, 1, nR * nC	);	return *this;	}
+		const	vMatrix&	operator	/=		( const vMatrix& p		) const	{ Div( m, 1, p.m, 1, m, 1, nR * nC	);	return *this;	}
+		const	vMatrix&	operator	+=		( F p					) const	{ Add( m, 1,  p	, m, 1, nR * nC	);		return *this;	}
+		const	vMatrix&	operator	-=		( F p					) const	{ Add( m, 1, -p	, m, 1, nR * nC	);		return *this;	}
+		const	vMatrix&	operator	*=		( F p					) const	{ Mul( m, 1,  p	, m, 1, nR * nC	);		return *this;	}
+		const	vMatrix&	operator	/=		( F p					) const	{ Div( m, 1,  p	, m, 1, nR * nC	);		return *this;	}
 	};
 	
 	template	< typename F >	bool			operator
@@ -104,11 +104,11 @@ namespace JP {
 			return *this;
 		}
 #ifndef	COL_ROW
-		void	SetRow		( size_t pR, const vVector< F >& p	) { _Add( p.m, p.s, F( 0 ), &vMatrix< F >::m[ pR ]						, vMatrix< F >::nR	, vMatrix< F >::nC ); }
-		void	SetCol		( size_t pC, const vVector< F >& p	) { _Add( p.m, p.s, F( 0 ), &vMatrix< F >::m[ pC * vMatrix< F >::nR ]	, 1					, vMatrix< F >::nR ); }
+		void	SetRow		( size_t pR, const vVector< F >& p	) { Add( p.m, p.s, F( 0 ), &vMatrix< F >::m[ pR ]						, vMatrix< F >::nR	, vMatrix< F >::nC ); }
+		void	SetCol		( size_t pC, const vVector< F >& p	) { Add( p.m, p.s, F( 0 ), &vMatrix< F >::m[ pC * vMatrix< F >::nR ]	, 1					, vMatrix< F >::nR ); }
 #else
-		void	SetRow		( size_t pR, const vVector< F >& p	) { _Add( p.m, p.s, F( 0 ), &vMatrix< F >::m[ pR * vMatrix< F >::nC ]	, 1					, vMatrix< F >::nC ); }
-		void	SetCol		( size_t pC, const vVector< F >& p	) { _Add( p.m, p.s, F( 0 ), &vMatrix< F >::m[ pC ]						, vMatrix< F >::nC	, vMatrix< F >::nR ); }
+		void	SetRow		( size_t pR, const vVector< F >& p	) { Add( p.m, p.s, F( 0 ), &vMatrix< F >::m[ pR * vMatrix< F >::nC ]	, 1					, vMatrix< F >::nC ); }
+		void	SetCol		( size_t pC, const vVector< F >& p	) { Add( p.m, p.s, F( 0 ), &vMatrix< F >::m[ pC ]						, vMatrix< F >::nC	, vMatrix< F >::nR ); }
 #endif
 	};
 	
@@ -123,9 +123,9 @@ namespace JP {
 	~( const vMatrix< F >& p ) {
 		Matrix< F > v( p.nC, p.nR );
 #ifndef	COL_ROW
-		_Trans( p.m, 1, v.m, 1, v.nC, v.nR );
+		Trans( p.m, 1, v.m, 1, v.nC, v.nR );
 #else
-		_Trans( p.m, 1, v.m, 1, v.nR, v.nC );
+		Trans( p.m, 1, v.m, 1, v.nR, v.nC );
 #endif
 		return v;
 	}
@@ -133,7 +133,7 @@ namespace JP {
 	template	< typename F >	Matrix< F >			operator
 	-( const vMatrix< F >& p ) {
 		Matrix< F > v( p );
-		_Neg( p.m, 1, v.m, 1, v.nR * v.nC );
+		Neg( p.m, 1, v.m, 1, v.nR * v.nC );
 		return v;
 	}
 
@@ -165,7 +165,7 @@ namespace JP {
 	template	< typename F >	Matrix< F >
 	Spread( const vVector< F >& l, const vVector< F >& r ) {
 		Matrix< F >	v( l.n, r.n );
-		for ( auto iR = 0; iR < v.nR; iR++ ) _Mul( r.m, r.s, l.m[ iR ], v.m + iR * v.nC, 1, v.nC );
+		for ( auto iR = 0; iR < v.nR; iR++ ) Mul( r.m, r.s, l.m[ iR ], v.m + iR * v.nC, 1, v.nC );
 		return v;
 	}
 
@@ -204,19 +204,19 @@ namespace JP {
 	operator +( const vMatrix< F >& l, const vMatrix< F >& r ) {
 		assert( l.nR == r.nR && l.nC == r.nC );
 		Matrix< F >	v( l.nR, l.nC );
-		_Add( l.m, 1, r.m, 1, v.m, 1, v.nR * v.nC );
+		Add( l.m, 1, r.m, 1, v.m, 1, v.nR * v.nC );
 		return v;
 	}
 	template	< typename F >	Matrix< F >
 	operator +( const vMatrix< F >& l, F r ) {
 		Matrix< F >	v( l.nR, l.nC, r );
-		_Add( l.m, 1, v.m, 1, v.m, 1, v.nR * v.nC );
+		Add( l.m, 1, v.m, 1, v.m, 1, v.nR * v.nC );
 		return v;
 	}
 	template	< typename F >	Matrix< F >
 	operator +( F l, const vMatrix< F >& r ) {
 		Matrix< F >	v( r.nR, r.nC, l );
-		_Add( v.m, 1, r.m, 1, v.m, 1, v.nR * v.nC );
+		Add( v.m, 1, r.m, 1, v.m, 1, v.nR * v.nC );
 		return v;
 	}
 
@@ -224,19 +224,19 @@ namespace JP {
 	operator -( const vMatrix< F >& l, const vMatrix< F >& r ) {
 		assert( l.nR == r.nR && l.nC == r.nC );
 		Matrix< F >	v( l.nR, l.nC );
-		_Sub( l.m, 1, r.m, 1, v.m, 1, v.nR * v.nC );
+		Sub( l.m, 1, r.m, 1, v.m, 1, v.nR * v.nC );
 		return v;
 	}
 	template	< typename F >	Matrix< F >
 	operator -( const vMatrix< F >& l, F r ) {
 		Matrix< F >	v( l.nR, l.nC, r );
-		_Sub( l.m, 1, v.m, 1, v.m, 1, v.nR * v.nC );
+		Sub( l.m, 1, v.m, 1, v.m, 1, v.nR * v.nC );
 		return v;
 	}
 	template	< typename F >	Matrix< F >
 	operator -( F l, const vMatrix< F >& r ) {
 		Matrix< F >	v( r.nR, r.nC, l );
-		_Sub( v.m, 1, r.m, 1, v.m, 1, v.nR * v.nC );
+		Sub( v.m, 1, r.m, 1, v.m, 1, v.nR * v.nC );
 		return v;
 	}
 
@@ -244,19 +244,19 @@ namespace JP {
 	operator *( const vMatrix< F >& l, const vMatrix< F >& r ) {
 		assert( l.nR == r.nR && l.nC == r.nC );
 		Matrix< F >	v( l.nR, l.nC );
-		_Mul( l.m, 1, r.m, 1, v.m, 1, v.nR * v.nC );
+		Mul( l.m, 1, r.m, 1, v.m, 1, v.nR * v.nC );
 		return v;
 	}
 	template	< typename F >	Matrix< F >
 	operator *( const vMatrix< F >& l, F r ) {
 		Matrix< F >	v( l.nR, l.nC, r );
-		_Mul( l.m, 1, v.m, 1, v.m, 1, v.nR * v.nC );
+		Mul( l.m, 1, v.m, 1, v.m, 1, v.nR * v.nC );
 		return v;
 	}
 	template	< typename F >	Matrix< F >
 	operator *( F l, const vMatrix< F >& r ) {
 		Matrix< F >	v( r.nR, r.nC, l );
-		_Mul( v.m, 1, r.m, 1, v.m, 1, v.nR * v.nC );
+		Mul( v.m, 1, r.m, 1, v.m, 1, v.nR * v.nC );
 		return v;
 	}
 
@@ -264,26 +264,26 @@ namespace JP {
 	operator /( const vMatrix< F >& l, const vMatrix< F >& r ) {
 		assert( l.nR == r.nR && l.nC == r.nC );
 		Matrix< F >	v( l.nR, l.nC );
-		_Div( l.m, 1, r.m, 1, v.m, 1, v.nR * v.nC );
+		Div( l.m, 1, r.m, 1, v.m, 1, v.nR * v.nC );
 		return v;
 	}
 	template	< typename F >	Matrix< F >
 	operator /( const vMatrix< F >& l, F r ) {
 		Matrix< F >	v( l.nR, l.nC, r );
-		_Div( l.m, 1, v.m, 1, v.m, 1, v.nR * v.nC );
+		Div( l.m, 1, v.m, 1, v.m, 1, v.nR * v.nC );
 		return v;
 	}
 	template	< typename F >	Matrix< F >
 	operator /( F l, const vMatrix< F >& r ) {
 		Matrix< F >	v( r.nR, r.nC, l );
-		_Div( v.m, 1, r.m, 1, v.m, 1, v.nR * v.nC );
+		Div( v.m, 1, r.m, 1, v.m, 1, v.nR * v.nC );
 		return v;
 	}
 
 	template	< typename F >	Matrix< F >
 	Exp( const vMatrix< F >& p ) {
 		Matrix< F > v( p );
-		_Exp( p.m, v.m, (int)( v.nR * v.nC ) );
+		Exp( p.m, v.m, (int)( v.nR * v.nC ) );
 		return v;
 	}
 }

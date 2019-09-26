@@ -3,8 +3,6 @@
 #pragma once
 
 #include	"JPMatrix.h"
-#include	<iostream>
-#include	<fstream>
 
 using namespace std;
 
