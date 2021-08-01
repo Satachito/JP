@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang=zxx>
+<title>Bezier - LeastSquares</title>
+
+<div>CLICK 4 or more points please.</div>
+<canvas id=Canvas width=500 height=500 style="border: 1px solid black"></canvas>
+<br>
+<button id=Clear>CLEAR</button>
+
+<script type=module>
+
+const
+C2D = Canvas.getContext( '2d' )
+const
+Dot = ( x, y ) => C2D.fillRect( x -2, y - 2, 4, 4 )
+
+import	{ FitToBezier } from './G.js'
+
+const
+$ = []
+
+const
+Draw = () => {
+	C2D.clearRect( 0, 0, Canvas.width, Canvas.height )
+	if ( $.length > 3 ) {
+		C2D.beginPath()
+		C2D.moveTo( ...$[ 0 ] )
+		const [ pX, qX ] = FitToBezier( $.map( $ => $[ 0 ] ) )
+		const [ pY, qY ] = FitToBezier( $.map( $ => $[ 1 ] ) )
+		C2D.bezierCurveTo( pX, pY, qX, qY, ...$[ $.length - 1 ] )
+		C2D.strokeStyle = 'red'
+		C2D.stroke()
+		C2D.fillStyle = 'red'
+		Dot( pX, pY )
+		Dot( qX, qY )
+	}
+	C2D.fillStyle = 'black'
+	$.forEach( $ => Dot( ...$ ) )
+}
+
+Clear.onclick = () => ( $.length = 0, Draw() )
+
+Canvas.onclick = ev => ( $.push( [ ev.offsetX, ev.offsetY ] ), Draw() )
+
+</script>
+
+
