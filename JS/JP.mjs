@@ -63,6 +63,7 @@ DecodeBase64URL = $ => {
 
 export const
 DecodeHex = $ => {
+	if ( $.length % 2 ) $ = '0' + $
 	const v = new Uint8Array( $.length / 2 )
 	v.forEach( ( _, i ) => v[ i ] = parseInt( $.substr( i * 2, 2 ), 16 ) )
 	return v
@@ -103,7 +104,7 @@ Range = ( s, e, length ) => s < e
 export default
 () => {
 	const
-	a = DecodeHex( '7afe1822b54b4baf8b85d6e7f6c207ec' )
+	a = DecodeHex( 'afe1822b54b4baf8b85d6e7f6c207ec' )
 
 	const
 	b = Hex( a )
