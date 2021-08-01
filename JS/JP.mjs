@@ -74,7 +74,7 @@ OnDef = ( $, def ) => $ === void 0 ? $ : def( $ )
 export const
 OnDefUndef = ( $, def, undef ) => $ === void 0 ? undef() : def( $ )
 
-const
+export const
 Seek = ( bias, $, length ) => {
 	if ( bias ) {
 		$ += bias
@@ -87,13 +87,13 @@ Seek = ( bias, $, length ) => {
 	return $
 }
 
-const
+export const
 FW = ( $, length ) => $ + 1 === length ? 0 : $ + 1
 
-const
+export const
 BW = ( $, length ) => ( $ ? $ : length ) - 1
 
-const
+export const
 Range = ( s, e, length ) => s < e
 ?   Array.from( { length: e - s }, ( _, k ) => k + s )
 :   [   ...Array.from( { length: length - s }, ( _, k ) => k + s )
