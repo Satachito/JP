@@ -12,6 +12,7 @@
 #include	<numeric>
 #include	<ctime>
 #include	<sstream>
+#include	<random>
 
 using namespace std;
 
@@ -21,7 +22,7 @@ typedef	unsigned int	UI4;
 typedef	unsigned long	UI8;
 
 //	UNIX UNDER ZERO ERROR
-inline UI8
+inline int
 _X( int $, const string& _, const string& file, int line ) {
 	if ( $ < 0 ) {
 		cerr << file + ':' + to_string( line ) + ':' + strerror( errno ) + ':' + _;
@@ -33,7 +34,6 @@ _X( int $, const string& _, const string& file, int line ) {
 	return $;
 }
 #define X( $ ) _X( $, #$, __FILE__, __LINE__ )
-
 
 //	ASSERTION
 inline void
@@ -48,8 +48,9 @@ _A( bool $, const string& _, const string& file, int line ) {
 }
 #define A( $ ) _A( $, #$, __FILE__, __LINE__ )
 
-template	< typename T >	T*	//	NULL EXCEPTION
-_N( T* $, const string& _, const char* file, int line ) {
+//	NULL EXCEPTION
+template	< typename T >	T*
+_N( T* $, const string& _, const string& file, int line ) {
 	if ( ! $ ) {
 		cerr << file + ':' + to_string( line ) + ':' + _;
 #ifdef DEBUG
@@ -215,4 +216,4 @@ namespace JP {
 		time_t _ = $ - 2208988800UL;	//	3600 × 24 × ( 365 × 70 + 17 )
 		return asctime( gmtime( &_ ) );
 	}
-};
+}

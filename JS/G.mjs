@@ -248,9 +248,10 @@ BezierDots = ( [ s, p, q, e ] ) => {
 	,	[ [], [], [], [], [] ]
 	)
 
+	const rM = Round( $[ 2 ] )
+
 	const rS = Round( s )
 	const rE = Round( e )
-	const rM = Round( $[ 2 ] )
 
 	const eqS = EQ( rS, rM )
 	const eqE = EQ( rE, rM )
@@ -273,6 +274,44 @@ BezierDots = ( [ s, p, q, e ] ) => {
 	,	rM
 	,	...BezierDots( [ $[ 2 ], $[ 3 ], $[ 4 ], e ] )
 	]
+}
+
+export const	//	nD
+FindT = ( HIT, [ s, p, q, e ], tS = 0, tE = 1 ) => {	//	$ must be rounded
+	const $ = s.reduce(
+		( $, _, i ) => {
+			const [ S, P, Q, E ] = [ s[ i ], p[ i ], q[ i ], e[ i ] ]
+			const pq = ( P + Q ) / 2
+			const LP = ( S + P ) / 2
+			const RQ = ( Q + E ) / 2
+			const LQ = ( LP + pq ) / 2
+			const RP = ( pq + RQ ) / 2
+			$[ 0 ].push( LP )
+			$[ 1 ].push( LQ )
+			$[ 2 ].push( ( LQ + RP ) / 2 )
+			$[ 3 ].push( RP )
+			$[ 4 ].push( RQ )
+			return $
+		}
+	,	[ [], [], [], [], [] ]
+	)
+
+	const rM = Round( $[ 2 ] )
+
+	if ( EQ( HIT, rM ) ) return ( tS + tE ) / 2
+
+	const rS = Round( s )
+	const rE = Round( e )
+
+	const nearS = Near( rS, rM )
+	const nearE = Near( rE, rM )
+
+	if ( nearS && nearE ) return null
+
+	const _ = FindT( HIT, [ s, $[ 0 ], $[ 1 ], $[ 2 ] ], tS, ( tS + tE ) / 2 )
+	return _
+	?	_
+	:	FindT( HIT, [ $[ 2 ], $[ 3 ], $[ 4 ], e ], ( tS + tE ) / 2, tE )
 }
 
 const

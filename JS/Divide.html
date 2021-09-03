@@ -3,7 +3,7 @@
 
 <script type=module>
 
-import	{ DivideBezier } from './G.mjs'
+import	{ DivideBezier, FindT } from './G.mjs'
 
 const b = [ [ 0, 200 ], [ 400, 0 ], [ 400, 400 ], [ 0, 200 ] ]
 
@@ -36,6 +36,15 @@ Draw = () => {
 
 Draw()
 
-RANGE.oninput = $ => Draw()
+RANGE.oninput = ev => Draw()
+
+CANVAS.onclick = ev => {
+	const _ = FindT( [ ev.offsetX - 10, ev.offsetY - 10 ], b )
+	console.log( _ )
+	_ && (
+		RANGE.value = _ * 100
+	,	Draw()
+	)
+}
 
 </script>

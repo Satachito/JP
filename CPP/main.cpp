@@ -4,6 +4,7 @@
 #include	<set>
 using namespace std;
 
+#include	"JP.h"
 
 //#define	JP_USE_CPU
 #define	COL_ROW
