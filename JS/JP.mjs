@@ -1,3 +1,6 @@
+//	Written by Satoru Ogura, SliP LLC Tokyo.
+//
+
 export const
 TaggedElements = ( $, tag ) => Array.from( $.getElementsByTagName( tag ) )
 
