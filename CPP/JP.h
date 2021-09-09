@@ -168,17 +168,17 @@ namespace JP {
 	}
 
 	inline void
-	Write( int fd, void* $, UI8 _ ) {
+	Write( int fd, const void* $, UI8 _ ) {
 		A( write( fd, $, _ ) == _ );
 	}
 
 	inline void
-	Out( void* $, UI8 _ ) {
+	Out( const void* $, UI8 _ ) {
 		Write( 1, $, _ );
 	}
 
 	inline void
-	Err( void* $, UI8 _ ) {
+	Err( const void* $, UI8 _ ) {
 		Write( 2, $, _ );
 	}
 
