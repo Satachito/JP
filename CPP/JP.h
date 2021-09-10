@@ -16,6 +16,9 @@
 
 using namespace std;
 
+#include	<filesystem>
+using namespace filesystem;
+
 typedef	unsigned char	UI1;
 typedef	unsigned short	UI2;
 typedef	unsigned int	UI4;

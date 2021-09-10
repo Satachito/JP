@@ -1,8 +1,6 @@
 #pragma once
 
-#include	<vector>
-#include	<string>
-using namespace std;
+#include	"JP.h"
 
 namespace JP {
 	inline unsigned char
