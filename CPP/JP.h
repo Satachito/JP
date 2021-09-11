@@ -159,15 +159,20 @@ namespace JP {
 	}
 
 	inline vector< UI1 >
-	In() {
+	Read( int fd ) {
 		vector< UI1 >	$;
 		char	buffer[ 1024 * 1024 ];
 		ssize_t	numRead;
-		while ( ( numRead = read( 0, buffer, sizeof( buffer ) ) ) ) {
+		while ( ( numRead = read( fd, buffer, sizeof( buffer ) ) ) ) {
 			X( numRead < 0 ? -1 : 0 );
 			$.insert( $.end(), buffer, buffer + numRead );
 		}
 		return $;
+	}
+
+	inline vector< UI1 >
+	In() {
+		return Read( 0 );
 	}
 
 	inline void
@@ -176,8 +181,18 @@ namespace JP {
 	}
 
 	inline void
+	Write( int fd, const vector< UI1 >& $ ) {
+		Write( fd, &$[ 0 ], $.size() );
+	}
+
+	inline void
 	Out( const void* $, UI8 _ ) {
 		Write( 1, $, _ );
+	}
+
+	inline void
+	Out( const vector< UI1 >& $ ) {
+		Write( 1, &$[ 0 ], $.size() );
 	}
 
 	inline void
@@ -185,17 +200,22 @@ namespace JP {
 		Write( 2, $, _ );
 	}
 
+	inline void
+	Err( const vector< UI1 >& $ ) {
+		Write( 2, &$[ 0 ], $.size() );
+	}
+
 	inline UI8
-	FileSize( const char* path ) {
+	FileSize( const string& path ) {
 		struct stat $;
-		X( stat( path, &$ ) );
+		X( stat( path.c_str(), &$ ) );
 		return $.st_size;
 	}
 
 	inline vector< UI1 >
-	GetFileContent( const char* path ) {
+	GetFileContent( const string& path ) {
 		vector< UI1 >	$( FileSize( path ) );
-		int fd = open( path, O_RDONLY );
+		int fd = open( path.c_str(), O_RDONLY );
 		A( fd > 2 );
 		A( read( fd, &$[ 0 ], $.size() ) == $.size() );
 		close( fd );
@@ -203,10 +223,21 @@ namespace JP {
 	}
 
 	inline void
-	SetFileContent( const char* path, const vector< UI1 >& $ ) {
-		int fd = creat( path, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP );
+	SetFileContent( const string& path, const vector< UI1 >& $ ) {
+		int fd = creat( path.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP );
 		A( write( fd, &$[ 0 ], $.size() ) == $.size() );
 		close( fd );
+	}
+
+	inline vector< string >
+	GetLines( istream& $ = cin ) {
+		vector< string >	_;
+		string				s;
+		while ( !$.eof() ) {
+			getline( $, s );
+			if ( s.size() ) _.emplace_back( s );
+		}
+		return _;
 	}
 
 	inline char*	//	IC
