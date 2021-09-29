@@ -39,30 +39,34 @@ namespace JP {
 		return string( _ );
 	}
 	inline string
-	EncodeHex( const vector< unsigned char >& $ ) {
-		string	$$;
-		for ( auto& _: $ ) $$ += HexStr( _ );
-		return $$;
-	}
-	inline string
 	EncodeHex( unsigned char* _, unsigned char* $ ) {
-		return EncodeHex( vector< unsigned char >( _, $ ) );
+		string	$$;
+		while ( _ < $ ) $$ += HexStr( *_++ );
+		return $$;
 	}
 	inline string
 	EncodeHex( unsigned char* _, unsigned long $ ) {
 		return EncodeHex( _, _ + $ );
 	}
 	inline string
-	EncodeHexLF16( unsigned char* _, unsigned char* $ ) {
+	EncodeHex( const vector< unsigned char >& $ ) {
+		return EncodeHex( (unsigned char*)&$[ 0 ], $.size() );
+	}
+	inline string
+	EncodeHexLF16( unsigned char* _, unsigned long $ ) {
 		string	$$;
-		for ( auto count = 0; _ < $; _ += 16 ) {
-			auto nRemain = $ - _;
-			$$ += to_string( count++ ) + ':' + EncodeHex( _, _ + ( nRemain < 16 ? nRemain : 16 ) ) + '\n';
+		for ( auto i = 0; i < $; i += 16 ) {
+			auto nRemain = $ - i;
+			$$ += to_string( i ) + ':' + EncodeHex( _ + i, _ + i + ( nRemain < 16 ? nRemain : 16 ) ) + '\n';
 		}
 		return $$;
 	}
 	inline string
-	EncodeHexLF16( unsigned char* _, unsigned long $ ) {
-		return EncodeHexLF16( _, _ + $ );
+	EncodeHexLF16( unsigned char* _, unsigned char* $ ) {
+		return EncodeHexLF16( _, $ - _ );
+	}
+	inline string
+	EncodeHexLF16( const vector< unsigned char >& _, unsigned long $ ) {
+		return EncodeHexLF16( (unsigned char*)&_[ 0 ], $ );
 	}
 }
