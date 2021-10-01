@@ -66,7 +66,7 @@ namespace JP {
 		return EncodeHexLF16( _, $ - _ );
 	}
 	inline string
-	EncodeHexLF16( const vector< unsigned char >& _, unsigned long $ ) {
-		return EncodeHexLF16( (unsigned char*)&_[ 0 ], $ );
+	EncodeHexLF16( const vector< unsigned char >& _ ) {
+		return EncodeHexLF16( (unsigned char*)&_[ 0 ], _.size() );
 	}
 }
