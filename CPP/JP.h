@@ -28,7 +28,7 @@ typedef	unsigned long	UI8;
 inline int
 _X( int $, const string& _, const string& file, int line ) {
 	if ( $ < 0 ) {
-		cerr << file + ':' + to_string( line ) + ':' + strerror( errno ) + ':' + _;
+		cerr << file + ':' + to_string( line ) + ':' + strerror( errno ) + ':' + _ << endl;
 #ifdef DEBUG
 		__builtin_trap();
 #endif
@@ -42,7 +42,7 @@ _X( int $, const string& _, const string& file, int line ) {
 inline void
 _A( bool $, const string& _, const string& file, int line ) {
 	if ( !$ ) {
-		cerr << file + ':' + to_string( line ) + ':' + _;
+		cerr << file + ':' + to_string( line ) + ':' + _ << endl;
 #ifdef DEBUG
 		__builtin_trap();
 #endif
@@ -55,7 +55,7 @@ _A( bool $, const string& _, const string& file, int line ) {
 template	< typename T >	T*
 _N( T* $, const string& _, const string& file, int line ) {
 	if ( ! $ ) {
-		cerr << file + ':' + to_string( line ) + ':' + _;
+		cerr << file + ':' + to_string( line ) + ':' + _ << endl;
 #ifdef DEBUG
 		__builtin_trap();
 #endif
