@@ -223,10 +223,15 @@ namespace JP {
 	}
 
 	inline void
-	SetFileContent( const string& path, const vector< UI1 >& $ ) {
+	SetFileContent( const string& path, const UI1* $, UI8 _ ) {
 		int fd = creat( path.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP );
-		A( write( fd, &$[ 0 ], $.size() ) == $.size() );
+		A( write( fd, $, _ ) == _ );
 		close( fd );
+	}
+
+	inline void
+	SetFileContent( const string& path, const vector< UI1 >& $ ) {
+		SetFileContent( path, &$[ 0 ], $.size() );
 	}
 
 	inline vector< string >
