@@ -247,12 +247,12 @@ namespace JP {
 
 	inline char*	//	IC
 	LocalTimeString_MP4TimeStamp( UI8 $ ) {
-		time_t _ = $ - 2208988800UL;	//	3600 × 24 × ( 365 × 70 + 17 )
+		time_t _ = $ - 3600 * 24 * ( 365 * 66 + 17 );	//	Jan. 1, 1904
 		return asctime( localtime( &_ ) );
 	}
 	inline char*
 	GMTimeString_MP4TimeStamp( UI8 $ ) {
-		time_t _ = $ - 2208988800UL;	//	3600 × 24 × ( 365 × 70 + 17 )
+		time_t _ = $ - 3600 * 24 * ( 365 * 66 + 17 );	//	Jan. 1, 1904
 		return asctime( gmtime( &_ ) );
 	}
 }
