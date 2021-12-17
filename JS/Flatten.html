@@ -1,9 +1,10 @@
-<input	id=RANGE	type=range min=1 value=2 max=400>
+<input	id=RANGE	type=range min=1 value=1 max=100>
+<br>
 <canvas id=CANVAS	width=420 height=420></canvas>
 
 <script type=module>
 
-import	{ FlattenBezier } from './G.mjs'
+import	{ FlattenBezier } from './G.js'
 
 const b = [ [ 0, 0 ], [ 400, 0 ], [ 400, 400 ], [ 0, 400 ] ]
 
@@ -18,6 +19,9 @@ DrawBezier = ( [ s, p, q, e ] ) => {
 }
 
 const
+D = () => Math.pow( RANGE.value / 100, 8 ) * 400
+
+const
 Draw = () => {
 	c2D.clearRect( 0, 0, CANVAS.width, CANVAS.height )
 	c2D.save()
@@ -25,7 +29,7 @@ Draw = () => {
 
 	c2D.strokeStyle = 'black'
 	DrawBezier( b )
-	const _ = FlattenBezier( b, RANGE.value * RANGE.value )
+	const _ = FlattenBezier( b, Math.pow( D(), 2 ) )	//	RANGE.value * RANGE.value
 	c2D.beginPath()
 	c2D.moveTo( ...b[ 0 ] )
 	_.forEach( $ => c2D.lineTo( ...$ ) )

@@ -2,7 +2,7 @@
 
 <script type=module>
 
-import	{ EQ, BezierDots } from './G.mjs'
+import	{ EQ, Mul, BezierPixels } from './G.js'
 
 const b = [ [ 0, 50 ], [ 100, 0 ], [ 100, 100 ], [ 0, 50 ] ]
 
@@ -17,7 +17,7 @@ DrawBezier = ( [ s, p, q, e ] ) => {
 }
 
 const
-Dot = $ => c2D.fillRect( Math.round( $[ 0 ] ) * 4 - 2, Math.round( $[ 1 ] ) * 4 - 2, 4, 4 )
+FSD = $ => c2D.fillRect( Math.round( $[ 0 ] ) * 4 - 2, Math.round( $[ 1 ] ) * 4 - 2, 4, 4 )
 
 const
 Draw = () => {
@@ -25,14 +25,14 @@ Draw = () => {
 	c2D.save()
 	c2D.translate( 10, 10 )
 
-	Dot( b[ 0 ] )
-	Dot( b[ 3 ] )
-	const _ = BezierDots( b )
-	_.forEach( $ => Dot( $ ) )
+	FSD( b[ 0 ] )
+	FSD( b[ 3 ] )
+	const _ = BezierPixels( b )
+	_.forEach( $ => FSD( $ ) )
 for ( let i = 1; i < _.length; i++ ) if ( EQ( _[ i ], _[ i - 1 ] ) ) console.error( i, _[ i ], _[ i - 1 ] )
 
 	c2D.strokeStyle = 'yellow'
-	DrawBezier( b.map( $ => $.map( $ => $ * 4 ) ) )
+	DrawBezier( b.map( $ => Mul( $, 4 ) ) )
 
 	c2D.restore()
 }
@@ -41,8 +41,8 @@ const
 Test = () => {
 	const
 	Log = ( $, _ ) => {
-		console.log( 'BezierDots( ' + JSON.stringify( $ ) + ' ):' + JSON.stringify( _ ) )
-		console.log( JSON.stringify( BezierDots( $ ) ) )
+		console.log( 'BezierPixels( ' + JSON.stringify( $ ) + ' ):' + JSON.stringify( _ ) )
+		console.log( JSON.stringify( BezierPixels( $ ) ) )
 	}
 	//	A
 	Log( [ [ 0, 0 ], [ 0, 0 ], [ 0, 0 ], [ 0, 0 ] ], [] )
