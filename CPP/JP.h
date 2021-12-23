@@ -244,15 +244,4 @@ namespace JP {
 		}
 		return _;
 	}
-
-	inline char*	//	IC
-	LocalTimeString_MP4TimeStamp( UI8 $ ) {
-		time_t _ = $ - 3600 * 24 * ( 365 * 66 + 17 );	//	Jan. 1, 1904
-		return asctime( localtime( &_ ) );
-	}
-	inline char*
-	GMTimeString_MP4TimeStamp( UI8 $ ) {
-		time_t _ = $ - 3600 * 24 * ( 365 * 66 + 17 );	//	Jan. 1, 1904
-		return asctime( gmtime( &_ ) );
-	}
 }
