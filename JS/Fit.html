@@ -14,7 +14,7 @@ C2D = Canvas.getContext( '2d' )
 const
 Dot = ( x, y ) => C2D.fillRect( x -2, y - 2, 4, 4 )
 
-import	{ FitToBezier } from './G.mjs'
+import	{ FitBezier } from './G.js'
 
 const
 $ = []
@@ -25,14 +25,13 @@ Draw = () => {
 	if ( $.length > 3 ) {
 		C2D.beginPath()
 		C2D.moveTo( ...$[ 0 ] )
-		const [ pX, qX ] = FitToBezier( $.map( $ => $[ 0 ] ) )
-		const [ pY, qY ] = FitToBezier( $.map( $ => $[ 1 ] ) )
-		C2D.bezierCurveTo( pX, pY, qX, qY, ...$[ $.length - 1 ] )
+		const [ p, q ] = FitBezier( $ )
+		C2D.bezierCurveTo( ...p, ...q, ...$[ $.length - 1 ] )
 		C2D.strokeStyle = 'red'
 		C2D.stroke()
 		C2D.fillStyle = 'red'
-		Dot( pX, pY )
-		Dot( qX, qY )
+		Dot( ...p )
+		Dot( ...q )
 	}
 	C2D.fillStyle = 'black'
 	$.forEach( $ => Dot( ...$ ) )
