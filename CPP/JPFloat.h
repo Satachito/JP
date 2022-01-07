@@ -21,7 +21,6 @@ namespace JP {
 
 #include	<cmath>
 
-#define	JP_USE_CPU
 #ifdef	JP_USE_CPU
 namespace JP {
 
