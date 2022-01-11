@@ -14,6 +14,7 @@
 #include	<ctime>
 #include	<sstream>
 #include	<random>
+#include	<algorithm>
 
 using namespace std;
 
