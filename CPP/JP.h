@@ -8,11 +8,13 @@
 #include	<iostream>
 #include	<string>
 #include	<vector>
+#include	<map>
 #include	<stack>
 #include	<numeric>
 #include	<ctime>
 #include	<sstream>
 #include	<random>
+#include	<algorithm>
 
 using namespace std;
 
@@ -25,8 +27,8 @@ typedef	unsigned int	UI4;
 typedef	unsigned long	UI8;
 
 //	UNIX UNDER ZERO ERROR
-inline int
-_X( int $, const string& _, const string& file, int line ) {
+template	< typename I >	I
+_X( I $, const string& _, const string& file, int line ) {
 	if ( $ < 0 ) {
 		cerr << file + ':' + to_string( line ) + ':' + strerror( errno ) + ':' + _ << endl;
 #ifdef DEBUG
@@ -70,10 +72,10 @@ namespace JP {
 	typedef	int	UNICODE;
 
 	inline	UNICODE
-	Unicode( std::istream& p ) {
+	Unicode( istream& p ) {
 		unsigned char	c;
 		p >> c;
-		if ( p.eof() ) throw "EOF";
+		A( !p.eof() );
 		if ( c < 0x80 ) return c;
 
 		c <<= 1;
@@ -86,7 +88,7 @@ namespace JP {
 
 		while ( wNumCont-- ) {
 			p >> c;
-			if ( p.eof() ) throw "EOF";
+			A( !p.eof() );
 			v = ( v << 6 ) | ( c & 0x3f );
 		}
 		
@@ -107,7 +109,7 @@ namespace JP {
 				Unreaded = false;
 				return buffer;
 			}
-			return Unicode( std::cin );	//	UC
+			return Unicode( cin );	//	UC
 		}
 	};
 	struct
@@ -163,10 +165,7 @@ namespace JP {
 		vector< UI1 >	$;
 		char	buffer[ 1024 * 1024 ];
 		ssize_t	numRead;
-		while ( ( numRead = read( fd, buffer, sizeof( buffer ) ) ) ) {
-			X( numRead < 0 ? -1 : 0 );
-			$.insert( $.end(), buffer, buffer + numRead );
-		}
+		while ( ( numRead = X( read( fd, buffer, sizeof( buffer ) ) ) ) ) $.insert( $.end(), buffer, buffer + numRead );
 		return $;
 	}
 
@@ -243,16 +242,5 @@ namespace JP {
 			if ( s.size() ) _.emplace_back( s );
 		}
 		return _;
-	}
-
-	inline char*	//	IC
-	LocalTimeString_MP4TimeStamp( UI8 $ ) {
-		time_t _ = $ - 3600 * 24 * ( 365 * 66 + 17 );	//	Jan. 1, 1904
-		return asctime( localtime( &_ ) );
-	}
-	inline char*
-	GMTimeString_MP4TimeStamp( UI8 $ ) {
-		time_t _ = $ - 3600 * 24 * ( 365 * 66 + 17 );	//	Jan. 1, 1904
-		return asctime( gmtime( &_ ) );
 	}
 }

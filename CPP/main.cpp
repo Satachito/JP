@@ -27,7 +27,6 @@ v() {
 	vector< float >		vS { 1, 2, 3 };
 	vector< double >	vD { 1, 2, 3 };
 	
-
 	assert( vS + vS		== vectorS( 2, 4, 6 ) );
 	assert( vD + vD		== vectorD( 2, 4, 6 ) );
 	assert( vS + 1.0f	== vectorS( 2, 3, 4 ) );
@@ -49,13 +48,14 @@ v() {
 	assert( 1.0f * vS	== vectorS( 1, 2, 3 ) );
 	assert( 1.0 * vD	== vectorD( 1, 2, 3 ) );
 
-#ifdef	USE_CPU
+#ifdef	JP_USE_CPU
 	assert( vS / vS		== vectorS( 1, 1, 1 ) );
 	assert( 1.0f / vS	== vectorS( 1, 0.5, 1.0 / 3.0 ) );
 #else
-	assert( 1.0f / vS	== vectorS( 0.99999994, 0.49999997, 0.333333313 ) );
 	assert( vS / vS		== vectorS( 0.99999994, 0.99999994, 0.99999994 ) );
+	assert( 1.0f / vS	== vectorS( 0.99999994, 0.49999997, 0.333333313 ) );
 #endif
+
 	assert( vD / vD		== vectorD( 1, 1, 1 ) );
 	assert( vS / 1.0f	== vectorS( 1, 2, 3 ) );
 	assert( vD / 1.0	== vectorD( 1, 2, 3 ) );
@@ -166,11 +166,7 @@ V() {
 	{ Vector< double > wD = vD2;	wD -= vD3;	assert( wD == Vector3< double >( 0, 0, 0 ) ); }
 	{ Vector< float  > wS = vS2;	wS *= vS3;	assert( wS == Vector3< float  >( 1, 4, 9 ) ); }
 	{ Vector< double > wD = vD2;	wD *= vD3;	assert( wD == Vector3< double >( 1, 4, 9 ) ); }
-#ifdef	USE_CPU
 	{ Vector< float  > wS = vS2;	wS /= vS3;	assert( wS == Vector3< float  >( 1, 1, 1 ) ); }
-#else
-	{ Vector< float  > wS = vS2;	wS /= vS3;	assert( wS == Vector3< float  >( 0.99999994, 0.99999994, 0.99999994 ) ); }
-#endif
 	{ Vector< double > wD = vD2;	wD /= vD3;	assert( wD == Vector3< double >( 1, 1, 1 ) ); }
 	{ Vector< float  > wS = vS2;	wS += 1;	assert( wS == Vector3< float  >( 2, 3, 4 ) ); }
 	{ Vector< double > wD = vD2;	wD += 1;	assert( wD == Vector3< double >( 2, 3, 4 ) ); }
@@ -202,13 +198,8 @@ V() {
 	assert( 1.0f * vS2	== Vector3< float  >( 1, 2, 3 ) );
 	assert( 1.0 * vD2	== Vector3< double >( 1, 2, 3 ) );
 	
-#ifdef	USE_CPU
 	assert( vS2 / vS3	== Vector3< float  >( 1, 1, 1 ) );
 	assert( 1.0f / vS2	== Vector3< float  >( 1, 0.5, 1.0 / 3.0 ) );
-#else
-	assert( vS2 / vS3	== Vector3< float  >( 0.99999994, 0.99999994, 0.99999994 ) );
-	assert( 1.0f / vS2	== Vector3< float  >( 0.99999994, 0.49999997, 0.333333313 ) );
-#endif
 	assert( vD2 / vD3	== Vector3< double >( 1, 1, 1 ) );
 	assert( vS2 / 1.0f	== Vector3< float  >( 1, 2, 3 ) );
 	assert( vD2 / 1.0	== Vector3< double >( 1, 2, 3 ) );
@@ -251,7 +242,7 @@ V() {
 	assert( Exp( vD1 ) == Vector3< double >( exp( 1 ), exp( 2 ), exp( 3 ) ) );
 
 	assert( Log( vS1 ) == Vector3< float  >( log( 1 )	, log( 2 )	, log( 3 ) ) );
-	assert( Log( vD1 ) == Vector3< double >( log( 1.0 )	, log( 2.0 ), 1.0986122886681096 ) );
+	assert( Log( vD1 ) == Vector3< double >( log( 1 )	, log( 2 )	, log( 3 ) ) );
 
 	assert( Dot( vS2, vS3 ) == 14 );
 	assert( Dot( vD2, vD3 ) == 14 );
@@ -312,15 +303,9 @@ JPMatrixTestF() {
 	assert( wM +  (float)2	== Matrix<float>( 2, 3, {   3  ,  4  ,  5  ,  6  ,  7  ,  8 } ) );
 	assert( wM -  (float)2	== Matrix<float>( 2, 3, {  -1  ,  0  ,  1  ,  2  ,  3  ,  4 } ) );
 	assert( wM *  (float)2	== Matrix<float>( 2, 3, {   2  ,  4  ,  6  ,  8  , 10  , 12 } ) );
-#ifdef	USE_CPU
 	assert( wM /  (float)2	== Matrix<float>( 2, 3, {   0.5, 1, 1.5, 2, 2.5, 3 } ) );
 	assert(  (float)2 / wM	== Matrix<float>( 2, 3, {   2  ,  1  ,  2.0/3.0,  0.5, 0.4, 1.0/3.0 } ) );
 	assert( wM / wM			== Matrix<float>( 2, 3, {   1, 1, 1, 1, 1, 1 } ) );
-#else
-	assert( wM /  (float)2	== Matrix<float>( 2, 3, {   0.49999997,  0.99999994  ,  1.49999988,  1.99999988  ,  2.49999976,  2.99999976 } ) );
-	assert(  (float)2 / wM	== Matrix<float>( 2, 3, {   1.9999999  ,  0.99999994  ,  0.6666666,  0.49999997, 0.39999998, 0.3333333 } ) );
-	assert( wM / wM			== Matrix<float>( 2, 3, {   0.99999994  ,  0.99999994  ,  0.99999994  ,  0.99999994  ,  0.99999994  ,  0.99999994 } ) );
-#endif
 	assert( (float)2 + wM	== Matrix<float>( 2, 3, {   3  ,  4  ,  5  ,  6  ,  7  ,  8 } ) );
 	assert( (float)2 - wM	== Matrix<float>( 2, 3, {   1  ,  0  , -1  , -2  , -3  , -4 } ) );
 	assert( (float)2 * wM	== Matrix<float>( 2, 3, {   2  ,  4  ,  6  ,  8  , 10  , 12 } ) );
