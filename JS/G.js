@@ -102,7 +102,7 @@ BBox = $ => $.slice( 1 ).reduce(
 )
 
 export const	//	2D
-OrBBox = ( p, q ) => [
+BBoxOr = ( p, q ) => [
 	p[ 0 ] < q[ 0 ] ? p[ 0 ] : q[ 0 ]
 ,	p[ 1 ] < q[ 1 ] ? p[ 1 ] : q[ 1 ]
 ,	p[ 2 ] > q[ 2 ] ? p[ 2 ] : q[ 2 ]
@@ -110,11 +110,11 @@ OrBBox = ( p, q ) => [
 ]
 
 export const	//	2D
-BBoxIntersection = ( p, q ) => q[ 0 ] < p[ 2 ] && p[ 0 ] < q[ 2 ] && q[ 1 ] < p[ 3 ] && p[ 1 ] < q[ 3 ]
+BBoxAnd = ( p, q ) => q[ 0 ] < p[ 2 ] && p[ 0 ] < q[ 2 ] && q[ 1 ] < p[ 3 ] && p[ 1 ] < q[ 3 ]
 
 export const	//	2D
 IntersectingPoints = ( p, q ) => {
-	if ( BBoxIntersection( BBox( p ), BBox( q ) ) ) {
+	if ( BBoxAnd( BBox( p ), BBox( q ) ) ) {
 		const $ = []
 		let prevP = p[ 0 ]
 		p.slice( 1 ).forEach(
@@ -321,7 +321,7 @@ CrossingPointsByPixels = ( p, q ) => {
 }
 
 export const	//	nD
-FindT = ( HIT, [ s, p, q, e ], tS = 0, tE = 1 ) => {	//	$ must be rounded
+FindT = ( HIT, [ s, p, q, e ], tS = 0, tE = 1 ) => {	//	HIT must be [ int ]
 	const $ = Div2Bezier( [ s, p, q, e ] )
 
 	const rM = Round( $[ 2 ] )
