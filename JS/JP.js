@@ -2,6 +2,23 @@
 //
 
 export const
+Last = _ => _[ _.length - 1 ]
+
+export const
+AND = ( l, r ) => l.filter( _ => !r.includes( _ ) )
+
+export const
+OR = ( l, r ) => [ ...l.filter( _ => !r.includes( _ ) ), r ]
+
+export const
+XOR = ( l, r ) => [ ...l.filter( _ => !r.includes( _ ) ), ...r.filter( _ => !l.includes( _ ) ) ]
+
+//v	INLINE
+export const
+Remove = ( $, _ ) => $.splice( $.findIndex( $ => $ === _ ), 1 )
+//^
+
+export const
 TaggedElements = ( $, tag ) => Array.from( $.getElementsByTagName( tag ) )
 
 export const
