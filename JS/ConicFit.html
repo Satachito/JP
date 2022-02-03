@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang=zxx>
+<title>Conic - LeastSquares</title>
+
+<div>CLICK 3 or more points please.</div>
+<canvas id=Canvas width=500 height=500 style="border: 1px solid black"></canvas>
+<br>
+<button id=Clear>CLEAR</button>
+
+<script type=module>
+
+const
+C2D = Canvas.getContext( '2d' )
+const
+Dot = ( x, y ) => C2D.fillRect( x -2, y - 2, 4, 4 )
+
+import	{ FitConic } from './G.js'
+
+const
+$ = []
+
+const
+Draw = () => {
+	C2D.clearRect( 0, 0, Canvas.width, Canvas.height )
+	if ( $.length > 2 ) {
+		C2D.beginPath()
+		C2D.moveTo( ...$[ 0 ] )
+		const c = FitConic( $ )
+console.log( c )
+		C2D.quadraticCurveTo( ...c, ...$[ $.length - 1 ] )
+		C2D.strokeStyle = 'red'
+		C2D.stroke()
+		C2D.fillStyle = 'red'
+		Dot( ...c )
+	}
+	C2D.fillStyle = 'black'
+	$.forEach( $ => Dot( ...$ ) )
+}
+
+Clear.onclick = () => ( $.length = 0, Draw() )
+
+Canvas.onclick = ev => ( $.push( [ ev.offsetX, ev.offsetY ] ), Draw() )
+
+</script>
+
+

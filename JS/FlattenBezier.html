@@ -19,23 +19,20 @@ DrawBezier = ( [ s, p, q, e ] ) => {
 }
 
 const
-D = () => Math.pow( RANGE.value / 100, 8 ) * 400
-
-const
 Draw = () => {
 	c2D.clearRect( 0, 0, CANVAS.width, CANVAS.height )
 	c2D.save()
 	c2D.translate( 10, 10 )
-
+//
 	c2D.strokeStyle = 'black'
 	DrawBezier( b )
-	const _ = FlattenBezier( b, Math.pow( D(), 2 ) )	//	RANGE.value * RANGE.value
+	const _ = FlattenBezier( b, RANGE.value * RANGE.value )
 	c2D.beginPath()
 	c2D.moveTo( ...b[ 0 ] )
 	_.forEach( $ => c2D.lineTo( ...$ ) )
 	c2D.strokeStyle = 'red'
 	c2D.stroke()
-
+//
 	c2D.restore()
 }
 

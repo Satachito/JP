@@ -1,0 +1,51 @@
+<canvas id=CANVAS	width=420 height=420></canvas>
+
+<script type=module>
+
+import	{ EQ, Mul, ConicPixels } from './G.js'
+
+const c = [ [ 0, 0 ], [ 100, 50 ], [ 0, 100 ] ]
+
+const c2D = CANVAS.getContext( '2d' )
+
+const
+DrawConic = ( [ s, c, e ] ) => {
+	c2D.beginPath()
+	c2D.moveTo( ...s )
+	c2D.quadraticCurveTo( ...c, ...e )
+	c2D.stroke()
+}
+
+const
+FSD = $ => c2D.fillRect( Math.round( $[ 0 ] ) * 4 - 2, Math.round( $[ 1 ] ) * 4 - 2, 4, 4 )
+
+const
+Draw = () => {
+	c2D.clearRect( 0, 0, CANVAS.width, CANVAS.height )
+	c2D.save()
+	c2D.translate( 10, 10 )
+
+	FSD( c[ 0 ] )
+	FSD( c[ 2 ] )
+	const _ = ConicPixels( c )
+	_.forEach( $ => FSD( $ ) )
+for ( let i = 1; i < _.length; i++ ) if ( EQ( _[ i ], _[ i - 1 ] ) ) console.error( i, _[ i ], _[ i - 1 ] )
+
+	c2D.strokeStyle = 'yellow'
+	DrawConic( c.map( $ => Mul( $, 4 ) ) )
+
+	c2D.restore()
+}
+
+const
+Test = () => {
+	const
+	Log = ( $, _ ) => {
+		console.log( 'ConicPixels( ' + JSON.stringify( $ ) + ' ):' + JSON.stringify( _ ) )
+		console.log( JSON.stringify( ConicPixels( $ ) ) )
+	}
+}
+CANVAS.onclick = () => Test()
+Draw()
+
+</script>
