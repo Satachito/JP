@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang=zxx>
+<title>Angle</title>
+
+<canvas id=Canvas width=400 height=400 style="border: 1px solid black"></canvas>
+<p id=ANGLE></p>
+<br>
+
+<script type=module>
+
+const
+C2D = Canvas.getContext( '2d' )
+const
+Dot = ( x, y ) => C2D.fillRect( x -2, y - 2, 4, 4 )
+
+import	{ Near, Vec, Angle } from './G.js'
+
+let
+P = [ 100, 100 ]
+let
+Q = [ 300, 300 ]
+
+const
+Draw = () => {
+	C2D.clearRect( 0, 0, Canvas.width, Canvas.height )
+	C2D.save()
+	C2D.beginPath()
+	C2D.moveTo( 200, 200 )
+	C2D.lineTo( ...P )
+	C2D.moveTo( 200, 200 )
+	C2D.lineTo( ...Q )
+	C2D.strokeStyle = 'black'
+	C2D.stroke()
+
+	C2D.fillStyle = 'yellow'
+	Dot( 200, 200 )
+	C2D.fillStyle = 'red'
+	Dot( ...P )
+	Dot( ...Q )
+
+	C2D.restore()
+
+	ANGLE.textContent = Angle( Vec( P, [ 200, 200 ] ), Vec( [ 200, 200 ], Q ) ) / Math.PI * 180
+}
+
+Canvas.onmousedown = md => {
+	const _ = [ md.offsetX, md.offsetY ]
+console.log( _, P, Q )
+	Near( _, P ) && (
+		Canvas.onmousemove = mv => ( P = [ mv.offsetX, mv.offsetY ], Draw() )
+	,	Canvas.onmouseup = mu => (
+			Canvas.onmousemove = null
+		,	Canvas.onmouseup = null
+		)
+	)
+	Near( _, Q ) && (
+		Canvas.onmousemove = mv => ( Q = [ mv.offsetX, mv.offsetY ], Draw() )
+	,	Canvas.onmouseup = mu => (
+			Canvas.onmousemove = null
+		,	Canvas.onmouseup = null
+		)
+	)
+	Draw()
+}
+
+Draw()
+
+</script>
+
+
