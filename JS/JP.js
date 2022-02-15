@@ -2,6 +2,71 @@
 //
 
 export const
+IsJSONable = _ => {
+	if ( _ === void 0					) return false	// undefined
+	if ( _ === Number.POSITIVE_INFINITY	) return false
+	if ( _ === Number.NEGATIVE_INFINITY	) return false
+	if ( Number.isNaN( _ )				) return false	// 'Number.' needed, global isNaN( string ) returns true
+
+	if ( _ === null ) return true
+
+	switch ( _.constructor ) {
+	case Array:
+		return _.every( _ => IsJSONable( _ ) )
+	case Object:
+		return Object.entries( _ ).every( ( [ k, v ] ) => k.constructor === String && IsJSONable( v ) )
+	case String:
+	case Boolean:
+	case Number:
+		return true
+	default:
+		return false
+	}
+}
+
+export const
+CloneJSONable = _ => {
+
+//	In JavaScript, strings are immutable.
+
+	if ( _ === null ) return _
+	
+	switch ( _.constructor ) {
+	case Array:
+		return _.map( _ => CloneJSONable( _ ) )
+	case Object:
+		return Object.fromEntries(
+			Object.entries( _ ).map( ( [ $, _ ] ) => [ $, CloneJSONable( _ ) ] )
+		)
+		break
+	default:	// String, Boolean, Number
+		return _
+	}
+}
+
+export const
+EqualJSONable = ( p, q ) => {
+	if ( p === null ) return p === q
+	if ( q === null ) return false
+	
+	const c = p.constructor
+	if ( c !== q.constructor ) return false
+	switch ( c ) {
+	case Array:
+		return p.length === q.length
+		?	p.every( ( $, _ ) => EqualJSONable( $, q[ _ ] ) )
+		:	false
+	case Object:
+		const keys = Object.keys( p ).sort()	// [ String ]
+		return Object.keys( q ).sort().every(
+			( $, _ ) => $ === keys[ _ ] && EqualJSONable( p[ $ ], q[ $ ] )
+		)
+	default:
+		return p === q
+	}
+}
+
+export const
 Last = _ => _[ _.length - 1 ]
 
 export const
@@ -13,7 +78,7 @@ OR = ( l, r ) => [ ...l.filter( _ => !r.includes( _ ) ), r ]
 export const
 XOR = ( l, r ) => [ ...l.filter( _ => !r.includes( _ ) ), ...r.filter( _ => !l.includes( _ ) ) ]
 
-//v	INLINE
+//v	INPLACE
 export const
 Remove = ( $, _ ) => $.splice( $.findIndex( $ => $ === _ ), 1 )
 //^
@@ -121,8 +186,51 @@ Range = ( s, e, length ) => s < e
 	,   ...Array.from( { length: e }, ( _, k ) => k )
 	]
 
+
 export default
 () => {
+
+	const _ = { A: [ void 0 ] }						; console.log( _, IsJSONable( _ ) )
+	const X = { A: [ NaN ] }						; console.log( X, IsJSONable( X ) )
+	const Y = { A: [ Number.POSITIVE_INFINITY ] }	; console.log( Y, IsJSONable( Y ) )
+	const Z = { A: [ Number.NEGATIVE_INFINITY ] }	; console.log( Z, IsJSONable( Z ) )
+
+	const
+	P = {
+		A: [ 1, "A", true ]
+	,	B: [ 2, "B", false ]
+	}
+	console.log( P, IsJSONable( P ) )
+
+	const
+	Q = {
+		B: [ 2, "B", false ]
+	,	A: [ 1, "A", true ]
+	}
+	console.log( Q, IsJSONable( Q ) )
+
+	console.log( P, Q, EqualJSONable( P, Q ) )
+
+	console.log( EqualJSONable( CloneJSONable( P ), CloneJSONable( Q ) ) )
+
+
+/*
+	const
+	TestValue = ( js, expected ) => {
+		const _ = eval( js )
+		EqualJSONable( _, expected )
+		?	console.log( 'OK', js, _ )
+		:	console.error( 'ERROR', js, _, expected )
+	}
+
+	TestValue( "EqualJSONable( [], [] )", true )
+	TestValue( "EqualJSONable( null, null )", true )
+	TestValue( "EqualJSONable( [ 1, 'A' ], [ 1, 'A' ] )", true )
+	TestValue( "EqualJSONable( [ 1, 'A' ], [ 1, 'B' ] )", false )
+	TestValue( "EqualJSONable( [ 1, 'A', 2 ], [ 1, 'A' ] )", false )
+	TestValue( "EqualJSONable( { 'A': 1, 'B': 2 }, { 'B': 2, 'A': 1 } )", true )
+	TestValue( "EqualJSONable( { 'A': 1, 'B': [ 1, 2 ] }, { 'B': [ 1, 2 ], 'A': 1 } )", true )
+	
 	const
 	a = DecodeHex( 'afe1822b54b4baf8b85d6e7f6c207ec' )
 
@@ -146,4 +254,5 @@ export default
 	console.log( BW( 0, 3 ) )	//	2
 	console.log( Range( 1, 3, 4 ) )	//	[ 1, 2 ]
 	console.log( Range( 3, 1, 4 ) )	//	[ 3, 0 ]
+*/
 }
