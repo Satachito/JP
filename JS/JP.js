@@ -28,6 +28,7 @@ export const
 CloneJSONable = _ => {
 
 //	In JavaScript, strings are immutable.
+//	Comparing to JSON.parse( JSON.stringify( _ ) ), this function is a little bit faster and efficient by string sharing.
 
 	if ( _ === null ) return _
 	
@@ -212,6 +213,7 @@ export default
 	console.log( P, Q, EqualJSONable( P, Q ) )
 
 	console.log( EqualJSONable( CloneJSONable( P ), CloneJSONable( Q ) ) )
+	console.log( EqualJSONable( JSON.parse( JSON.stringify( P ) ), P ) )
 
 
 /*
