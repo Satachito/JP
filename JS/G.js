@@ -90,6 +90,13 @@ export const	//	2D
 PerpendicularLength2 = ( o, p, q ) => PerpendicularLength2V( Vec( o, p ), Vec( o, q ) )
 
 export const	//	2D
+IsLinePixels = _ => {
+	const lastI = _.length - 1
+	const pq = Vec( _[ 0 ], _[ lastI ] )
+	return _.slice( 1, lastI ).every( r => Math.abs( PerpendicularLength2V( pq, Vec( _[ 0 ], r ) ) ) < 1 )
+}
+
+export const	//	2D
 BBox = $ => $.slice( 1 ).reduce(
 	( $, _ ) => (
 		_[ 0 ] < $[ 0 ] && ( $[ 0 ] = _[ 0 ] )
