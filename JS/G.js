@@ -363,7 +363,7 @@ ConicPixels = ( [ s, c, e ] ) => {
 }
 
 export const
-CrossingPointsByPixels = ( p, q ) => {
+PointsOfIntersectionByPixels = ( p, q ) => {
 
 	const $ = []
 
