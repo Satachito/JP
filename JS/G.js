@@ -1,11 +1,17 @@
 export const
 CF	= ( -24 + Math.sqrt( 24 * 24 + 64 * 9 ) ) / 18	//	Curve factor	: 0.552285
 
-export const
+export const	//	Int
 EQ = ( p, q ) => p.every( ( $, _ ) => $ === q[ _ ] )
 
 export const
 Round = $ => $.map( $ => Math.round( $ ) )
+
+export const
+Abs = _ => _.map( _ => Math.abs( _ ) )
+
+export const	//	Int
+Next = ( p, q ) => Abs( Sub( p, q ) ).reduce( ( $, _ ) => $ + _, 0 ) === 1
 
 export const
 Near = ( p, q ) => p.every( ( $, _ ) => Math.abs( $ - q[ _ ] ) <= 1 )
@@ -367,39 +373,25 @@ PointsOfIntersectionByPixels = ( p, q ) => {
 
 	const $ = []
 
-	const
-	indexPairs = []
-	for ( let _P = 0; _P < p.length; _P++ ) {
-		for ( let _Q = 0; _Q < q.length; _Q++ ) {
-			if ( EQ( p[ _P ], q[ _Q ] ) ) {
-				indexPairs.push( [ _P, _Q ] )
-				$.push( p[ _P ] )
+	for ( let P of p ) for ( let Q of q ) EQ( P, Q ) && $.push( P )
+
+	let prevP = p[ 0 ]
+	for ( let _P = 1; _P < p.length; _P++ ) {
+		const P = p[ _P ]
+		if ( prevP[ 0 ] !== P[ 0 ] && prevP[ 1 ] !== P[ 1 ] ) {
+			let prevQ = q[ 0 ]
+			for ( let _Q = 1; _Q < q.length; _Q++ ) {
+				const Q = q[ _Q ]
+				if ( prevQ[ 0 ] !== Q[ 0 ] && prevQ[ 1 ] !== Q[ 1 ] ) {
+					//	DIAGONAL CROSSING
+					Next( prevP, prevQ ) && Next( prevP, Q ) && Next( P, prevQ ) && Next( P, Q ) && $.push(
+						[ ( prevP[ 0 ] + P[ 0 ] ) / 2, ( prevP[ 1 ] + P[ 1 ] ) / 2 ]
+					)
+				}
+				prevQ = Q
 			}
 		}
-	}
-
-	for ( let _P = 1; _P < p.length; _P++ ) {
-		for ( let _Q = 1; _Q < q.length; _Q++ ) {
-			if (
-				indexPairs.some( $ => $[ 0 ] === _P && $[ 1 ] === _Q ) 
-			||	indexPairs.some( $ => $[ 0 ] === _P - 1 && $[ 1 ] === _Q - 1 ) 
-			) continue
-
-			const P = p[ _P ]
-			const Q = q[ _Q ]
-			const prevP = p[ _P - 1 ]
-			const prevQ = q[ _Q - 1 ]
-
-			const distP = P[ 0 ] - prevP[ 0 ] + P[ 1 ] - prevP[ 1 ]
-			if ( distP === 1 || distP === -1 ) continue
-
-			const distQ = Q[ 0 ] - prevQ[ 0 ] + Q[ 1 ] - prevQ[ 1 ]
-			if ( distQ === 1 || distQ === -1 ) continue
-
-			const x2 = P[ 0 ] + prevP[ 0 ]
-			const y2 = P[ 1 ] + prevP[ 1 ]
-			if ( x2 === Q[ 0 ] + prevQ[ 0 ] && y2 === Q[ 1 ] + prevQ[ 1 ] ) $.push( [ x2 / 2, y2 / 2 ] )
-		}
+		prevP = P
 	}
 	return $
 }

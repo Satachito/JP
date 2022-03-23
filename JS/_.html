@@ -5,13 +5,9 @@
 import	{ Mul, Div, Add, Near, Sub, BezierPixels, LinePixels, PointsOfIntersectionByPixels } from './G.js'
 
 const
-b1 = [ [ 0, 0 ], [ 150, 0 ], [ 150, 200 ], [ 0, 200 ] ]
+l1 = [ [ 0, 0 ], [ 5, 5 ] ]
 const
-b2 = [ [ 200, 0 ], [ 50, 0 ], [ 50, 200 ], [ 200, 200 ] ]
-const
-l1 = [ [ 100, 0 ], [ 100, 200 ] ]
-const
-l2 = [ [ 0, 100 ], [ 200, 100 ] ]
+l2 = [ [ 0, 5 ], [ 5, 0 ] ]
 
 const
 target = []
@@ -49,7 +45,7 @@ DrawLine = ( [ s, e ] ) => {
 }
 
 const
-Grip = $ => c2D.strokeRect( Math.round( $[ 0 ] ) * 4 - 3, Math.round( $[ 1 ] ) * 4 - 3, 6, 6 )
+Grip = $ => void 0	//c2D.strokeRect( Math.round( $[ 0 ] ) * 4 - 3, Math.round( $[ 1 ] ) * 4 - 3, 6, 6 )
 
 const
 ReducedCP = ( p, q ) => {
@@ -86,47 +82,24 @@ ReducedCP = ( p, q ) => {
 
 const
 Draw = () => {
-console.log( 'Draw' )
-	const b1D = BezierPixels( b1 )
-	const b2D = BezierPixels( b2 )
 	const l1D = LinePixels( l1 )
 	const l2D = LinePixels( l2 )
 
-//console.log( 'b1b2' )
-	const b1b2 = ReducedCP( b1D, b2D )
-//console.log( 'l1l2' )
 	const l1l2 = ReducedCP( l1D, l2D )
-//console.log( 'b1l1' )
-	const b1l1 = ReducedCP( b1D, l1D )
-//console.log( 'b1l2' )
-	const b1l2 = ReducedCP( b1D, l2D )
-//console.log( 'b2l1' )
-	const b2l1 = ReducedCP( b2D, l1D )
-//console.log( 'b2l2' )
-	const b2l2 = ReducedCP( b2D, l2D )
 
 	c2D.clearRect( 0, 0, CANVAS.width, CANVAS.height )
 	c2D.save()
 	c2D.translate( 10, 10 )
 
 	c2D.fillStyle = 'black'
-	b1D.forEach( $ => FSD( $ ) )
-	b2D.forEach( $ => FSD( $ ) )
 	l1D.forEach( $ => FSD( $ ) )
 	l2D.forEach( $ => FSD( $ ) )
 
-	DrawBezier( b1 )
-	DrawBezier( b2 )
 	DrawLine( l1 )
 	DrawLine( l2 )
 
 	c2D.fillStyle = 'red'
-	b1b2.forEach( $ => FSD( $ ) )
 	l1l2.forEach( $ => FSD( $ ) )
-	b1l1.forEach( $ => FSD( $ ) )
-	b1l2.forEach( $ => FSD( $ ) )
-	b2l1.forEach( $ => FSD( $ ) )
-	b2l2.forEach( $ => FSD( $ ) )
 
 	c2D.restore()
 }
@@ -135,8 +108,6 @@ Draw()
 CANVAS.onmousedown = ev => {
 	const _ = [ ( ev.offsetX - 10 ) / 4, ( ev.offsetY - 10 ) / 4 ]
 
-	b1.forEach( $ => Near( $, _ ) && target.push( $ ) )
-	b2.forEach( $ => Near( $, _ ) && target.push( $ ) )
 	l1.forEach( $ => Near( $, _ ) && target.push( $ ) )
 	l2.forEach( $ => Near( $, _ ) && target.push( $ ) )
 }
