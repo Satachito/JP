@@ -176,7 +176,7 @@ namespace JP {
 
 	inline void
 	Write( int fd, const void* $, UI8 _ ) {
-		A( write( fd, $, _ ) == _ );
+		A( UI8( X( write( fd, $, _ ) ) ) == _ );
 	}
 
 	inline void
@@ -216,7 +216,7 @@ namespace JP {
 		vector< UI1 >	$( FileSize( path ) );
 		int fd = open( path.c_str(), O_RDONLY );
 		A( fd > 2 );
-		A( read( fd, &$[ 0 ], $.size() ) == $.size() );
+		A( UI8( X( read( fd, &$[ 0 ], $.size() ) ) ) == $.size() );
 		close( fd );
 		return $;
 	}
@@ -224,7 +224,7 @@ namespace JP {
 	inline void
 	SetFileContent( const string& path, const UI1* $, UI8 _ ) {
 		int fd = creat( path.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP );
-		A( write( fd, $, _ ) == _ );
+		A( UI8( X( write( fd, $, _ ) ) ) == _ );
 		close( fd );
 	}
 
