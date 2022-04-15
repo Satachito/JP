@@ -56,7 +56,7 @@ _A( bool $, const string& _, const string& file, int line ) {
 //	NULL EXCEPTION
 template	< typename T >	T*
 _N( T* $, const string& _, const string& file, int line ) {
-	if ( ! $ ) {
+	if ( !$ ) {
 		cerr << file + ':' + to_string( line ) + ':' + _ << endl;
 #ifdef DEBUG
 		__builtin_trap();
@@ -181,7 +181,7 @@ namespace JP {
 
 	inline void
 	Write( int fd, const vector< UI1 >& $ ) {
-		Write( fd, &$[ 0 ], $.size() );
+		Write( fd, $.data(), $.size() );
 	}
 
 	inline void
@@ -191,7 +191,7 @@ namespace JP {
 
 	inline void
 	Out( const vector< UI1 >& $ ) {
-		Write( 1, &$[ 0 ], $.size() );
+		Write( 1, $.data(), $.size() );
 	}
 
 	inline void
@@ -201,7 +201,7 @@ namespace JP {
 
 	inline void
 	Err( const vector< UI1 >& $ ) {
-		Write( 2, &$[ 0 ], $.size() );
+		Write( 2, $.data(), $.size() );
 	}
 
 	inline UI8
@@ -216,7 +216,7 @@ namespace JP {
 		vector< UI1 >	$( FileSize( path ) );
 		int fd = open( path.c_str(), O_RDONLY );
 		A( fd > 2 );
-		A( UI8( X( read( fd, &$[ 0 ], $.size() ) ) ) == $.size() );
+		A( UI8( X( read( fd, $.data(), $.size() ) ) ) == $.size() );
 		close( fd );
 		return $;
 	}
@@ -230,7 +230,7 @@ namespace JP {
 
 	inline void
 	SetFileContent( const string& path, const vector< UI1 >& $ ) {
-		SetFileContent( path, &$[ 0 ], $.size() );
+		SetFileContent( path, $.data(), $.size() );
 	}
 
 	inline vector< string >
