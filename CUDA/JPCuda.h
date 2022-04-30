@@ -4,7 +4,7 @@
 
 #include	<mma.h>
 
-void 
+inline void 
 C( cudaError_t _, const char* file, int line ) {
 	if ( _ ) {
 		std::cerr << file << ':' << line << ':' << _ << ':' << cudaGetErrorString( _ ) << std::endl;
@@ -14,10 +14,10 @@ C( cudaError_t _, const char* file, int line ) {
 
 #define C( _ )	C( _, __FILE__, __LINE__ )
 
-cudaDeviceProp
+inline cudaDeviceProp
 CudaDeviceProp( int ID = 0 ) {
 	cudaDeviceProp _;
-    cudaGetDeviceProperties( &_, ID );
+	cudaGetDeviceProperties( &_, ID );
 	return _;
 }
 
