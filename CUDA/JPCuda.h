@@ -5,14 +5,14 @@
 #include	<mma.h>
 
 inline void 
-C( cudaError_t _, const char* file, int line ) {
+_C( cudaError_t _, const char* file, int line ) {
 	if ( _ ) {
 		std::cerr << file << ':' << line << ':' << _ << ':' << cudaGetErrorString( _ ) << std::endl;
 		throw 0;
 	}
 }
 
-#define C( _ )	C( _, __FILE__, __LINE__ )
+#define _C( _ )	_C( _, __FILE__, __LINE__ )
 
 inline cudaDeviceProp
 CudaDeviceProp( int ID = 0 ) {
@@ -30,11 +30,11 @@ CUDAMemory {
 
 	~
 	CUDAMemory() {
-		C( cudaFree( $ ) );
+		_C( cudaFree( $ ) );
 	}
 	CUDAMemory( size_t _ )
 	:	_( _ ) {
-		C( cudaMallocManaged( &$, _ * sizeof( F ) ) );
+		_C( cudaMallocManaged( &$, _ * sizeof( F ) ) );
 	}
 	F*
 	Host() {
@@ -43,11 +43,11 @@ CUDAMemory {
 
 	void
 	HtoD() {
-		C( cudaDeviceSynchronize() );
+		_C( cudaDeviceSynchronize() );
 	}
 	void
 	DtoH() {
-		C( cudaDeviceSynchronize() );
+		_C( cudaDeviceSynchronize() );
 	}
 	F
 	operator()( size_t _ ) {
@@ -56,7 +56,7 @@ CUDAMemory {
 
 	void
 	Zeroset() {
-		C( cudaMemset( $, _ * sizeof( F ), 0 ) );
+		_C( cudaMemset( $, _ * sizeof( F ), 0 ) );
 	}
 	void
 	Dump16( ) {
@@ -81,13 +81,13 @@ CUDAMemory {
 
 	~
 	CUDAMemory() {
-		C( cudaFreeHost( host ) );
-		C( cudaFree( $ ) );
+		_C( cudaFreeHost( host ) );
+		_C( cudaFree( $ ) );
 	}
 	CUDAMemory( size_t _ )
 	:	_( _ ) {
-		C( cudaMallocHost( &host, _ * sizeof( F ) ) );
-		C( cudaMalloc( &$, _ * sizeof( F ) ) );
+		_C( cudaMallocHost( &host, _ * sizeof( F ) ) );
+		_C( cudaMalloc( &$, _ * sizeof( F ) ) );
 	}
 	F*
 	Host() {
@@ -96,11 +96,11 @@ CUDAMemory {
 
 	void
 	HtoD() {
-		C( cudaMemcpy( $, host, _ * sizeof( F ), cudaMemcpyHostToDevice ) );
+		_C( cudaMemcpy( $, host, _ * sizeof( F ), cudaMemcpyHostToDevice ) );
 	}
 	void
 	DtoH() {
-		C( cudaMemcpy( host, $, _ * sizeof( F ), cudaMemcpyDeviceToHost ) );
+		_C( cudaMemcpy( host, $, _ * sizeof( F ), cudaMemcpyDeviceToHost ) );
 	}
 	F
 	operator()( size_t _ ) {
@@ -109,7 +109,7 @@ CUDAMemory {
 
 	void
 	Zeroset() {
-		C( cudaMemset( $, _ * sizeof( F ), 0 ) );
+		_C( cudaMemset( $, _ * sizeof( F ), 0 ) );
 	}
 	void
 	Dump16() {
