@@ -58,13 +58,12 @@ CUDAMemory {
 	Zeroset() {
 		_C( cudaMemset( $, _ * sizeof( F ), 0 ) );
 	}
-	void
-	Dump16( ) {
+	template < int N > void
+	Dump( ) {
 		auto index = size_t( 0 );
 		while ( index < _ ) {
 			std::cerr << '\t' << float( $[ index ] );
-			index++;
-			if ( index % 16 == 0 ) std::cerr << std::endl;
+			if ( ++index % N == 0 ) std::cerr << std::endl;
 		}
 		std::cerr << std::endl;
 	}
@@ -111,13 +110,12 @@ CUDAMemory {
 	Zeroset() {
 		_C( cudaMemset( $, _ * sizeof( F ), 0 ) );
 	}
-	void
-	Dump16() {
+	template < int N > void
+	Dump() {
 		auto index = size_t( 0 );
 		while ( index < _ ) {
 			std::cerr << '\t' << float( host[ index ] );
-			index++;
-			if ( index % 16 == 0 ) std::cerr << std::endl;
+			if ( ++index % N == 0 ) std::cerr << std::endl;
 		}
 		std::cerr << std::endl;
 	}
@@ -131,7 +129,7 @@ DummyHalfs( half* _, size_t N ) {
 }
 void
 DummyData( const CUDAMemory< half >& _ ) {
-	DummyHalfs<<< ( _._ + 255 ) / 256, 256 >>>( _.$, _._ );
+	DummyHalfs<<< ( _._ + 1023 ) / 1024, 1024 >>>( _.$, _._ );
 }
 __global__	void
 DummyFloats( float* _, size_t N ) {
@@ -140,7 +138,7 @@ DummyFloats( float* _, size_t N ) {
 }
 void
 DummyData( const CUDAMemory< float >& _ ) {
-	DummyFloats<<< ( _._ + 255 ) / 256, 256 >>>( _.$, _._ );
+	DummyFloats<<< ( _._ + 1023 ) / 1024, 1024 >>>( _.$, _._ );
 }
 __global__	void
 DummyDoubles( double* _, size_t N ) {
@@ -149,7 +147,7 @@ DummyDoubles( double* _, size_t N ) {
 }
 void
 DummyData( const CUDAMemory< double >& _ ) {
-	DummyDoubles<<< ( _._ + 255 ) / 256, 256 >>>( _.$, _._ );
+	DummyDoubles<<< ( _._ + 1023 ) / 1024, 1024 >>>( _.$, _._ );
 }
 
 template < typename Fi, typename Fo >	__global__	void
