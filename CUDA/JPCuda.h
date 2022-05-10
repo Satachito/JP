@@ -43,11 +43,11 @@ CUDAMemory {
 
 	void
 	HtoD() {
-		_C( cudaDeviceSynchronize() );
+	//	_C( cudaDeviceSynchronize() );
 	}
 	void
 	DtoH() {
-		_C( cudaDeviceSynchronize() );
+	//	_C( cudaDeviceSynchronize() );
 	}
 	F
 	operator()( size_t _ ) {
