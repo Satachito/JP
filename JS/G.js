@@ -11,7 +11,7 @@ export const
 Abs = _ => _.map( _ => Math.abs( _ ) )
 
 export const	//	Int
-Next = ( p, q ) => Abs( Sub( p, q ) ).reduce( ( $, _ ) => $ + _, 0 ) === 1
+Next = ( p, q ) => Abs( Sub( p, q ) ).reduce( ( $, _ ) => $ + _, 0 ) <= 1
 
 export const
 Near = ( p, q ) => p.every( ( $, _ ) => Math.abs( $ - q[ _ ] ) <= 1 )
