@@ -38,7 +38,7 @@ _X( I $, const string& _, const string& file, int line ) {
 	}
 	return $;
 }
-#define X( $ ) _X( $, #$, __FILE__, __LINE__ )
+#define _X( $ ) _X( $, #$, __FILE__, __LINE__ )
 
 //	ASSERTION
 inline void
@@ -51,7 +51,7 @@ _A( bool $, const string& _, const string& file, int line ) {
 		throw file + ':' + to_string( line ) + ':' + _;
 	}
 }
-#define A( $ ) _A( $, #$, __FILE__, __LINE__ )
+#define _A( $ ) _A( $, #$, __FILE__, __LINE__ )
 
 //	NULL EXCEPTION
 template	< typename T >	T*
@@ -65,7 +65,7 @@ _N( T* $, const string& _, const string& file, int line ) {
 	}
 	return $;
 }
-#define	N( $ ) _N( $, #$, __FILE__, __LINE__ )
+#define	_N( $ ) _N( $, #$, __FILE__, __LINE__ )
 
 namespace JP {
 
@@ -75,7 +75,7 @@ namespace JP {
 	Unicode( istream& p ) {
 		unsigned char	c;
 		p >> c;
-		A( !p.eof() );
+		_A( !p.eof() );
 		if ( c < 0x80 ) return c;
 
 		c <<= 1;
@@ -88,7 +88,7 @@ namespace JP {
 
 		while ( wNumCont-- ) {
 			p >> c;
-			A( !p.eof() );
+			_A( !p.eof() );
 			v = ( v << 6 ) | ( c & 0x3f );
 		}
 		
@@ -165,7 +165,7 @@ namespace JP {
 		vector< UI1 >	$;
 		char	buffer[ 1024 * 1024 ];
 		ssize_t	numRead;
-		while ( ( numRead = X( read( fd, buffer, sizeof( buffer ) ) ) ) ) $.insert( $.end(), buffer, buffer + numRead );
+		while ( ( numRead = _X( read( fd, buffer, sizeof( buffer ) ) ) ) ) $.insert( $.end(), buffer, buffer + numRead );
 		return $;
 	}
 
@@ -176,7 +176,7 @@ namespace JP {
 
 	inline void
 	Write( int fd, const void* $, UI8 _ ) {
-		A( UI8( X( write( fd, $, _ ) ) ) == _ );
+		_A( UI8( _X( write( fd, $, _ ) ) ) == _ );
 	}
 
 	inline void
@@ -207,7 +207,7 @@ namespace JP {
 	inline UI8
 	FileSize( const string& path ) {
 		struct stat $;
-		X( stat( path.c_str(), &$ ) );
+		_X( stat( path.c_str(), &$ ) );
 		return $.st_size;
 	}
 
@@ -215,8 +215,8 @@ namespace JP {
 	GetFileContent( const string& path ) {
 		vector< UI1 >	$( FileSize( path ) );
 		int fd = open( path.c_str(), O_RDONLY );
-		A( fd > 2 );
-		A( UI8( X( read( fd, $.data(), $.size() ) ) ) == $.size() );
+		_A( fd > 2 );
+		_A( UI8( _X( read( fd, $.data(), $.size() ) ) ) == $.size() );
 		close( fd );
 		return $;
 	}
@@ -224,7 +224,7 @@ namespace JP {
 	inline void
 	SetFileContent( const string& path, const UI1* $, UI8 _ ) {
 		int fd = creat( path.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP );
-		A( UI8( X( write( fd, $, _ ) ) ) == _ );
+		_A( UI8( _X( write( fd, $, _ ) ) ) == _ );
 		close( fd );
 	}
 
