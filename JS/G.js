@@ -393,6 +393,24 @@ PointsOfIntersectionByPixels = ( p, q ) => {
 		}
 		prevP = P
 	}
+	if ( $.length >= 3 ) {
+		const
+		Dist2 = ( [ pX, pY ], [ qX, qY ] ) => ( pX - qX ) * ( pX - qX ) + ( pY - qY ) * ( pY - qY )
+
+		const toDelete = []
+		let curr = $[ 1 ]
+		let prevIsNear = Dist2( $[ 0 ], curr ) <= 2
+		for ( let _ = 1; _ < $.length - 1; _++ ) {
+			const next = $[ _ + 1 ]
+			const nextIsNear = Dist2( curr, next )
+			prevIsNear && nextIsNear && toDelete.push( _ )
+
+			curr = next
+			prevIsNear = nextIsNear
+		}
+		toDelete.sort( ( p, q ) => q - p ).forEach( _ => $.splice( _, 1 ) )
+	}
+
 	return $
 }
 
