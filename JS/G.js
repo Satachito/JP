@@ -440,6 +440,10 @@ FindConicT = ( HIT, [ s, c, e ], tS = 0, tE = 1 ) => {	//	HIT must be [ int ]
 	:	FindConicT( HIT, [ $[ 1 ], $[ 2 ], e ], ( tS + tE ) / 2, tE )
 }
 
+const
+Transpose = _ => _[ 0 ].map( ( __, d ) => _.map( _ => _[ d ] ) )
+
+
 /*	Points: [ s, p, q, e ] 
 	BezierDiff: t => {	const u = 1 - t
 			u^3s
@@ -467,24 +471,25 @@ FindConicT = ( HIT, [ s, c, e ], tS = 0, tE = 1 ) => {	//	HIT must be [ int ]
 						: (3ut^2)( 3u^2tp + 3ut^2q + u^3s + t^3e - $ )
 */
 export const
-FitBezier1D = $ => {
-	const l = $.length - 1
-	const s = $[ 0 ]
-	const e = $[ l ]
+FitBezier1D = _ => {
+	const l = _.length - 1
+	const s = _[ 0 ]
+	const e = _[ l ]
 
 	let	pp = 0, pq = 0, qp = 0, qq = 0, p = 0, q = 0
-	for ( let _ = 1; _ < l; _++ ) { //	Bypass first and last element, because 't' or 'u' will be zero.
-		const t = _ / l
+	for ( let $ = 1; $ < l; $++ ) {	//	Bypass first and last element, because 't' or 'u' will be zero.
+		const t = $ / l
 		const u = 1 - t
 		const P = 3 * u * u * t
 		const Q = 3 * u * t * t
 		pp += P * P
-		pq += P * Q
-		qp += Q * P
 		qq += Q * Q
-		const PQ = $[ _ ] - u * u * u * s - t * t * t * e
-		p += P * PQ
-		q += Q * PQ
+		const PQ = P * Q
+		pq += PQ
+		qp += PQ
+		const R = _[ $ ] - u * u * u * s - t * t * t * e
+		p += P * R
+		q += Q * R
 	}
 
 	const dm = pp * qq - pq * qp
@@ -496,13 +501,7 @@ FitBezier1D = $ => {
 }
 
 export const
-FitBezier = $ => {
-	const pqs = $[ 0 ].map( ( __, _ ) => FitBezier1D( $.map( $ => $[ _ ] ) ) )
-	return $[ 0 ].map(
-		( __, _ ) => pqs.map( $ => $[ _ ] )
-	)
-}
-
+FitBezier = _ => Transpose( Transpose( _ ).map( _ => FitBezier1D( _ ) ) )
 
 /*	Points: [ s, ?, e ] 
 	ConicDiff: t => {	const u = 1 - t
@@ -526,19 +525,20 @@ FitBezier = $ => {
 	2? = ( $ / ut ) - ( us / t ) - ( te / u )
 
 */
+
 export const
-FitConic1D = $ => {
-	const l = $.length - 1
-	const s = $[ 0 ]
-	const e = $[ l ]
+FitConic1D = _ => {
+	const l = _.length - 1
+	const s = _[ 0 ]
+	const e = _[ l ]
 
 	let C = 0
 	let S = 0
 	let E = 0
-	for ( let _ = 1; _ < l; _++ ) { //	Bypass first and last element, because 't' or 'u' will be zero.
-		const t = _ / l
+	for ( let $ = 1; $ < l; $++ ) { //	Bypass first and last element, because 't' or 'u' will be zero.
+		const t = $ / l
 		const u = 1 - t
-		C += $[ _ ] / ( u * t )
+		C += _[ $ ] / ( u * t )
 		S += u * s / t
 		E += t * e / u
 	}
@@ -547,5 +547,5 @@ FitConic1D = $ => {
 }
 
 export const
-FitConic = $ => $[ 0 ].map( ( __, _ ) => FitConic1D( $.map( $ => $[ _ ] ) ) )
+FitConic = _ => Transpose( _ ).map( _ => FitConic1D( _ ) )
 
