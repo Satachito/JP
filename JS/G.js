@@ -535,8 +535,8 @@ FitBezier = _ => Transpose( Transpose( _ ).map( _ => FitBezier1D( _ ) ) )
 	D	: -$
 	ConicDiff			: A + B? + C + D
 
-	ConnicDiff^2		: A^2 + B^2?^2 + C^2 + D^2 + 2AB? + 2AC + 2AD + 2BC? + 2BD? + 2CD
-	(ConnicDiff^2)'/2	: B^2? + AB + BC + BD
+	ConicDiff^2		: A^2 + B^2?^2 + C^2 + D^2 + 2AB? + 2AC + 2AD + 2BC? + 2BD? + 2CD
+	(ConicDiff^2)'/2	: B^2? + AB + BC + BD
 						: 4u^2t^2? + 2u^3ts + 2ut^3e - 2ut$
 						: (2ut)( 2ut? + u^2s + t^2e - $ )
 	2ut? + u^2s + t^2e - $ = 0
