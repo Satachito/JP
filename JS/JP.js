@@ -58,18 +58,15 @@ EqualJSONable = ( p, q ) => {
 		?	p.every( ( $, _ ) => EqualJSONable( $, q[ _ ] ) )
 		:	false
 	case Object:
-		const pKeys = Object.keys( p )
-		if ( pKeys.length !== Object.keys( q ).length ) return false
-		return pKeys.every(
-			_ => $ === q[ _ ] && EqualJSONable( p[ _ ], q[ _ ] )
+		const P = Object.entries( p )
+		if ( P.length !== Object.keys( q ).length ) return false
+		return P.every(
+			( [ k, v ] ) => q[ k ] && EqualJSONable( v, q[ k ] )
 		)
 	default:
 		return p === q
 	}
 }
-
-export const
-Last = _ => _[ _.length - 1 ]
 
 export const
 AND = ( l, r ) => l.filter( _ => !r.includes( _ ) )
@@ -216,8 +213,6 @@ export default
 	console.log( EqualJSONable( CloneJSONable( P ), CloneJSONable( Q ) ) )
 	console.log( EqualJSONable( JSON.parse( JSON.stringify( P ) ), P ) )
 
-
-/*
 	const
 	TestValue = ( js, expected ) => {
 		const _ = eval( js )
@@ -251,11 +246,10 @@ export default
 	,	DecodeBase64URL( d )
 	)
 
-	console.log( Seek( 5, 1, 3 ) )	//	0
-	console.log( Seek( -5, 1, 3 ) )	//	2
-	console.log( FW( 2, 3 ) )	//	0
-	console.log( BW( 0, 3 ) )	//	2
-	console.log( Range( 1, 3, 4 ) )	//	[ 1, 2 ]
-	console.log( Range( 3, 1, 4 ) )	//	[ 3, 0 ]
-*/
+	TestValue( 'Seek( 5, 1, 3 )', 0 )
+	TestValue( 'Seek( -5, 1, 3 )', 2 )
+	TestValue( 'FW( 2, 3 )', 0 )
+	TestValue( 'BW( 0, 3 )', 2 )
+	TestValue( 'Range( 1, 3, 4 )', [ 1, 2 ] )
+	TestValue( 'Range( 3, 1, 4 )', [ 3, 0 ] )
 }
