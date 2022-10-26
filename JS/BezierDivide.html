@@ -39,7 +39,7 @@ Draw()
 RANGE.oninput = ev => Draw()
 
 CANVAS.onclick = ev => {
-	const _ = FindT( [ ev.offsetX - 10, ev.offsetY - 10 ], b )
+	const _ = FindBezierT( [ ev.offsetX - 10, ev.offsetY - 10 ], b )
 	console.log( _ )
 	_ && (
 		RANGE.value = _ * 100

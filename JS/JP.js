@@ -3,21 +3,21 @@
 
 export const
 IsJSONable = _ => {
-	if ( _ === void 0					) return false	// undefined
-	if ( _ === Number.POSITIVE_INFINITY	) return false
-	if ( _ === Number.NEGATIVE_INFINITY	) return false
-	if ( Number.isNaN( _ )				) return false	// 'Number.' needed, global isNaN( string ) returns true
-
-	if ( _ === null ) return true
-
+	if ( _ === void 0	) return false
+	if ( _ === null		) return true
 	switch ( _.constructor ) {
 	case Array:
 		return _.every( _ => IsJSONable( _ ) )
 	case Object:
 		return Object.entries( _ ).every( ( [ k, v ] ) => k.constructor === String && IsJSONable( v ) )
 	case String:
+		return true
 	case Boolean:
+		return true
 	case Number:
+		if ( isNaN( _ )						) return false
+		if ( _ === Number.POSITIVE_INFINITY	) return false
+		if ( _ === Number.NEGATIVE_INFINITY	) return false
 		return true
 	default:
 		return false
@@ -58,9 +58,10 @@ EqualJSONable = ( p, q ) => {
 		?	p.every( ( $, _ ) => EqualJSONable( $, q[ _ ] ) )
 		:	false
 	case Object:
-		const keys = Object.keys( p ).sort()	// [ String ]
-		return Object.keys( q ).sort().every(
-			( $, _ ) => $ === keys[ _ ] && EqualJSONable( p[ $ ], q[ $ ] )
+		const pKeys = Object.keys( p )
+		if ( pKeys.length !== Object.keys( q ).length ) return false
+		return pKeys.every(
+			_ => $ === q[ _ ] && EqualJSONable( p[ _ ], q[ _ ] )
 		)
 	default:
 		return p === q
