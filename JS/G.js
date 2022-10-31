@@ -420,15 +420,10 @@ FindBezierT = ( HIT, [ s, p, q, e ], tS = 0, tE = 1 ) => {	//	HIT must be [ int 
 
 	const rM = Round( $[ 2 ] )
 
-	if ( EQ( HIT, rM ) ) return ( tS + tE ) / 2
+//console.log( HIT, rM, Round( s ), Round( e ) )
+	if ( Near( HIT, rM ) ) return ( tS + tE ) / 2
 
-	const rS = Round( s )
-	const rE = Round( e )
-
-	const nearS = Near( rS, rM )
-	const nearE = Near( rE, rM )
-
-	if ( nearS && nearE ) return null
+	if ( Near( Round( s ), Round( e ) ) ) return null
 
 	const _ = FindBezierT( HIT, [ s, $[ 0 ], $[ 1 ], $[ 2 ] ], tS, ( tS + tE ) / 2 )
 	return _
@@ -442,15 +437,9 @@ FindConicT = ( HIT, [ s, c, e ], tS = 0, tE = 1 ) => {	//	HIT must be [ int ]
 
 	const rM = Round( $[ 1 ] )
 
-	if ( EQ( HIT, rM ) ) return ( tS + tE ) / 2
+	if ( Near( HIT, rM ) ) return ( tS + tE ) / 2
 
-	const rS = Round( s )
-	const rE = Round( e )
-
-	const nearS = Near( rS, rM )
-	const nearE = Near( rE, rM )
-
-	if ( nearS && nearE ) return null
+	if ( Near( Round( s ), Round( e ) ) ) return null
 
 	const _ = FindConicT( HIT, [ s, $[ 0 ], $[ 1 ] ], tS, ( tS + tE ) / 2 )
 	return _
