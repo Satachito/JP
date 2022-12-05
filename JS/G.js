@@ -143,7 +143,7 @@ IntersectingPoints = ( p, q ) => {
 				prevP = P
 			}
 		)
-		return $.reduce( ( $, _ ) => ( !$.some( $ => EQ( $, _ ) ) && $.push( _ ), $ ), [] )
+		return $
 	} else {
 		return []
 	}
@@ -156,7 +156,7 @@ Transform2D = ( $, _ ) => [
 ]
 
 export const	//	nD
-DivideBezier = ( [ s, p, q, e ], t ) => {
+DivideCubeBezier = ( [ s, p, q, e ], t ) => {
 	const u = 1 - t
 	return s.map(
 		( $, _ ) => {
@@ -180,7 +180,7 @@ DivideBezier = ( [ s, p, q, e ], t ) => {
 }
 
 export const	//	nD
-DivideConic = ( [ s, c, e ], t ) => {
+DivideQuadBezier = ( [ s, c, e ], t ) => {
 	const u = 1 - t
 	return s.map(
 		( $, _ ) => {
@@ -199,7 +199,7 @@ DivideConic = ( [ s, c, e ], t ) => {
 }
 
 export const	//	nD
-Div2Bezier = ( [ s, p, q, e ] ) => s.map(
+Div2CubeBezier = ( [ s, p, q, e ] ) => s.map(
 	( $, _ ) => {
 		const	sp	= ( s[ _ ] + p[ _ ] ) / 2
 		const	pq	= ( p[ _ ] + q[ _ ] ) / 2
@@ -220,7 +220,7 @@ Div2Bezier = ( [ s, p, q, e ] ) => s.map(
 )
 
 export const	//	nD
-Div2Conic = ( [ s, c, e ] ) => s.map(
+Div2QuadBezier = ( [ s, c, e ] ) => s.map(
 	( $, _ ) => {
 		const	sc	= ( s[ _ ] + c[ _ ] ) / 2
 		const	ce	= ( c[ _ ] + e[ _ ] ) / 2
@@ -236,7 +236,7 @@ Div2Conic = ( [ s, c, e ] ) => s.map(
 )
 
 export const	//	2D
-FlattenBezier = ( [ s, p, q, e ], d2 ) => {
+FlattenCubeBezier = ( [ s, p, q, e ], d2 ) => {
 	const vE = Vec( s, e )
 	const deno2 = vE[ 0 ] * vE[ 0 ] + vE[ 1 ] * vE[ 1 ]
 
@@ -249,23 +249,23 @@ FlattenBezier = ( [ s, p, q, e ], d2 ) => {
 	if ( Math.max( d2P, d2Q ) * ( numP * numQ < 0 ? 4 / 9 : 3 / 4 ) < d2 ) { 
 		return [ e ]
 	} else {
-		const _ = Div2Bezier( [ s, p, q, e ] )
+		const _ = Div2CubeBezier( [ s, p, q, e ] )
 		return [
-			...FlattenBezier( [ s, _[ 0 ], _[ 1 ], _[ 2 ] ], d2 )
-		,	...FlattenBezier( [ _[ 2 ], _[ 3 ], _[ 4 ], e ], d2 )
+			...FlattenCubeBezier( [ s, _[ 0 ], _[ 1 ], _[ 2 ] ], d2 )
+		,	...FlattenCubeBezier( [ _[ 2 ], _[ 3 ], _[ 4 ], e ], d2 )
 		]
 	}
 }
 
 export const	//	2D
-FlattenConic = ( [ s, c, e ], d2 ) => {
+FlattenQuadBezier = ( [ s, c, e ], d2 ) => {
 	if ( PerpendicularLength2( s, e, c ) / 2 < d2 ) {
 		return [ e ]
 	} else {
-		const _ = Div2Conic( [ s, c, e ] )
+		const _ = Div2QuadBezier( [ s, c, e ] )
 		return [
-			...FlattenConic( [ s, _[ 0 ], _[ 1 ] ], d2 )
-		,	...FlattenConic( [ _[ 1 ], _[ 2 ], e ], d2 )
+			...FlattenQuadBezier( [ s, _[ 0 ], _[ 1 ] ], d2 )
+		,	...FlattenQuadBezier( [ _[ 1 ], _[ 2 ], e ], d2 )
 		]
 	}
 }
@@ -310,71 +310,95 @@ LinePixelsV = ( [ x, y ], [ h, v ] ) => h < 0
 export const
 LinePixels = ( [ s, e ] ) => LinePixelsV( s, Vec( s, e ) )
 
-export const	//	nD
-BezierPixels = ( [ s, p, q, e ] ) => {
-
-	const $ = Div2Bezier( [ s, p, q, e ] )
-	const rM = Round( $[ 2 ] )
-	const rS = Round( s )
-	const rE = Round( e )
-
-	const eqS = EQ( rS, rM )
-	const eqE = EQ( rE, rM )
-	if ( eqS && eqE ) return []
-
-	const nearS = Near( rS, rM )
-	const nearE = Near( rE, rM )
-
-	if ( ( eqS && nearE ) || ( nearS && eqE ) ) return []
-
-	if ( nearS && nearE ) return [ rM ]
-
-	if ( nearS ) return [ rM, ...BezierPixels( [ $[ 2 ], $[ 3 ], $[ 4 ], e ] ) ]
-	if ( nearE ) return [ ...BezierPixels( [ s, $[ 0 ], $[ 1 ], $[ 2 ] ] ), rM ]
-
-	return [
-		...BezierPixels( [ s, $[ 0 ], $[ 1 ], $[ 2 ] ] )
-	,	rM
-	,	...BezierPixels( [ $[ 2 ], $[ 3 ], $[ 4 ], e ] )
-	]
-}
-
-export const	//	nD
-ConicPixels = ( [ s, c, e ] ) => {
-
-	const $ = Div2Conic( [ s, c, e ] )
-	const rM = Round( $[ 1 ] )
-	const rS = Round( s )
-	const rE = Round( e )
-
-	const eqS = EQ( rS, rM )
-	const eqE = EQ( rE, rM )
-	if ( eqS && eqE ) return []
-
-	const nearS = Near( rS, rM )
-	const nearE = Near( rE, rM )
-
-	if ( ( eqS && nearE ) || ( nearS && eqE ) ) return []
-
-	if ( nearS && nearE ) return [ rM ]
-
-	if ( nearS ) return [ rM, ...ConicPixels( [ $[ 1 ], $[ 2 ], e ] ) ]
-	if ( nearE ) return [ ...ConicPixels( [ s, $[ 0 ], $[ 1 ] ] ), rM ]
-
-	return [
-		...ConicPixels( [ s, $[ 0 ], $[ 1 ] ] )
-	,	rM
-	,	...ConicPixels( [ $[ 1 ], $[ 2 ], e ] )
-	]
+const	//	!!DESTRUCTIVE!!
+OptGrids = ( s, $, e ) => {
+	let next = Sub( $.at( -1 ), e )
+	let _ = $.length
+	while ( _-- ) {
+if ( next[ 0 ] === 0 && next[ 1 ] === 0 ) debugger
+		const prev = Sub( _ ? $[ _ - 1 ] : s, $[ _ ] )
+if ( prev[ 0 ] === 0 && prev[ 1 ] === 0 ) debugger
+		if ( ( prev[ 0 ] === 0 && next[ 1 ] === 0 ) || ( prev[ 1 ] === 0 && next[ 0 ] === 0 ) ) $.splice( _, 1 )
+		next = prev
+	}
+	return $
 }
 
 export const
-PointsOfIntersectionByPixels = ( p, q ) => {
+LineGrids = ( s, e ) => {
+	const rS	= Round( s )
+	const rE	= Round( e )
+	if ( Near( rS, rE ) ) return []
+
+	const $		= Mid( s, e )
+	const rM	= Round( $ )
+
+	return OptGrids(
+		s
+	,	[	...LineGrids( s, $ )
+		,	rM
+		,	...LineGrids( $, e )
+		]
+	,	e
+	)
+}
+
+export const
+QuadGrids = ( s, c, e ) => {
+	const rS	= Round( s )
+	const rE	= Round( e )
+
+	const sc	= Mid( s, c )
+	const ce	= Mid( c, e )
+	const $		= Mid( sc, ce )
+	const rM	= Round( $ )
+
+	return Near( rS, rM ) && Near( rM, rE )
+	?	Near( rS, rE ) ? [] : [ rM ]
+	:	OptGrids(
+			s
+		,	[	...QuadGrids( s, sc, $ )
+			,	rM
+			,	...QuadGrids( $, ce, e )
+			]
+		,	e
+		)
+}
+
+export const
+CubeGrids = ( s, p, q, e ) => {
+	const rS	= Round( s )
+	const rE	= Round( e )
+
+	const sp	= Mid( s, p )
+	const qe	= Mid( q, e )
+	const pq	= Mid( p, q )
+	const spq	= Mid( sp, pq )
+	const pqe	= Mid( pq, qe )
+	const $		= Mid( spq, pqe )
+
+	const rM	= Round( $ )
+
+	return Near( rS, rM ) && Near( rM, rE )
+	?	Near( rS, rE ) ? [] : [ rM ]
+	:	OptGrids(
+			s
+		,	[	...CubeGrids( s, sp, spq, $ )
+			,	rM
+			,	...CubeGrids( $, pqe, qe, e )
+			]
+		,	e
+		)
+}
+
+export const
+IntersectingGrids = ( p, q ) => {
 
 	const $ = []
 
 	for ( let P of p ) for ( let Q of q ) EQ( P, Q ) && $.push( P )
 
+	//	FINDING DIAGONAL CROSSING
 	let prevP = p[ 0 ]
 	for ( let _P = 1; _P < p.length; _P++ ) {
 		const P = p[ _P ]
@@ -383,40 +407,25 @@ PointsOfIntersectionByPixels = ( p, q ) => {
 			for ( let _Q = 1; _Q < q.length; _Q++ ) {
 				const Q = q[ _Q ]
 				if ( prevQ[ 0 ] !== Q[ 0 ] && prevQ[ 1 ] !== Q[ 1 ] ) {
-					//	DIAGONAL CROSSING
-					Next( prevP, prevQ ) && Next( prevP, Q ) && Next( P, prevQ ) && Next( P, Q ) && $.push(
-						[ ( prevP[ 0 ] + P[ 0 ] ) / 2, ( prevP[ 1 ] + P[ 1 ] ) / 2 ]
-					)
+					Next( prevP, prevQ ) && Next( prevP, Q ) && Next( P, prevQ ) && Next( P, Q ) && $.push( Mid( prevP, P ) )
 				}
 				prevQ = Q
 			}
 		}
 		prevP = P
 	}
-	if ( $.length >= 3 ) {
-		const
-		Dist2 = ( [ pX, pY ], [ qX, qY ] ) => ( pX - qX ) * ( pX - qX ) + ( pY - qY ) * ( pY - qY )
-
-		const toDelete = []
-		let curr = $[ 1 ]
-		let prevIsNear = Dist2( $[ 0 ], curr ) <= 2
-		for ( let _ = 1; _ < $.length - 1; _++ ) {
-			const next = $[ _ + 1 ]
-			const nextIsNear = Dist2( curr, next )
-			prevIsNear && nextIsNear && toDelete.push( _ )
-
-			curr = next
-			prevIsNear = nextIsNear
-		}
-		toDelete.sort( ( p, q ) => q - p ).forEach( _ => $.splice( _, 1 ) )
-	}
-
 	return $
 }
 
+export const	//	2D
+IsLineGrids = ( s, _, e ) => {
+	const pq = Vec( s, e )
+	return _.every( r => Math.abs( PerpendicularLength2V( pq, Vec( s, r ) ) ) < 1 )
+}
+
 export const	//	nD
-FindBezierT = ( HIT, [ s, p, q, e ], tS = 0, tE = 1 ) => {	//	HIT must be [ int ]
-	const $ = Div2Bezier( [ s, p, q, e ] )
+FindCubeBezierT = ( HIT, [ s, p, q, e ], tS = 0, tE = 1 ) => {	//	HIT must be [ int ]
+	const $ = Div2CubeBezier( [ s, p, q, e ] )
 
 	const rM = Round( $[ 2 ] )
 
@@ -425,15 +434,15 @@ FindBezierT = ( HIT, [ s, p, q, e ], tS = 0, tE = 1 ) => {	//	HIT must be [ int 
 
 	if ( Near( Round( s ), Round( e ) ) ) return null
 
-	const _ = FindBezierT( HIT, [ s, $[ 0 ], $[ 1 ], $[ 2 ] ], tS, ( tS + tE ) / 2 )
+	const _ = FindCubeBezierT( HIT, [ s, $[ 0 ], $[ 1 ], $[ 2 ] ], tS, ( tS + tE ) / 2 )
 	return _
 	?	_
-	:	FindBezierT( HIT, [ $[ 2 ], $[ 3 ], $[ 4 ], e ], ( tS + tE ) / 2, tE )
+	:	FindCubeBezierT( HIT, [ $[ 2 ], $[ 3 ], $[ 4 ], e ], ( tS + tE ) / 2, tE )
 }
 
 export const	//	nD
-FindConicT = ( HIT, [ s, c, e ], tS = 0, tE = 1 ) => {	//	HIT must be [ int ]
-	const $ = Div2Conic( [ s, c, e ] )
+FindQuadBezierT = ( HIT, [ s, c, e ], tS = 0, tE = 1 ) => {	//	HIT must be [ int ]
+	const $ = Div2QuadBezier( [ s, c, e ] )
 
 	const rM = Round( $[ 1 ] )
 
@@ -441,10 +450,10 @@ FindConicT = ( HIT, [ s, c, e ], tS = 0, tE = 1 ) => {	//	HIT must be [ int ]
 
 	if ( Near( Round( s ), Round( e ) ) ) return null
 
-	const _ = FindConicT( HIT, [ s, $[ 0 ], $[ 1 ] ], tS, ( tS + tE ) / 2 )
+	const _ = FindQuadBezierT( HIT, [ s, $[ 0 ], $[ 1 ] ], tS, ( tS + tE ) / 2 )
 	return _
 	?	_
-	:	FindConicT( HIT, [ $[ 1 ], $[ 2 ], e ], ( tS + tE ) / 2, tE )
+	:	FindQuadBezierT( HIT, [ $[ 1 ], $[ 2 ], e ], ( tS + tE ) / 2, tE )
 }
 
 const
@@ -452,7 +461,7 @@ Transpose = _ => _[ 0 ].map( ( __, d ) => _.map( _ => _[ d ] ) )
 
 
 /*	Points: [ s, p, q, e ] 
-	BezierDiff: t => {	const u = 1 - t
+	CubeBezierDiff: t => {	const u = 1 - t
 			u^3s
 		+	3u^2tp
 		+	3ut^2q
@@ -465,20 +474,20 @@ Transpose = _ => _[ 0 ].map( ( __, d ) => _.map( _ => _[ d ] ) )
 	C	: 3ut^2
 	D	: t^3e
 	E	: -$
-	BezierDiff			: A + Bp + Cq + D + E
+	CubeBezierDiff			: A + Bp + Cq + D + E
 
-	BezierDiff^2		: A^2 + B^2p^2 + C^2q^2 + D^2 + E^2 + 2ABp + 2ACq + 2AD + 2AE + 2BCpq + 2BDp + 2BEp + 2CDq + 2CEq + 2DE
-	(BezierDiff^2)'/p/2	: B^2p + BCq + AB + BD + BE
-	(BezierDiff^2)'/q/2	: BCp + C^2q + AC + CD + CE
+	CubeBezierDiff^2		: A^2 + B^2p^2 + C^2q^2 + D^2 + E^2 + 2ABp + 2ACq + 2AD + 2AE + 2BCpq + 2BDp + 2BEp + 2CDq + 2CEq + 2DE
+	(CubeBezierDiff^2)'/p/2	: B^2p + BCq + AB + BD + BE
+	(CubeBezierDiff^2)'/q/2	: BCp + C^2q + AC + CD + CE
 
-	(BezierDiff^2)'/p/2	: 9u^4t^2p + 9u^3t^3q + 3u^5ts + 3u^2t^4e - 3u^2t$
+	(CubeBezierDiff^2)'/p/2	: 9u^4t^2p + 9u^3t^3q + 3u^5ts + 3u^2t^4e - 3u^2t$
 						: (3u^2t)( 3u^2tp + 3ut^2q + u^3s + t^3e - $ )
 
-	(BezierDiff^2)'/q/2	: 9u^3t^3p + 9u^2t^4q + 3u^4t^2s + 3ut^5e - 3ut^2$
+	(CubeBezierDiff^2)'/q/2	: 9u^3t^3p + 9u^2t^4q + 3u^4t^2s + 3ut^5e - 3ut^2$
 						: (3ut^2)( 3u^2tp + 3ut^2q + u^3s + t^3e - $ )
 */
 export const
-FitBezier1D = _ => {
+FitCubeBezier1D = _ => {
 	const l = _.length - 1
 	const s = _[ 0 ]
 	const e = _[ l ]
@@ -508,10 +517,10 @@ FitBezier1D = _ => {
 }
 
 export const
-FitBezier = _ => Transpose( Transpose( _ ).map( _ => FitBezier1D( _ ) ) )
+FitCubeBezier = _ => Transpose( Transpose( _ ).map( _ => FitCubeBezier1D( _ ) ) )
 
 /*	Points: [ s, ?, e ] 
-	ConicDiff: t => {	const u = 1 - t
+	QuadBezierDiff: t => {	const u = 1 - t
 			u^2s
 		+	2ut?
 		+	t^2e
@@ -522,10 +531,10 @@ FitBezier = _ => Transpose( Transpose( _ ).map( _ => FitBezier1D( _ ) ) )
 	B	: 2ut
 	C	: t^2e
 	D	: -$
-	ConicDiff			: A + B? + C + D
+	QuadBezierDiff			: A + B? + C + D
 
-	ConicDiff^2		: A^2 + B^2?^2 + C^2 + D^2 + 2AB? + 2AC + 2AD + 2BC? + 2BD? + 2CD
-	(ConicDiff^2)'/2	: B^2? + AB + BC + BD
+	QuadBezierDiff^2		: A^2 + B^2?^2 + C^2 + D^2 + 2AB? + 2AC + 2AD + 2BC? + 2BD? + 2CD
+	(QuadBezierDiff^2)'/2	: B^2? + AB + BC + BD
 						: 4u^2t^2? + 2u^3ts + 2ut^3e - 2ut$
 						: (2ut)( 2ut? + u^2s + t^2e - $ )
 	2ut? + u^2s + t^2e - $ = 0
@@ -534,7 +543,7 @@ FitBezier = _ => Transpose( Transpose( _ ).map( _ => FitBezier1D( _ ) ) )
 */
 
 export const
-FitConic1D = _ => {
+FitQuadBezier1D = _ => {
 	const l = _.length - 1
 	const s = _[ 0 ]
 	const e = _[ l ]
@@ -554,5 +563,5 @@ FitConic1D = _ => {
 }
 
 export const
-FitConic = _ => Transpose( _ ).map( _ => FitConic1D( _ ) )
+FitQuadBezier = _ => Transpose( _ ).map( _ => FitQuadBezier1D( _ ) )
 

@@ -153,12 +153,37 @@ DecodeHex = $ => {
 	return v
 }
 
+////////////////////////////////////////////////////////////////	LOGIC
 export const
-OnDef = ( $, def ) => $ === void 0 ? $ : def( $ )
+If					= ( $, def )		=> $ === void 0 || def( $ )
+export const
+IfElse				= ( $, def, undef )	=> $ === void 0 ? undef() : def( $ )
 
 export const
-OnDefUndef = ( $, def, undef ) => $ === void 0 ? undef() : def( $ )
+Loop				= ( N, $ )			=> {
+	for ( let _ = 0; _ < N; _++ ) $()
+}
+export const
+Iterate				= ( N, $ )			=> {
+	for ( let _ = 0; _ < N; _++ ) $( _ )
+}
 
+export const
+Permutations		= ( N, $ )			=> {
+	for ( let p = 0; p < N - 1; p++ ) for ( let q = p + 1; q < N; q++ ) $( p, q )
+}
+export const
+ArrayPermutations	= ( _, $ )			=> {
+	const L = _.length
+	for ( let p = 0; p < L - 1; p++ ) for ( let q = p + 1; q < L; q++ ) $( _[ p ], _[ q ] )
+}
+
+export const
+Product				= ( P, Q, $ )		=> {
+	for ( let p = 0; p < P; p++ ) for ( let q = 0; q < Q; q++ ) $( p, q )
+}
+
+////////////////////////////////////////////////////////////////	CIRCULAR
 export const
 Seek = ( bias, $, length ) => {
 	if ( bias ) {
@@ -186,6 +211,7 @@ Range = ( s, e, length ) => s < e
 	]
 
 
+////////////////////////////////////////////////////////////////	TEST
 export default
 () => {
 
