@@ -312,20 +312,31 @@ LinePixels = ( [ s, e ] ) => LinePixelsV( s, Vec( s, e ) )
 
 const	//	!!DESTRUCTIVE!!
 OptGrids = ( s, $, e ) => {
-	let next = Sub( $.at( -1 ), e )
-	let _ = $.length
-	while ( _-- ) {
-if ( next[ 0 ] === 0 && next[ 1 ] === 0 ) debugger
-		const prev = Sub( _ ? $[ _ - 1 ] : s, $[ _ ] )
-if ( prev[ 0 ] === 0 && prev[ 1 ] === 0 ) debugger
+	{	let next	= e
+		let _		= $.length
+		while ( _-- ) {
+			const prev = $[ _ ]
+			EQ( prev, next ) && $.splice( _, 1 )
+			next = prev
+		}
+		$.length && EQ( s, $[ 0 ] ) && $.splice( 0, 1 )
+	}
+	if ( $.length ) {
+		let next = Sub( $.at( -1 ), e )
+		let _ = $.length
+		while ( --_ ) {
+			const prev = Sub( $[ _ - 1 ], $[ _ ] )
+			if ( ( prev[ 0 ] === 0 && next[ 1 ] === 0 ) || ( prev[ 1 ] === 0 && next[ 0 ] === 0 ) ) $.splice( _, 1 )
+			next = prev
+		}
+		const prev = Sub( s, $[ 0 ] )
 		if ( ( prev[ 0 ] === 0 && next[ 1 ] === 0 ) || ( prev[ 1 ] === 0 && next[ 0 ] === 0 ) ) $.splice( _, 1 )
-		next = prev
 	}
 	return $
 }
 
-export const
-LineGrids = ( s, e ) => {
+const
+_LineGrids = ( s, e ) => {
 	const rS	= Round( s )
 	const rE	= Round( e )
 	if ( Near( rS, rE ) ) return []
@@ -333,18 +344,17 @@ LineGrids = ( s, e ) => {
 	const $		= Mid( s, e )
 	const rM	= Round( $ )
 
-	return OptGrids(
-		s
-	,	[	...LineGrids( s, $ )
-		,	rM
-		,	...LineGrids( $, e )
-		]
-	,	e
-	)
+	return [
+		..._LineGrids( s, $ )
+	,	rM
+	,	..._LineGrids( $, e )
+	]
 }
-
 export const
-QuadGrids = ( s, c, e ) => {
+LineGrids = ( s, e ) => OptGrids( s, _LineGrids( s, e ), e )
+
+const
+_QuadGrids = ( s, c, e ) => {
 	const rS	= Round( s )
 	const rE	= Round( e )
 
@@ -355,18 +365,16 @@ QuadGrids = ( s, c, e ) => {
 
 	return Near( rS, rM ) && Near( rM, rE )
 	?	Near( rS, rE ) ? [] : [ rM ]
-	:	OptGrids(
-			s
-		,	[	...QuadGrids( s, sc, $ )
-			,	rM
-			,	...QuadGrids( $, ce, e )
-			]
-		,	e
-		)
+	:	[	..._QuadGrids( s, sc, $ )
+		,	rM
+		,	..._QuadGrids( $, ce, e )
+		]
 }
-
 export const
-CubeGrids = ( s, p, q, e ) => {
+QuadGrids = ( s, c, e ) => OptGrids( s, _QuadGrids( s, c, e ), e )
+
+const
+_CubeGrids = ( s, p, q, e ) => {
 	const rS	= Round( s )
 	const rE	= Round( e )
 
@@ -381,15 +389,13 @@ CubeGrids = ( s, p, q, e ) => {
 
 	return Near( rS, rM ) && Near( rM, rE )
 	?	Near( rS, rE ) ? [] : [ rM ]
-	:	OptGrids(
-			s
-		,	[	...CubeGrids( s, sp, spq, $ )
-			,	rM
-			,	...CubeGrids( $, pqe, qe, e )
-			]
-		,	e
-		)
+	:	[	..._CubeGrids( s, sp, spq, $ )
+		,	rM
+		,	..._CubeGrids( $, pqe, qe, e )
+		]
 }
+export const
+CubeGrids = ( s, p, q, e ) => OptGrids( s, _CubeGrids( s, p, q, e ), e )
 
 export const
 IntersectingGrids = ( p, q ) => {
