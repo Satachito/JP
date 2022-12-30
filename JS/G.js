@@ -1,44 +1,92 @@
 export const
-CF	= ( -24 + Math.sqrt( 24 * 24 + 64 * 9 ) ) / 18	//	Curve factor	: 0.552285
+CF				= ( -24 + Math.sqrt( 24 * 24 + 64 * 9 ) ) / 18	//	Curve factor	: 0.552285
+
+////////////////////////////////////////////////////////////////	Multidimensional
 
 export const	//	Int
-EQ = ( p, q ) => p.every( ( $, _ ) => $ === q[ _ ] )
+EQ				= ( p, q ) => p.every( ( $, _ ) => $ === q[ _ ] )
 
 export const
-Round = $ => $.map( $ => Math.round( $ ) )
+Round			= _ => _.map( _ => Math.round( _ ) )
 
 export const
-Abs = _ => _.map( _ => Math.abs( _ ) )
+Abs				= _ => _.map( _ => Math.abs( _ ) )
 
 export const	//	Int
-Next = ( p, q ) => Abs( Sub( p, q ) ).reduce( ( $, _ ) => $ + _, 0 ) <= 1
+Next			= ( p, q ) => Abs( Sub( p, q ) ).reduce( ( $, _ ) => $ + _, 0 ) <= 1
 
 export const
-Near = ( p, q ) => p.every( ( $, _ ) => Math.abs( $ - q[ _ ] ) <= 1 )
+Near			= ( p, q ) => p.every( ( $, _ ) => Math.abs( $ - q[ _ ] ) <= 1 )
 
 export const
-Add = ( p, q ) => p.map( ( $, _ ) => $ + q[ _ ] )
+Add				= ( p, q ) => p.map( ( $, _ ) => $ + q[ _ ] )
 
 export const
-Sub = ( p, q ) => p.map( ( $, _ ) => $ - q[ _ ] )
+Sub				= ( p, q ) => p.map( ( $, _ ) => $ - q[ _ ] )
 
 export const
-Vec = ( p, q ) => p.map( ( $, _ ) => q[ _ ] - $ )
+Vec				= ( p, q ) => p.map( ( $, _ ) => q[ _ ] - $ )
 
 export const
-Mul = ( $, _ ) => $.map( $ => $ * _ )
+Mul				= ( $, _ ) => $.map( $ => $ * _ )
 
 export const
-Div = ( $, _ ) => $.map( $ => $ / _ )
+Div				= ( $, _ ) => $.map( $ => $ / _ )
 
 export const
-Mid = ( p, q ) => p.map( ( $, _ ) => ( $ + q[ _ ] ) / 2 )
+Mid				= ( p, q ) => p.map( ( $, _ ) => ( $ + q[ _ ] ) / 2 )
 
 export const
-Dot = ( p, q ) => p.reduce( ( $, p, _ ) => $ + p * q[ _ ], 0 )
+Dot				= ( p, q ) => p.reduce( ( $$, $, _ ) => $$ + $ * q[ _ ], 0 )
 
 export const
-Norm = $ => Math.sqrt( Dot( $, $ ) )
+Norm			= _ => Math.sqrt( Dot( _, _ ) )
+
+export const
+Transpose		= _ => _[ 0 ].map( ( __, d ) => _.map( _ => _[ d ] ) )
+
+export const
+BBox			= ( _, ...$ ) => $.reduce(
+	( $$, $ ) => $.map(
+		( $, _ ) => (
+			_ = $$[ _ ]
+		,	[	$ < _[ 0 ] ? $ : _[ 0 ]
+			,	$ > _[ 1 ] ? $ : _[ 1 ]
+			]
+		)
+	)
+,	_.map( _ => [ _, _ ] )
+)
+
+export const
+BBoxOr			= ( _, ...$ ) => $.reduce(
+	( $$, $ ) => $.map(
+		( $, _ ) => (
+			_ = $$[ _ ]
+		,	[	$[ 0 ] < _[ 0 ] ? $[ 0 ] : _[ 0 ]
+			,	$[ 1 ] > _[ 1 ] ? $[ 1 ] : _[ 1 ]
+			]
+		)
+	)
+,	_
+)
+
+//	Normally return value of this function is checked if all dimensions has non void value
+export const
+BBoxAnd			= ( _, ...$ ) => $.reduce(
+	( $$, $ ) => $.map(
+		( $, _ ) => (
+			_ = $$[ _ ]
+		,	$[ 1 ] > _[ 0 ] && _[ 1 ] > $[ 0 ]
+			?	[	$[ 0 ] < _[ 0 ] ? _[ 0 ] : $[ 0 ]
+				,	$[ 1 ] > _[ 1 ] ? _[ 1 ] : $[ 1 ]
+				]
+			:	void 0
+		)
+	)
+)
+
+////////////////////////////////////////////////////////////////	3D
 
 export const	//	3D
 Cross3D = ( [ px, py, pz ], [ qx, qy, qz ] ) => [
@@ -49,6 +97,8 @@ Cross3D = ( [ px, py, pz ], [ qx, qy, qz ] ) => [
 
 export const	//	3D
 FormedAngle = ( p, q ) => Math.atan2( Norm( Cross3D( p, q ) ), Dot( p, q ) )
+
+////////////////////////////////////////////////////////////////	2D
 
 export const	//	2D
 Angle = ( [ ph, pv ], [ qh, qv ] ) => Math.atan2(
@@ -96,36 +146,6 @@ export const	//	2D
 PerpendicularLength2 = ( o, p, q ) => PerpendicularLength2V( Vec( o, p ), Vec( o, q ) )
 
 export const	//	2D
-IsLinePixels = _ => {
-	const lastI = _.length - 1
-	const pq = Vec( _[ 0 ], _[ lastI ] )
-	return _.slice( 1, lastI ).every( r => Math.abs( PerpendicularLength2V( pq, Vec( _[ 0 ], r ) ) ) < 1 )
-}
-
-export const	//	2D
-BBox = $ => $.slice( 1 ).reduce(
-	( $, _ ) => (
-		_[ 0 ] < $[ 0 ] && ( $[ 0 ] = _[ 0 ] )
-	,	_[ 1 ] < $[ 1 ] && ( $[ 1 ] = _[ 1 ] )
-	,	_[ 0 ] > $[ 2 ] && ( $[ 2 ] = _[ 0 ] )
-	,	_[ 1 ] > $[ 3 ] && ( $[ 3 ] = _[ 1 ] )
-	,	$
-	)
-,	[ ...$[ 0 ], ...$[ 0 ] ]
-)
-
-export const	//	2D
-BBoxOr = ( p, q ) => [
-	p[ 0 ] < q[ 0 ] ? p[ 0 ] : q[ 0 ]
-,	p[ 1 ] < q[ 1 ] ? p[ 1 ] : q[ 1 ]
-,	p[ 2 ] > q[ 2 ] ? p[ 2 ] : q[ 2 ]
-,	p[ 3 ] > q[ 3 ] ? p[ 3 ] : q[ 3 ]
-]
-
-export const	//	2D
-BBoxAnd = ( p, q ) => q[ 0 ] < p[ 2 ] && p[ 0 ] < q[ 2 ] && q[ 1 ] < p[ 3 ] && p[ 1 ] < q[ 3 ]
-
-export const	//	2D
 IntersectingPoints = ( p, q ) => {
 	if ( BBoxAnd( BBox( p ), BBox( q ) ) ) {
 		const $ = []
@@ -155,121 +175,9 @@ Transform2D = ( $, _ ) => [
 ,	$[ 0 ] * _[ 3 ], $[ 1 ] * _[ 4 ] + _[ 5 ]
 ]
 
-export const	//	nD
-DivideCubeBezier = ( [ s, p, q, e ], t ) => {
-	const u = 1 - t
-	return s.map(
-		( $, _ ) => {
-			const	sp	= ( s[ _ ] * u + p[ _ ] * t )
-			const	pq	= ( p[ _ ] * u + q[ _ ] * t )
-			const	qe	= ( q[ _ ] * u + e[ _ ] * t )
-			const	spq	= ( sp * u + pq * t )
-			const	pqe	= ( pq * u + qe * t )
-			return	[
-				sp
-			,	spq
-			,	spq * u + pqe * t
-			, 	pqe
-			,	qe
-			]
-		}
-	).reduce(
-		( $, _ ) => ( $.forEach( ( $, i ) => $.push( _[ i ] ) ), $ )
-	,	[ [], [], [], [], [] ]
-	)
-}
+////////////////////////////////////////////////////////////////	Pixels(Obsolute) 2D
 
-export const	//	nD
-DivideQuadBezier = ( [ s, c, e ], t ) => {
-	const u = 1 - t
-	return s.map(
-		( $, _ ) => {
-			const	sc	= ( s[ _ ] * u + c[ _ ] * t )
-			const	ce	= ( c[ _ ] * u + e[ _ ] * t )
-			return	[
-				sc
-			,	sc * u + ce * t
-			,	ce
-			]
-		}
-	).reduce(
-		( $, _ ) => ( $.forEach( ( $, i ) => $.push( _[ i ] ) ), $ )
-	,	[ [], [], [] ]
-	)
-}
-
-export const	//	nD
-Div2CubeBezier = ( [ s, p, q, e ] ) => s.map(
-	( $, _ ) => {
-		const	sp	= ( s[ _ ] + p[ _ ] ) / 2
-		const	pq	= ( p[ _ ] + q[ _ ] ) / 2
-		const	qe	= ( q[ _ ] + e[ _ ] ) / 2
-		const	spq	= ( sp + pq ) / 2
-		const	pqe	= ( pq + qe ) / 2
-		return	[
-			sp
-		,	spq
-		,	( spq + pqe ) / 2
-		, 	pqe
-		,	qe
-		]
-	}
-).reduce(
-	( $, _ ) => ( $.forEach( ( $, i ) => $.push( _[ i ] ) ), $ )
-,	[ [], [], [], [], [] ]
-)
-
-export const	//	nD
-Div2QuadBezier = ( [ s, c, e ] ) => s.map(
-	( $, _ ) => {
-		const	sc	= ( s[ _ ] + c[ _ ] ) / 2
-		const	ce	= ( c[ _ ] + e[ _ ] ) / 2
-		return	[
-			sc
-		,	( sc + ce ) / 2
-		,	ce
-		]
-	}
-).reduce(
-	( $, _ ) => ( $.forEach( ( $, i ) => $.push( _[ i ] ) ), $ )
-,	[ [], [], [] ]
-)
-
-export const	//	2D
-FlattenCubeBezier = ( [ s, p, q, e ], d2 ) => {
-	const vE = Vec( s, e )
-	const deno2 = vE[ 0 ] * vE[ 0 ] + vE[ 1 ] * vE[ 1 ]
-
-	const vP = Vec( s, p )
-	const vQ = Vec( s, q )
-	const numP = vE[ 0 ] * vP[ 1 ] - vE[ 1 ] * vP[ 0 ]
-	const numQ = vE[ 0 ] * vQ[ 1 ] - vE[ 1 ] * vQ[ 0 ]
-	const d2P = numP * numP / deno2
-	const d2Q = numQ * numQ / deno2
-	if ( Math.max( d2P, d2Q ) * ( numP * numQ < 0 ? 4 / 9 : 3 / 4 ) < d2 ) { 
-		return [ e ]
-	} else {
-		const _ = Div2CubeBezier( [ s, p, q, e ] )
-		return [
-			...FlattenCubeBezier( [ s, _[ 0 ], _[ 1 ], _[ 2 ] ], d2 )
-		,	...FlattenCubeBezier( [ _[ 2 ], _[ 3 ], _[ 4 ], e ], d2 )
-		]
-	}
-}
-
-export const	//	2D
-FlattenQuadBezier = ( [ s, c, e ], d2 ) => {
-	if ( PerpendicularLength2( s, e, c ) / 2 < d2 ) {
-		return [ e ]
-	} else {
-		const _ = Div2QuadBezier( [ s, c, e ] )
-		return [
-			...FlattenQuadBezier( [ s, _[ 0 ], _[ 1 ] ], d2 )
-		,	...FlattenQuadBezier( [ _[ 1 ], _[ 2 ], e ], d2 )
-		]
-	}
-}
-
+/*
 const
 _LinePixelsQ1st = ( h, v ) => {
 	if ( h <= 1 && v <= 1 ) return []
@@ -309,6 +217,9 @@ LinePixelsV = ( [ x, y ], [ h, v ] ) => h < 0
 
 export const
 LinePixels = ( [ s, e ] ) => LinePixelsV( s, Vec( s, e ) )
+*/
+
+////////////////////////////////////////////////////////////////	Grids 2D
 
 const	//	!!DESTRUCTIVE!!
 OptGrids = ( s, $, e ) => {
@@ -429,6 +340,88 @@ IsLineGrids = ( s, _, e ) => {
 	return _.every( r => Math.abs( PerpendicularLength2V( pq, Vec( s, r ) ) ) < 1 )
 }
 
+////////////////////////////////////////////////////////////////	Bezier Multidimensional
+
+export const	//	nD
+DivideCubeBezier = ( [ s, p, q, e ], t ) => {
+	const u = 1 - t
+	return s.map(
+		( $, _ ) => {
+			const	sp	= ( s[ _ ] * u + p[ _ ] * t )
+			const	pq	= ( p[ _ ] * u + q[ _ ] * t )
+			const	qe	= ( q[ _ ] * u + e[ _ ] * t )
+			const	spq	= ( sp * u + pq * t )
+			const	pqe	= ( pq * u + qe * t )
+			return	[
+				sp
+			,	spq
+			,	spq * u + pqe * t
+			,	pqe
+			,	qe
+			]
+		}
+	).reduce(
+		( $, _ ) => ( $.forEach( ( $, i ) => $.push( _[ i ] ) ), $ )
+	,	[ [], [], [], [], [] ]
+	)
+}
+
+export const	//	nD
+DivideQuadBezier = ( [ s, c, e ], t ) => {
+	const u = 1 - t
+	return s.map(
+		( $, _ ) => {
+			const	sc	= ( s[ _ ] * u + c[ _ ] * t )
+			const	ce	= ( c[ _ ] * u + e[ _ ] * t )
+			return	[
+				sc
+			,	sc * u + ce * t
+			,	ce
+			]
+		}
+	).reduce(
+		( $, _ ) => ( $.forEach( ( $, i ) => $.push( _[ i ] ) ), $ )
+	,	[ [], [], [] ]
+	)
+}
+
+export const	//	nD
+Div2CubeBezier = ( [ s, p, q, e ] ) => s.map(
+	( $, _ ) => {
+		const	sp	= ( s[ _ ] + p[ _ ] ) / 2
+		const	pq	= ( p[ _ ] + q[ _ ] ) / 2
+		const	qe	= ( q[ _ ] + e[ _ ] ) / 2
+		const	spq	= ( sp + pq ) / 2
+		const	pqe	= ( pq + qe ) / 2
+		return	[
+			sp
+		,	spq
+		,	( spq + pqe ) / 2
+		,	pqe
+		,	qe
+		]
+	}
+).reduce(
+	( $, _ ) => ( $.forEach( ( $, i ) => $.push( _[ i ] ) ), $ )
+,	[ [], [], [], [], [] ]
+)
+
+export const	//	nD
+Div2QuadBezier = ( [ s, c, e ] ) => s.map(
+	( $, _ ) => {
+		const	sc	= ( s[ _ ] + c[ _ ] ) / 2
+		const	ce	= ( c[ _ ] + e[ _ ] ) / 2
+		return	[
+			sc
+		,	( sc + ce ) / 2
+		,	ce
+		]
+	}
+).reduce(
+	( $, _ ) => ( $.forEach( ( $, i ) => $.push( _[ i ] ) ), $ )
+,	[ [], [], [] ]
+)
+
 export const	//	nD
 FindCubeBezierT = ( HIT, [ s, p, q, e ], tS = 0, tE = 1 ) => {	//	HIT must be [ int ]
 	const $ = Div2CubeBezier( [ s, p, q, e ] )
@@ -462,9 +455,6 @@ FindQuadBezierT = ( HIT, [ s, c, e ], tS = 0, tE = 1 ) => {	//	HIT must be [ int
 	:	FindQuadBezierT( HIT, [ $[ 1 ], $[ 2 ], e ], ( tS + tE ) / 2, tE )
 }
 
-const
-Transpose = _ => _[ 0 ].map( ( __, d ) => _.map( _ => _[ d ] ) )
-
 
 /*	Points: [ s, p, q, e ] 
 	CubeBezierDiff: t => {	const u = 1 - t
@@ -492,7 +482,7 @@ Transpose = _ => _[ 0 ].map( ( __, d ) => _.map( _ => _[ d ] ) )
 	(CubeBezierDiff^2)'/q/2	: 9u^3t^3p + 9u^2t^4q + 3u^4t^2s + 3ut^5e - 3ut^2$
 						: (3ut^2)( 3u^2tp + 3ut^2q + u^3s + t^3e - $ )
 */
-export const
+const
 FitCubeBezier1D = _ => {
 	const l = _.length - 1
 	const s = _[ 0 ]
@@ -548,7 +538,7 @@ FitCubeBezier = _ => Transpose( Transpose( _ ).map( _ => FitCubeBezier1D( _ ) ) 
 
 */
 
-export const
+const
 FitQuadBezier1D = _ => {
 	const l = _.length - 1
 	const s = _[ 0 ]
@@ -570,4 +560,41 @@ FitQuadBezier1D = _ => {
 
 export const
 FitQuadBezier = _ => Transpose( _ ).map( _ => FitQuadBezier1D( _ ) )
+
+////////////////////////////////////////////////////////////////	Bezier 2D
+
+export const
+FlattenCubeBezier = ( [ s, p, q, e ], d2 ) => {
+	const vE = Vec( s, e )
+	const deno2 = vE[ 0 ] * vE[ 0 ] + vE[ 1 ] * vE[ 1 ]
+
+	const vP = Vec( s, p )
+	const vQ = Vec( s, q )
+	const numP = vE[ 0 ] * vP[ 1 ] - vE[ 1 ] * vP[ 0 ]
+	const numQ = vE[ 0 ] * vQ[ 1 ] - vE[ 1 ] * vQ[ 0 ]
+	const d2P = numP * numP / deno2
+	const d2Q = numQ * numQ / deno2
+	if ( Math.max( d2P, d2Q ) * ( numP * numQ < 0 ? 4 / 9 : 3 / 4 ) < d2 ) { 
+		return [ e ]
+	} else {
+		const _ = Div2CubeBezier( [ s, p, q, e ] )
+		return [
+			...FlattenCubeBezier( [ s, _[ 0 ], _[ 1 ], _[ 2 ] ], d2 )
+		,	...FlattenCubeBezier( [ _[ 2 ], _[ 3 ], _[ 4 ], e ], d2 )
+		]
+	}
+}
+
+export const
+FlattenQuadBezier = ( [ s, c, e ], d2 ) => {
+	if ( PerpendicularLength2( s, e, c ) / 2 < d2 ) {
+		return [ e ]
+	} else {
+		const _ = Div2QuadBezier( [ s, c, e ] )
+		return [
+			...FlattenQuadBezier( [ s, _[ 0 ], _[ 1 ] ], d2 )
+		,	...FlattenQuadBezier( [ _[ 1 ], _[ 2 ], e ], d2 )
+		]
+	}
+}
 
