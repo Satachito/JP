@@ -3,20 +3,22 @@ CF				= ( -24 + Math.sqrt( 24 * 24 + 64 * 9 ) ) / 18	//	Curve factor	: 0.552285
 
 ////////////////////////////////////////////////////////////////	Multidimensional
 
-export const	//	Int
+//v	Int
+export const
 EQ				= ( p, q ) => p.every( ( $, _ ) => $ === q[ _ ] )
+
+export const
+Next			= ( p, q ) => Abs( Sub( p, q ) ).reduce( ( $, _ ) => $ + _, 0 ) <= 1
+
+export const
+Near			= ( p, q ) => p.every( ( $, _ ) => Math.abs( $ - q[ _ ] ) <= 1 )
+//^	Int
 
 export const
 Round			= _ => _.map( _ => Math.round( _ ) )
 
 export const
 Abs				= _ => _.map( _ => Math.abs( _ ) )
-
-export const	//	Int
-Next			= ( p, q ) => Abs( Sub( p, q ) ).reduce( ( $, _ ) => $ + _, 0 ) <= 1
-
-export const
-Near			= ( p, q ) => p.every( ( $, _ ) => Math.abs( $ - q[ _ ] ) <= 1 )
 
 export const
 Add				= ( p, q ) => p.map( ( $, _ ) => $ + q[ _ ] )
@@ -71,7 +73,7 @@ BBoxOr			= ( _, ...$ ) => $.reduce(
 ,	_
 )
 
-//	Normally return value of this function is checked if all dimensions has non void value
+//	The return value of this function must be checked to ensure that all dimensions are non void.
 export const
 BBoxAnd			= ( _, ...$ ) => $.reduce(
 	( $$, $ ) => $.map(
@@ -147,7 +149,7 @@ PerpendicularLength2 = ( o, p, q ) => PerpendicularLength2V( Vec( o, p ), Vec( o
 
 export const	//	2D
 IntersectingPoints = ( p, q ) => {
-	if ( BBoxAnd( BBox( p ), BBox( q ) ) ) {
+	if ( BBoxAnd( BBox( p ), BBox( q ) ).every( _ => _ ) ) {
 		const $ = []
 		let prevP = p[ 0 ]
 		p.slice( 1 ).forEach(
