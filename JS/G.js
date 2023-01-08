@@ -3,17 +3,6 @@ CF				= ( -24 + Math.sqrt( 24 * 24 + 64 * 9 ) ) / 18	//	Curve factor	: 0.552285
 
 ////////////////////////////////////////////////////////////////	Multidimensional
 
-//v	Int
-export const
-EQ				= ( p, q ) => p.every( ( $, _ ) => $ === q[ _ ] )
-
-export const
-Next			= ( p, q ) => Abs( Sub( p, q ) ).reduce( ( $, _ ) => $ + _, 0 ) <= 1
-
-export const
-Near			= ( p, q ) => p.every( ( $, _ ) => Math.abs( $ - q[ _ ] ) <= 1 )
-//^	Int
-
 export const
 Round			= _ => _.map( _ => Math.round( _ ) )
 
@@ -88,6 +77,17 @@ BBoxAnd			= ( _, ...$ ) => $.reduce(
 	)
 )
 
+//v	Int
+export const
+EQ				= ( p, q ) => p.every( ( $, _ ) => $ === q[ _ ] )
+
+export const
+Next			= ( p, q ) => Abs( Sub( p, q ) ).reduce( ( $, _ ) => $ + _, 0 ) <= 1
+
+export const
+Near			= ( p, q ) => p.every( ( $, _ ) => Math.abs( $ - q[ _ ] ) <= 1 )
+//^	Int
+
 ////////////////////////////////////////////////////////////////	3D
 
 export const	//	3D
@@ -125,23 +125,8 @@ Intersection = ( [ sP, eP ], [ sQ, eQ ] ) => IntersectionV( [ sP, Vec( sP, eP ) 
 //	https://manabitimes.jp/math/857
 export const	//	2D
 PerpendicularLength2V = ( [ ph, pv ], [ qh, qv ] ) => {
-	const deno2 = ph * ph + pv * pv
-	if ( deno2 == 0 ) return null
-	if ( ph < 0 ) {
-		ph = -ph
-		qh = -qh
-	}
-	if ( pv < 0 ) {
-		pv = -pv
-		qv = -qv
-	}
-	const _ = ( pv * qv + ph * qh ) / deno2
-	const X = ph * _
-	if ( X < 0 || ph < X ) return null
-	const Y = pv * _
-	if ( Y < 0 || pv < Y ) return null
-	const num = ph * qv - pv * qh
-	return num * num / deno2
+	const num = qv * ph - qh * pv
+	return num * num / ( qh * qh + qv * qv )
 }
 
 export const	//	2D
@@ -299,7 +284,9 @@ _CubeGrids = ( s, p, q, e ) => {
 	const $		= Mid( spq, pqe )
 
 	const rM	= Round( $ )
-
+if ( isNaN( p[ 0 ] ) ) {
+	console.log( s, p, q, e, sp, spq, pqe, qe, rS, rM, rE )
+}
 	return Near( rS, rM ) && Near( rM, rE )
 	?	Near( rS, rE ) ? [] : [ rM ]
 	:	[	..._CubeGrids( s, sp, spq, $ )
