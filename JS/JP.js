@@ -58,11 +58,11 @@ EqualJSONable = ( p, q ) => {
 		?	p.every( ( $, _ ) => EqualJSONable( $, q[ _ ] ) )
 		:	false
 	case Object:
-		const P = Object.entries( p )
-		if ( P.length !== Object.keys( q ).length ) return false
-		return P.every(
-			( [ k, v ] ) => q[ k ] && EqualJSONable( v, q[ k ] )
-		)
+		{	const P = Object.entries( p )
+			return P.length === Object.keys( q ).length
+			?	P.every( ( [ k, v ] ) => q[ k ] != void 0 && EqualJSONable( v, q[ k ] ) )
+			:	false
+		}
 	default:
 		return p === q
 	}
