@@ -1,5 +1,6 @@
-export const
-CF				= ( -24 + Math.sqrt( 24 * 24 + 64 * 9 ) ) / 18	//	Curve factor	: 0.552285
+export const	//	BEZIER FITTING CIRCLE'S QUATER ARC PARAMTER
+CF				= 4 / 3 * Math.tan( Math.PI / 8 )				// 0.5522847498307933
+//				= ( -24 + Math.sqrt( 24 * 24 + 64 * 9 ) ) / 18	// 0.5522847498307932
 
 ////////////////////////////////////////////////////////////////	Multidimensional
 
@@ -282,11 +283,8 @@ _CubeGrids = ( s, p, q, e ) => {
 	const spq	= Mid( sp, pq )
 	const pqe	= Mid( pq, qe )
 	const $		= Mid( spq, pqe )
-
 	const rM	= Round( $ )
-if ( isNaN( p[ 0 ] ) ) {
-	console.log( s, p, q, e, sp, spq, pqe, qe, rS, rM, rE )
-}
+
 	return Near( rS, rM ) && Near( rM, rE )
 	?	Near( rS, rE ) ? [] : [ rM ]
 	:	[	..._CubeGrids( s, sp, spq, $ )
