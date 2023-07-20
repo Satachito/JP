@@ -310,4 +310,103 @@ namespace JP {
 	EncodeHexLF16( const vector< UI1 >& _ ) {
 		return EncodeHexLF16( (UI1*)&_[ 0 ], _.size() );
 	}
+
+	inline UI8
+	Size1( const UI1* $ ) {
+		return $[ 0 ];
+	}
+
+	inline UI8
+	Size2( const UI1* $ ) {
+		return
+			UI2( $[ 1 ] ) << 0
+		|	UI2( $[ 0 ] ) << 8
+		;
+	}
+
+	inline UI8
+	Size3( const UI1* $ ) {
+		return
+			UI2( $[ 2 ] ) <<  0
+		|	UI2( $[ 1 ] ) <<  8
+		|	UI2( $[ 0 ] ) << 16
+		;
+	}
+
+	inline UI8
+	Size4( const UI1* $ ) {
+		return
+			UI4( $[ 3 ] ) << 0
+		|	UI4( $[ 2 ] ) << 8
+		|	UI4( $[ 1 ] ) << 16
+		|	UI4( $[ 0 ] ) << 24
+		;
+	}
+
+	inline UI8
+	Size8( const UI1* $ ) {
+		return
+			UI8( $[ 7 ] ) << 0
+		|	UI8( $[ 6 ] ) << 8
+		|	UI8( $[ 5 ] ) << 16
+		|	UI8( $[ 4 ] ) << 24
+		|	UI8( $[ 3 ] ) << 32
+		|	UI8( $[ 2 ] ) << 40
+		|	UI8( $[ 1 ] ) << 48
+		|	UI8( $[ 0 ] ) << 56
+		;
+	}
+
+	struct
+	BitReader {
+		const	UI1*	$;
+				UI8		_;
+
+#define NUM_BYTES	456
+UI8 bytes_left;
+UI8 bits_left;
+
+		BitReader( const UI1* $ )
+		:	$( $ )
+		,	_( 0 ) {
+bits_left = ( NUM_BYTES * 8 - _ ) % 32;
+bytes_left = NUM_BYTES - ( _ / 32 ) * 4;
+
+		}
+		bool
+		Read() {
+			UI8 v = $[ _ / 8 ] & ( 0x80 >> ( _ % 8 ) );
+			_++;
+bits_left = ( NUM_BYTES * 8 - _ ) % 32;
+bytes_left = NUM_BYTES - ( _ / 32 ) * 4;
+			return v ? true : false;
+		}
+		UI8
+		Read( UI8 _ ) {
+			UI8 v = 0;
+			while ( _-- ) v = ( v << 1 ) | ( Read() ? 1 : 0 );
+			return v;
+		}
+		UI8
+		ReadGolomb() {
+			UI8 lz = 0;
+			while ( !Read() ) lz++;
+			return lz ? ( 1 << lz ) - 1 + Read( lz ) : 0;
+		}
+		UI8
+		ReadSignedGolomb() {
+			auto $ = ReadGolomb();
+			if ( $ % 2 ) {
+				return ( $ + 1 ) / 2;
+			} else {
+				return - $ / 2;
+			}
+		}
+		void
+		Skip( UI8 $ ) {
+			_ += $;
+bits_left = ( NUM_BYTES * 8 - _ ) % 32;
+bytes_left = NUM_BYTES - ( _ / 32 ) * 4;
+		}
+	};
 }

@@ -4,106 +4,6 @@
 #include	"JP.h"
 using namespace JP;
 
-inline UI8
-Size1( const UI1* $ ) {
-	return $[ 0 ];
-}
-
-inline UI8
-Size2( const UI1* $ ) {
-	return
-		UI2( $[ 1 ] ) << 0
-	|	UI2( $[ 0 ] ) << 8
-	;
-}
-
-inline UI8
-Size3( const UI1* $ ) {
-	return
-		UI2( $[ 2 ] ) <<  0
-	|	UI2( $[ 1 ] ) <<  8
-	|	UI2( $[ 0 ] ) << 16
-	;
-}
-
-inline UI8
-Size4( const UI1* $ ) {
-	return
-		UI4( $[ 3 ] ) << 0
-	|	UI4( $[ 2 ] ) << 8
-	|	UI4( $[ 1 ] ) << 16
-	|	UI4( $[ 0 ] ) << 24
-	;
-}
-
-inline UI8
-Size8( const UI1* $ ) {
-	return
-		UI8( $[ 7 ] ) << 0
-	|	UI8( $[ 6 ] ) << 8
-	|	UI8( $[ 5 ] ) << 16
-	|	UI8( $[ 4 ] ) << 24
-	|	UI8( $[ 3 ] ) << 32
-	|	UI8( $[ 2 ] ) << 40
-	|	UI8( $[ 1 ] ) << 48
-	|	UI8( $[ 0 ] ) << 56
-	;
-}
-
-
-struct
-BitReader {
-	const	UI1*	$;
-			UI8		_;
-
-#define NUM_BYTES	456
-UI8 bytes_left;
-UI8 bits_left;
-
-	BitReader( const UI1* $ )
-	:	$( $ )
-	,	_( 0 ) {
-bits_left = ( NUM_BYTES * 8 - _ ) % 32;
-bytes_left = NUM_BYTES - ( _ / 32 ) * 4;
-
-	}
-	bool
-	Read() {
-		UI8 v = $[ _ / 8 ] & ( 0x80 >> ( _ % 8 ) );
-		_++;
-bits_left = ( NUM_BYTES * 8 - _ ) % 32;
-bytes_left = NUM_BYTES - ( _ / 32 ) * 4;
-		return v ? true : false;
-	}
-	UI8
-	Read( UI8 _ ) {
-		UI8 v = 0;
-		while ( _-- ) v = ( v << 1 ) | ( Read() ? 1 : 0 );
-		return v;
-	}
-	UI8
-	ReadGolomb() {
-		UI8 lz = 0;
-		while ( !Read() ) lz++;
-		return lz ? ( 1 << lz ) - 1 + Read( lz ) : 0;
-	}
-	UI8
-	ReadSignedGolomb() {
-		auto $ = ReadGolomb();
-		if ( $ % 2 ) {
-			return ( $ + 1 ) / 2;
-		} else {
-			return - $ / 2;
-		}
-	}
-	void
-	Skip( UI8 $ ) {
-		_ += $;
-bits_left = ( NUM_BYTES * 8 - _ ) % 32;
-bytes_left = NUM_BYTES - ( _ / 32 ) * 4;
-	}
-};
-
 #define	AVC_NAL_UNIT_TYPE_UNSPECIFIED                       0
 #define	AVC_NAL_UNIT_TYPE_CODED_SLICE_OF_NON_IDR_PICTURE    1
 #define	AVC_NAL_UNIT_TYPE_CODED_SLICE_DATA_PARTITION_A      2
@@ -1619,3 +1519,110 @@ Concat( vector< T >& $, T* _, UI8 size ) {
 	$.insert( $.end(), _, _ + size );
 }
 
+inline const char*
+HEVCNaluTypeName( unsigned int nalu_type ) {
+	switch ( nalu_type ) {
+	case  0: return "TRAIL_N - Coded slice segment of a non-TSA, non-STSA trailing picture";
+	case  1: return "TRAIL_R - Coded slice segment of a non-TSA, non-STSA trailing picture";
+	case  2: return "TSA_N - Coded slice segment of a TSA picture";
+	case  3: return "TSA_R - Coded slice segment of a TSA picture";
+	case  4: return "STSA_N - Coded slice segment of an STSA picture";
+	case  5: return "STSA_R - Coded slice segment of an STSA picture";
+	case  6: return "RADL_N - Coded slice segment of a RADL picture";
+	case  7: return "RADL_R - Coded slice segment of a RADL picture";
+	case  8: return "RASL_N - Coded slice segment of a RASL picture";
+	case  9: return "RASL_R - Coded slice segment of a RASL picture";
+	case 10: return "RSV_VCL_N10 - Reserved non-IRAP sub-layer non-reference";
+	case 12: return "RSV_VCL_N12 - Reserved non-IRAP sub-layer non-reference";
+	case 14: return "RSV_VCL_N14 - Reserved non-IRAP sub-layer non-reference";
+	case 11: return "RSV_VCL_R11 - Reserved non-IRAP sub-layer reference";
+	case 13: return "RSV_VCL_R13 - Reserved non-IRAP sub-layer reference";
+	case 15: return "RSV_VCL_R15 - Reserved non-IRAP sub-layer reference";
+	case 16: return "BLA_W_LP - Coded slice segment of a BLA picture";
+	case 17: return "BLA_W_RADL - Coded slice segment of a BLA picture";
+	case 18: return "BLA_N_LP - Coded slice segment of a BLA picture";
+	case 19: return "IDR_W_RADL - Coded slice segment of an IDR picture";
+	case 20: return "IDR_N_LP - Coded slice segment of an IDR picture";
+	case 21: return "CRA_NUT - Coded slice segment of a CRA picture";
+	case 22: return "RSV_IRAP_VCL22 - Reserved IRAP";
+	case 23: return "RSV_IRAP_VCL23 - Reserved IRAP";
+	case 24: return "RSV_VCL24 - Reserved non-IRAP";
+	case 25: return "RSV_VCL25 - Reserved non-IRAP";
+	case 26: return "RSV_VCL26 - Reserved non-IRAP";
+	case 27: return "RSV_VCL27 - Reserved non-IRAP";
+	case 28: return "RSV_VCL28 - Reserved non-IRAP";
+	case 29: return "RSV_VCL29 - Reserved non-IRAP";
+	case 30: return "RSV_VCL30 - Reserved non-IRAP";
+	case 31: return "RSV_VCL31 - Reserved non-IRAP";
+	case 32: return "VPS_NUT - Video parameter set";
+	case 33: return "SPS_NUT - Sequence parameter set";
+	case 34: return "PPS_NUT - Picture parameter set";
+	case 35: return "AUD_NUT - Access unit delimiter";
+	case 36: return "EOS_NUT - End of sequence";
+	case 37: return "EOB_NUT - End of bitstream";
+	case 38: return "FD_NUT - Filler data";
+	case 39: return "PREFIX_SEI_NUT - Supplemental enhancement information";
+	case 40: return "SUFFIX_SEI_NUT - Supplemental enhancement information";
+	case 62: return "Dolby Vision RPU NAL units";
+	case 63: return "Dolby Vision EL NAL units";
+	default: return NULL;
+	}
+}
+
+inline void
+PrefixSEIUnit( const vector< UI1 >& _, ostream& s ) {
+	auto $ = &_[ 0 ];
+	unsigned int payloadType = 0;
+	while ( *$++ == 0xff ) payloadType += 255;
+	payloadType += *( $ - 1 );
+	unsigned int payloadSize = 0;
+	while ( *$++ == 0xff ) payloadSize += 255;
+	payloadSize += *( $ - 1 );
+//	printf( "payload: %04d %04d ", payloadType, payloadSize );
+	s << '\t';
+	switch ( payloadType ) {
+	case 0:
+		s << "buffering_period";
+		break;
+	case 1:
+		s << "pic_timing";
+		break;
+	case 5:
+		//	16 byte uuid
+		s << "UUID:" << EncodeHex( $, 16 ) << endl;
+		$ += 16;
+		s << string( $, &_[ 0 ] + _.size() ) << endl;
+		break;
+	case 129:
+		s << "active_parameter_sets";
+		break;
+	default:
+		s << endl;
+		break;
+	}
+}
+
+inline void
+DumpHEVCNAL( const vector< UI1 >& nal, ostream& s ) {
+	static auto counter = 0;
+	auto nal_unit_type	= ( nal[ 0 ] >> 1 ) & 0x3F;
+//	auto nuh_layer_id	 = ( ( ( nal[ 0 ] & 1 ) << 5 ) | ( nal[ 1 ] >> 3 ) );
+	auto nuh_temporal_id	= nal[ 1 ] & 0x7;
+	A( nuh_temporal_id );
+	nuh_temporal_id--;
+	auto nal_unit_type_name = HEVCNaluTypeName( nal_unit_type );
+	if ( nal_unit_type_name == 0 ) nal_unit_type_name = "UNKNOWN";
+	s << counter++ << ':' << nal.size() << ':' << nal_unit_type_name;
+	auto $ = &nal[ 0 ];
+	switch ( nal_unit_type ) {
+	case 39:
+		PrefixSEIUnit( vector< UI1 >( $ + 2, $ + nal.size() ), s );
+		break;
+	}
+	s << endl;
+}
+inline void
+DumpHEVCNALs( const vector< vector< UI1 > >& nals, ostream& s = cerr ) {
+	for ( auto& nal: nals ) DumpHEVCNAL( nal, s );
+	s << "--------" << endl;
+}
