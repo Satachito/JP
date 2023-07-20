@@ -56,42 +56,54 @@ BitReader {
 	const	UI1*	$;
 			UI8		_;
 
+#define NUM_BYTES	456
+UI8 bytes_left;
+UI8 bits_left;
+
 	BitReader( const UI1* $ )
 	:	$( $ )
 	,	_( 0 ) {
+bits_left = ( NUM_BYTES * 8 - _ ) % 32;
+bytes_left = NUM_BYTES - ( _ / 32 ) * 4;
+
 	}
-	UI4
+	bool
 	Read() {
-		auto v = $[ _ / 8 ] & ( 0x00000080 >> ( _ % 8 ) );
+		UI8 v = $[ _ / 8 ] & ( 0x80 >> ( _ % 8 ) );
 		_++;
-		return v ? 1 : 0;
+bits_left = ( NUM_BYTES * 8 - _ ) % 32;
+bytes_left = NUM_BYTES - ( _ / 32 ) * 4;
+		return v ? true : false;
+	}
+	UI8
+	Read( UI8 _ ) {
+		UI8 v = 0;
+		while ( _-- ) v = ( v << 1 ) | ( Read() ? 1 : 0 );
+		return v;
+	}
+	UI8
+	ReadGolomb() {
+		UI8 lz = 0;
+		while ( !Read() ) lz++;
+		return lz ? ( 1 << lz ) - 1 + Read( lz ) : 0;
+	}
+	UI8
+	ReadSignedGolomb() {
+		auto $ = ReadGolomb();
+		if ( $ % 2 ) {
+			return ( $ + 1 ) / 2;
+		} else {
+			return - $ / 2;
+		}
 	}
 	void
 	Skip( UI8 $ ) {
 		_ += $;
+bits_left = ( NUM_BYTES * 8 - _ ) % 32;
+bytes_left = NUM_BYTES - ( _ / 32 ) * 4;
 	}
 };
 
-inline	UI4
-ReadBits( BitReader& $, UI4 _ ) {
-	auto v = (UI4)0;
-	while ( _-- ) v = ( v << 1 ) | $.Read();
-	return v;
-}
-inline	UI4
-ReadGolomb( BitReader& $ ) {
-	auto lz = 0;
-	while ( !$.Read() ) lz++;
-	return lz ? ( 1 << lz ) - 1 + ReadBits( $, lz ) : 0;
-}
-inline	int
-SignedGolomb( unsigned int code_num ) {
-    if (code_num % 2) {
-        return (code_num+1)/2;
-    } else {
-        return -((int)code_num/2);
-    }
-}
 #define	AVC_NAL_UNIT_TYPE_UNSPECIFIED                       0
 #define	AVC_NAL_UNIT_TYPE_CODED_SLICE_OF_NON_IDR_PICTURE    1
 #define	AVC_NAL_UNIT_TYPE_CODED_SLICE_DATA_PARTITION_A      2
@@ -240,7 +252,7 @@ AvcSPS( const UI1* ptr ) {
 	BitReader	bits( ptr );
     bits.Skip( 8 ); // NAL Unit Type
 
-    sps.profile_idc = ReadBits( bits, 8 );
+    sps.profile_idc = (unsigned int)bits.Read( 8 );
     sps.constraint_set0_flag = bits.Read();
     sps.constraint_set1_flag = bits.Read();
     sps.constraint_set2_flag = bits.Read();
@@ -248,8 +260,8 @@ AvcSPS( const UI1* ptr ) {
     sps.constraint_set4_flag = bits.Read();
     sps.constraint_set5_flag = bits.Read();
     bits.Skip( 2 );
-    sps.level_idc = ReadBits( bits, 8 );
-    sps.seq_parameter_set_id = ReadGolomb( bits );
+    sps.level_idc = (unsigned int)bits.Read( 8 );
+    sps.seq_parameter_set_id = (unsigned int)bits.ReadGolomb();
     if (sps.seq_parameter_set_id > AVC_SPS_MAX_ID) throw "ERROR_INVALID_FORMAT";
     if (sps.profile_idc  ==  100
 	||	sps.profile_idc  ==  110
@@ -264,13 +276,13 @@ AvcSPS( const UI1* ptr ) {
 	||	sps.profile_idc  ==  139
 	||	sps.profile_idc  ==  134
 	) {
-        sps.chroma_format_idc = ReadGolomb(bits);
+        sps.chroma_format_idc = (unsigned int)bits.ReadGolomb();
         sps.separate_colour_plane_flag = 0;
         if (sps.chroma_format_idc == 3) {
             sps.separate_colour_plane_flag = bits.Read();	//	ORG SKIP
         }
-        sps.bit_depth_luma_minus8 = ReadGolomb( bits );
-        sps.bit_depth_chroma_minus8 = ReadGolomb( bits );
+        sps.bit_depth_luma_minus8 = (unsigned int)bits.ReadGolomb();
+        sps.bit_depth_chroma_minus8 = (unsigned int)bits.ReadGolomb();
         sps.qpprime_y_zero_transform_bypass_flag = bits.Read();	//	ORG SKIP
         sps.seq_scaling_matrix_present_flag = bits.Read();
         if ( sps.seq_scaling_matrix_present_flag ) {
@@ -282,7 +294,7 @@ AvcSPS( const UI1* ptr ) {
                     if ( i < 6 ) {
                         for ( unsigned int j = 0; j < 16; j++ ) {
                             if ( next_scale ) {
-                                int delta_scale = SignedGolomb( ReadGolomb( bits ) );
+                                auto delta_scale = bits.ReadSignedGolomb();
                                 next_scale = ( last_scale + delta_scale + 256 ) % 256;
                                 sps.use_default_scaling_matrix_4x4[ i ] = ( j == 0 && next_scale == 0 );
                             }
@@ -292,7 +304,7 @@ AvcSPS( const UI1* ptr ) {
                     } else {
                         for ( unsigned int j = 0; j < 64; j++ ) {
                             if ( next_scale ) {
-                                int delta_scale = SignedGolomb( ReadGolomb( bits ) );
+                                auto delta_scale = bits.ReadSignedGolomb();
                                 next_scale = ( last_scale + delta_scale + 256 ) % 256;
                                 sps.use_default_scaling_matrix_8x8[ i - 6 ] = ( j == 0 && next_scale == 0 );
                             }
@@ -306,25 +318,25 @@ AvcSPS( const UI1* ptr ) {
     } else {
         sps.chroma_format_idc = 1;
 	}
-    sps.log2_max_frame_num_minus4 = ReadGolomb(bits);
-    sps.pic_order_cnt_type = ReadGolomb(bits);
+    sps.log2_max_frame_num_minus4 = (unsigned int)bits.ReadGolomb();
+    sps.pic_order_cnt_type = (unsigned int)bits.ReadGolomb();
     if (sps.pic_order_cnt_type > 2) throw "ERROR_INVALID_FORMAT";
     if (sps.pic_order_cnt_type == 0) {
-        sps.log2_max_pic_order_cnt_lsb_minus4 = ReadGolomb(bits);
+        sps.log2_max_pic_order_cnt_lsb_minus4 = (unsigned int)bits.ReadGolomb();
     } else if (sps.pic_order_cnt_type == 1) {
         sps.delta_pic_order_always_zero_flags = bits.Read();
-        sps.offset_for_non_ref_pic = SignedGolomb(ReadGolomb(bits));
-        sps.offset_for_top_to_bottom_field = SignedGolomb(ReadGolomb(bits));
-        sps.num_ref_frames_in_pic_order_cnt_cycle = ReadGolomb(bits);
+        sps.offset_for_non_ref_pic = (unsigned int)bits.ReadSignedGolomb();
+        sps.offset_for_top_to_bottom_field = (unsigned int)bits.ReadSignedGolomb();
+        sps.num_ref_frames_in_pic_order_cnt_cycle = (unsigned int)bits.ReadGolomb();
         if (sps.num_ref_frames_in_pic_order_cnt_cycle > AVC_SPS_MAX_NUM_REF_FRAMES_IN_PIC_ORDER_CNT_CYCLE) throw "ERROR_INVALID_FORMAT";
         for (unsigned int i=0; i<sps.num_ref_frames_in_pic_order_cnt_cycle; i++) {
-            sps.offset_for_ref_frame[i] = SignedGolomb(ReadGolomb(bits));
+            sps.offset_for_ref_frame[i] = (unsigned int)bits.ReadSignedGolomb();
         }
     }
-    sps.num_ref_frames                       = ReadGolomb(bits);
+    sps.num_ref_frames                       = (unsigned int)bits.ReadGolomb();
     sps.gaps_in_frame_num_value_allowed_flag = bits.Read();
-    sps.pic_width_in_mbs_minus1              = ReadGolomb(bits);
-    sps.pic_height_in_map_units_minus1       = ReadGolomb(bits);
+    sps.pic_width_in_mbs_minus1              = (unsigned int)bits.ReadGolomb();
+    sps.pic_height_in_map_units_minus1       = (unsigned int)bits.ReadGolomb();
     sps.frame_mbs_only_flag                  = bits.Read();
     if (!sps.frame_mbs_only_flag) {
         sps.mb_adaptive_frame_field_flag = bits.Read();
@@ -332,10 +344,10 @@ AvcSPS( const UI1* ptr ) {
     sps.direct_8x8_inference_flag = bits.Read();
     sps.frame_cropping_flag       = bits.Read();
     if (sps.frame_cropping_flag) {
-        sps.frame_crop_left_offset   = ReadGolomb(bits);
-        sps.frame_crop_right_offset  = ReadGolomb(bits);
-        sps.frame_crop_top_offset    = ReadGolomb(bits);
-        sps.frame_crop_bottom_offset = ReadGolomb(bits);
+        sps.frame_crop_left_offset   = (unsigned int)bits.ReadGolomb();
+        sps.frame_crop_right_offset  = (unsigned int)bits.ReadGolomb();
+        sps.frame_crop_top_offset    = (unsigned int)bits.ReadGolomb();
+        sps.frame_crop_bottom_offset = (unsigned int)bits.ReadGolomb();
     }
 
     return sps;
@@ -349,32 +361,32 @@ AvcPPS( const UI1* ptr ) {
 	BitReader	bits( ptr );
     bits.Skip(8); // NAL Unit Type
 
-    pps.pic_parameter_set_id     = ReadGolomb(bits);
+    pps.pic_parameter_set_id     = (unsigned int)bits.ReadGolomb();
     if (pps.pic_parameter_set_id > AVC_PPS_MAX_ID) throw "ERROR_INVALID_FORMAT";
-    pps.seq_parameter_set_id     = ReadGolomb(bits);
+    pps.seq_parameter_set_id     = (unsigned int)bits.ReadGolomb();
     if (pps.seq_parameter_set_id > AVC_SPS_MAX_ID) throw "ERROR_INVALID_FORMAT";
     pps.entropy_coding_mode_flag = bits.Read();
     pps.pic_order_present_flag   = bits.Read();
-    pps.num_slice_groups_minus1  = ReadGolomb(bits);
+    pps.num_slice_groups_minus1  = (unsigned int)bits.ReadGolomb();
     if (pps.num_slice_groups_minus1 >= AVC_PPS_MAX_SLICE_GROUPS) throw "ERROR_INVALID_FORMAT";
     if (pps.num_slice_groups_minus1 > 0) {
-        pps.slice_group_map_type = ReadGolomb(bits);
+        pps.slice_group_map_type = (unsigned int)bits.ReadGolomb();
         if (pps.slice_group_map_type == 0) {
             for (unsigned int i=0; i<=pps.num_slice_groups_minus1; i++) {
-                pps.run_length_minus1[i] = ReadGolomb(bits);
+                pps.run_length_minus1[i] = (unsigned int)bits.ReadGolomb();
             }
         } else if (pps.slice_group_map_type == 2) {
             for (unsigned int i=0; i<pps.num_slice_groups_minus1; i++) {
-                pps.top_left[i] = ReadGolomb(bits);
-                pps.bottom_right[i] = ReadGolomb(bits);
+                pps.top_left[i] = (unsigned int)bits.ReadGolomb();
+                pps.bottom_right[i] = (unsigned int)bits.ReadGolomb();
             }
         } else if (pps.slice_group_map_type == 3 ||
                    pps.slice_group_map_type == 4 ||
                    pps.slice_group_map_type == 5) {
             pps.slice_group_change_direction_flag = bits.Read();
-            pps.slice_group_change_rate_minus1 = ReadGolomb(bits);
+            pps.slice_group_change_rate_minus1 = (unsigned int)bits.ReadGolomb();
         } else if (pps.slice_group_map_type == 6) {
-            pps.pic_size_in_map_units_minus1 = ReadGolomb(bits);
+            pps.pic_size_in_map_units_minus1 = (unsigned int)bits.ReadGolomb();
             if (pps.pic_size_in_map_units_minus1 >= AVC_PPS_MAX_PIC_SIZE_IN_MAP_UNITS) throw "ERROR_INVALID_FORMAT";
             unsigned int num_bits_per_slice_group_id;
             if (pps.num_slice_groups_minus1 + 1 > 4) {
@@ -385,17 +397,17 @@ AvcPPS( const UI1* ptr ) {
                 num_bits_per_slice_group_id = 1;
             }
             for (unsigned int i=0; i<=pps.pic_size_in_map_units_minus1; i++) {
-                /*pps.slice_group_id[i] =*/ ReadBits(bits, num_bits_per_slice_group_id);
+                /*pps.slice_group_id[i] =*/ bits.Read( num_bits_per_slice_group_id );
             }
         }
     }
-    pps.num_ref_idx_10_active_minus1 = ReadGolomb(bits);
-    pps.num_ref_idx_11_active_minus1 = ReadGolomb(bits);
+    pps.num_ref_idx_10_active_minus1 = (unsigned int)bits.ReadGolomb();
+    pps.num_ref_idx_11_active_minus1 = (unsigned int)bits.ReadGolomb();
     pps.weighted_pred_flag           = bits.Read();
-    pps.weighted_bipred_idc          = ReadBits(bits, 2);
-    pps.pic_init_qp_minus26          = SignedGolomb(ReadGolomb(bits));
-    pps.pic_init_qs_minus26          = SignedGolomb(ReadGolomb(bits));
-    pps.chroma_qp_index_offset       = SignedGolomb(ReadGolomb(bits));
+    pps.weighted_bipred_idc          = bits.Read( 2 );
+    pps.pic_init_qp_minus26          = (unsigned int)bits.ReadSignedGolomb();
+    pps.pic_init_qs_minus26          = (unsigned int)bits.ReadSignedGolomb();
+    pps.chroma_qp_index_offset       = (unsigned int)bits.ReadSignedGolomb();
     pps.deblocking_filter_control_present_flag = bits.Read();
     pps.constrained_intra_pred_flag            = bits.Read();
     pps.redundant_pic_cnt_present_flag         = bits.Read();
@@ -409,14 +421,14 @@ AVCNaluHeaderSize( UI1* ptr, int nal_unit_type, int nal_ref_idc, AvcSequencePara
 	BitReader	bits( ptr );
 	AvcSliceHeader	slice_header;
 	memset( &slice_header, 0, sizeof( slice_header ) );
-    slice_header.first_mb_in_slice    = ReadGolomb(bits);
-    slice_header.slice_type           = ReadGolomb(bits);
-    slice_header.pic_parameter_set_id = ReadGolomb(bits);
+    slice_header.first_mb_in_slice    = (unsigned int)bits.ReadGolomb();
+    slice_header.slice_type           = (unsigned int)bits.ReadGolomb();
+    slice_header.pic_parameter_set_id = (unsigned int)bits.ReadGolomb();
     if (slice_header.pic_parameter_set_id > AVC_PPS_MAX_ID) throw "ERROR_INVALID_FORMAT";
     auto pps = PPS[slice_header.pic_parameter_set_id];
     auto sps = SPS[pps.seq_parameter_set_id];
-    if (sps.separate_colour_plane_flag) slice_header.colour_plane_id = ReadBits(bits, 2);
-    slice_header.frame_num = ReadBits(bits, sps.log2_max_frame_num_minus4 + 4);
+    if (sps.separate_colour_plane_flag) slice_header.colour_plane_id = (unsigned int)bits.Read( 2);
+    slice_header.frame_num = (unsigned int)bits.Read( sps.log2_max_frame_num_minus4 + 4);
     if (!sps.frame_mbs_only_flag) {
         slice_header.field_pic_flag = bits.Read();
         if (slice_header.field_pic_flag) {
@@ -424,22 +436,22 @@ AVCNaluHeaderSize( UI1* ptr, int nal_unit_type, int nal_ref_idc, AvcSequencePara
         }
     }
     if (nal_unit_type == AVC_NAL_UNIT_TYPE_CODED_SLICE_OF_IDR_PICTURE) {
-        slice_header.idr_pic_id = ReadGolomb(bits);
+        slice_header.idr_pic_id = (unsigned int)bits.ReadGolomb();
     }
     if (sps.pic_order_cnt_type == 0) {
-        slice_header.pic_order_cnt_lsb = ReadBits(bits, sps.log2_max_pic_order_cnt_lsb_minus4 + 4);
+        slice_header.pic_order_cnt_lsb = (unsigned int)bits.Read( sps.log2_max_pic_order_cnt_lsb_minus4 + 4);
         if (pps.pic_order_present_flag && !slice_header.field_pic_flag) {
-            slice_header.delta_pic_order_cnt[0] = SignedGolomb(ReadGolomb(bits));
+            slice_header.delta_pic_order_cnt[0] = (unsigned int)bits.ReadSignedGolomb();
         }
     }
     if (sps.pic_order_cnt_type == 1 && !sps.delta_pic_order_always_zero_flags) {
-        slice_header.delta_pic_order_cnt[0] = SignedGolomb(ReadGolomb(bits));
+        slice_header.delta_pic_order_cnt[0] = (unsigned int)bits.ReadSignedGolomb();
         if (pps.pic_order_present_flag && !slice_header.field_pic_flag) {
-            slice_header.delta_pic_order_cnt[1] = SignedGolomb(ReadGolomb(bits));
+            slice_header.delta_pic_order_cnt[1] = (unsigned int)bits.ReadSignedGolomb();
         }
     }
     if (pps.redundant_pic_cnt_present_flag) {
-        slice_header.redundant_pic_cnt = ReadGolomb(bits);
+        slice_header.redundant_pic_cnt = (unsigned int)bits.ReadGolomb();
     }
     
     unsigned int slice_type = slice_header.slice_type % 5; // this seems to be implicit in the spec
@@ -454,9 +466,9 @@ AVCNaluHeaderSize( UI1* ptr, int nal_unit_type, int nal_ref_idc, AvcSequencePara
         slice_header.num_ref_idx_active_override_flag = bits.Read();
         
         if (slice_header.num_ref_idx_active_override_flag) {
-            slice_header.num_ref_idx_l0_active_minus1 = ReadGolomb(bits);
+            slice_header.num_ref_idx_l0_active_minus1 = (unsigned int)bits.ReadGolomb();
             if ((slice_header.slice_type % 5) == AVC_SLICE_TYPE_B) {
-                slice_header.num_ref_idx_l1_active_minus1 = ReadGolomb(bits);
+                slice_header.num_ref_idx_l1_active_minus1 = (unsigned int)bits.ReadGolomb();
             }
         } else {
             slice_header.num_ref_idx_l0_active_minus1 = pps.num_ref_idx_10_active_minus1;
@@ -469,12 +481,12 @@ AVCNaluHeaderSize( UI1* ptr, int nal_unit_type, int nal_ref_idc, AvcSequencePara
         slice_header.ref_pic_list_reordering_flag_l0 = bits.Read();
         if (slice_header.ref_pic_list_reordering_flag_l0) {
             do {
-                slice_header.reordering_of_pic_nums_idc = ReadGolomb(bits);
+                slice_header.reordering_of_pic_nums_idc = (unsigned int)bits.ReadGolomb();
                 if (slice_header.reordering_of_pic_nums_idc == 0 ||
 					slice_header.reordering_of_pic_nums_idc == 1) {
-                    slice_header.abs_diff_pic_num_minus1 = ReadGolomb(bits);
+                    slice_header.abs_diff_pic_num_minus1 = (unsigned int)bits.ReadGolomb();
                 } else if (slice_header.reordering_of_pic_nums_idc == 2) {
-                    slice_header.long_term_pic_num = ReadGolomb(bits);
+                    slice_header.long_term_pic_num = (unsigned int)bits.ReadGolomb();
                 }
             } while (slice_header.reordering_of_pic_nums_idc != 3);
         }
@@ -483,12 +495,12 @@ AVCNaluHeaderSize( UI1* ptr, int nal_unit_type, int nal_ref_idc, AvcSequencePara
         slice_header.ref_pic_list_reordering_flag_l1 = bits.Read();
         if (slice_header.ref_pic_list_reordering_flag_l1) {
             do {
-                slice_header.reordering_of_pic_nums_idc = ReadGolomb(bits);
+                slice_header.reordering_of_pic_nums_idc = (unsigned int)bits.ReadGolomb();
                 if (slice_header.reordering_of_pic_nums_idc == 0 ||
 					slice_header.reordering_of_pic_nums_idc == 1) {
-                    slice_header.abs_diff_pic_num_minus1 = ReadGolomb(bits);
+                    slice_header.abs_diff_pic_num_minus1 = (unsigned int)bits.ReadGolomb();
                 } else if (slice_header.reordering_of_pic_nums_idc == 2) {
-                    slice_header.long_term_pic_num = ReadGolomb(bits);
+                    slice_header.long_term_pic_num = (unsigned int)bits.ReadGolomb();
                 }
             } while (slice_header.reordering_of_pic_nums_idc != 3);
         }
@@ -498,24 +510,24 @@ AVCNaluHeaderSize( UI1* ptr, int nal_unit_type, int nal_ref_idc, AvcSequencePara
         (slice_type == AVC_SLICE_TYPE_P || slice_type == AVC_SLICE_TYPE_SP)) ||
 		(pps.weighted_bipred_idc == 1 && slice_type == AVC_SLICE_TYPE_B)) {
         // pred_weight_table
-        slice_header.luma_log2_weight_denom = ReadGolomb(bits);
+        slice_header.luma_log2_weight_denom = (unsigned int)bits.ReadGolomb();
         
         if (sps.chroma_format_idc != 0) {
-            slice_header.chroma_log2_weight_denom = ReadGolomb(bits);
+            slice_header.chroma_log2_weight_denom = (unsigned int)bits.ReadGolomb();
         }
         
         for (unsigned int i=0; i<=slice_header.num_ref_idx_l0_active_minus1; i++) {
             unsigned int luma_weight_l0_flag = bits.Read();
             if (luma_weight_l0_flag) {
-                /* slice_header.luma_weight_l0[i] = SignedGolomb( */ ReadGolomb(bits);
-                /* slice_header.luma_offset_l0[i] = SignedGolomb( */ ReadGolomb(bits);
+                /* slice_header.luma_weight_l0[i] = SignedGolomb( */ bits.ReadGolomb();
+                /* slice_header.luma_offset_l0[i] = SignedGolomb( */ bits.ReadGolomb();
             }
             if (sps.chroma_format_idc != 0) {
                 unsigned int chroma_weight_l0_flag = bits.Read();
                 if (chroma_weight_l0_flag) {
                     for (unsigned int j=0; j<2; j++) {
-                        /* slice_header.chroma_weight_l0[i][j] = SignedGolomb( */ ReadGolomb(bits);
-                        /* slice_header.chroma_offset_l0[i][j] = SignedGolomb( */ ReadGolomb(bits);
+                        /* slice_header.chroma_weight_l0[i][j] = SignedGolomb( */ bits.ReadGolomb();
+                        /* slice_header.chroma_offset_l0[i][j] = SignedGolomb( */ bits.ReadGolomb();
                     }
                 }
             }
@@ -524,15 +536,15 @@ AVCNaluHeaderSize( UI1* ptr, int nal_unit_type, int nal_ref_idc, AvcSequencePara
             for (unsigned int i=0; i<=slice_header.num_ref_idx_l1_active_minus1; i++) {
                 unsigned int luma_weight_l1_flag = bits.Read();
                 if (luma_weight_l1_flag) {
-                    /* slice_header.luma_weight_l1[i] = SignedGolomb( */ ReadGolomb(bits);
-                    /* slice_header.luma_offset_l1[i] = SignedGolomb( */ ReadGolomb(bits);
+                    /* slice_header.luma_weight_l1[i] = SignedGolomb( */ bits.ReadGolomb();
+                    /* slice_header.luma_offset_l1[i] = SignedGolomb( */ bits.ReadGolomb();
                 }
                 if (sps.chroma_format_idc != 0) {
                     unsigned int chroma_weight_l1_flag = bits.Read();
                     if (chroma_weight_l1_flag) {
                         for (unsigned int j=0; j<2; j++) {
-                            /* slice_header.chroma_weight_l1[i][j] = SignedGolomb( */ ReadGolomb(bits);
-                            /* slice_header.chroma_offset_l1[i][j] = SignedGolomb( */ ReadGolomb(bits);
+                            /* slice_header.chroma_weight_l1[i][j] = SignedGolomb( */ bits.ReadGolomb();
+                            /* slice_header.chroma_offset_l1[i][j] = SignedGolomb( */ bits.ReadGolomb();
                         }
                     }
                 }
@@ -550,44 +562,44 @@ AVCNaluHeaderSize( UI1* ptr, int nal_unit_type, int nal_ref_idc, AvcSequencePara
             if (adaptive_ref_pic_marking_mode_flag) {
                 unsigned int memory_management_control_operation = 0;
                 do {
-                    memory_management_control_operation = ReadGolomb(bits);
+                    memory_management_control_operation = (unsigned int)bits.ReadGolomb();
                     if (memory_management_control_operation == 1 || memory_management_control_operation == 3) {
-                        slice_header.difference_of_pic_nums_minus1 = ReadGolomb(bits);
+                        slice_header.difference_of_pic_nums_minus1 = (unsigned int)bits.ReadGolomb();
                     }
                     if (memory_management_control_operation == 2) {
-                        slice_header.long_term_pic_num = ReadGolomb(bits);
+                        slice_header.long_term_pic_num = (unsigned int)bits.ReadGolomb();
                     }
                     if (memory_management_control_operation == 3 || memory_management_control_operation == 6) {
-                        slice_header.long_term_frame_idx = ReadGolomb(bits);
+                        slice_header.long_term_frame_idx = (unsigned int)bits.ReadGolomb();
                     }
                     if (memory_management_control_operation == 4) {
-                        slice_header.max_long_term_frame_idx_plus1 = ReadGolomb(bits);
+                        slice_header.max_long_term_frame_idx_plus1 = (unsigned int)bits.ReadGolomb();
                     }
                 } while (memory_management_control_operation != 0);
             }
         }
     }
     if (pps.entropy_coding_mode_flag && slice_type != AVC_SLICE_TYPE_I && slice_type != AVC_SLICE_TYPE_SI) {
-        slice_header.cabac_init_idc = ReadGolomb(bits);
+        slice_header.cabac_init_idc = (unsigned int)bits.ReadGolomb();
     }
-    slice_header.slice_qp_delta = ReadGolomb(bits);
+    slice_header.slice_qp_delta = (unsigned int)bits.ReadGolomb();
     if (slice_type == AVC_SLICE_TYPE_SP || slice_type == AVC_SLICE_TYPE_SI) {
         if (slice_type == AVC_SLICE_TYPE_SP) {
             slice_header.sp_for_switch_flag = bits.Read();
         }
-        slice_header.slice_qs_delta = SignedGolomb(ReadGolomb(bits));
+        slice_header.slice_qs_delta = (unsigned int)bits.ReadSignedGolomb();
     }
     if (pps.deblocking_filter_control_present_flag) {
-        slice_header.disable_deblocking_filter_idc = ReadGolomb(bits);
+        slice_header.disable_deblocking_filter_idc = (unsigned int)bits.ReadGolomb();
         if (slice_header.disable_deblocking_filter_idc != 1) {
-            slice_header.slice_alpha_c0_offset_div2 = SignedGolomb(ReadGolomb(bits));
-            slice_header.slice_beta_offset_div2     = SignedGolomb(ReadGolomb(bits));
+            slice_header.slice_alpha_c0_offset_div2 = (unsigned int)bits.ReadSignedGolomb();
+            slice_header.slice_beta_offset_div2     = (unsigned int)bits.ReadSignedGolomb();
         }
     }
     if (pps.num_slice_groups_minus1 > 0 &&
         pps.slice_group_map_type >= 3   &&
         pps.slice_group_map_type <= 5) {
-        slice_header.slice_group_change_cycle = ReadGolomb(bits);
+        slice_header.slice_group_change_cycle = (unsigned int)bits.ReadGolomb();
     }
     return ( bits._ + 7 ) / 8;
 }
@@ -641,38 +653,38 @@ HevcProfileTierLevel {
 	Parse( BitReader& bits, unsigned int max_num_sub_layers_minus_1)
 	{
 		// profile_tier_level
-		general_profile_space               = ReadBits( bits, 2);
+		general_profile_space               = bits.Read( 2);
 		general_tier_flag                   = bits.Read();
-		general_profile_idc                 = ReadBits( bits, 5);
-		general_profile_compatibility_flags = ReadBits( bits, 32);
+		general_profile_idc                 = bits.Read( 5);
+		general_profile_compatibility_flags = bits.Read( 32);
 		
-		general_constraint_indicator_flags  = ((AP4_UI64)ReadBits( bits, 16)) << 32;
-		general_constraint_indicator_flags |= ReadBits( bits, 32);
+		general_constraint_indicator_flags  = ((AP4_UI64)bits.Read( 16)) << 32;
+		general_constraint_indicator_flags |= bits.Read( 32);
 		
-		general_level_idc                   = ReadBits( bits, 8);
+		general_level_idc                   = bits.Read( 8);
 		for (unsigned int i = 0; i < max_num_sub_layers_minus_1; i++) {
 			sub_layer_info[i].sub_layer_profile_present_flag = bits.Read();
 			sub_layer_info[i].sub_layer_level_present_flag   = bits.Read();
 		}
 		if (max_num_sub_layers_minus_1) {
 			for (unsigned int i = max_num_sub_layers_minus_1; i < 8; i++) {
-				ReadBits( bits, 2); // reserved_zero_2bits[i]
+				bits.Read( 2); // reserved_zero_2bits[i]
 			}
 		}
 		for (unsigned int i = 0; i < max_num_sub_layers_minus_1; i++) {
 			if (sub_layer_info[i].sub_layer_profile_present_flag) {
-				sub_layer_info[i].sub_layer_profile_space               = ReadBits( bits, 2);
+				sub_layer_info[i].sub_layer_profile_space               = bits.Read( 2);
 				sub_layer_info[i].sub_layer_tier_flag                   = bits.Read();
-				sub_layer_info[i].sub_layer_profile_idc                 = ReadBits( bits, 5);
-				sub_layer_info[i].sub_layer_profile_compatibility_flags = ReadBits( bits, 32);
+				sub_layer_info[i].sub_layer_profile_idc                 = bits.Read( 5);
+				sub_layer_info[i].sub_layer_profile_compatibility_flags = bits.Read( 32);
 				sub_layer_info[i].sub_layer_progressive_source_flag     = bits.Read();
 				sub_layer_info[i].sub_layer_interlaced_source_flag      = bits.Read();
 				sub_layer_info[i].sub_layer_non_packed_constraint_flag  = bits.Read();
 				sub_layer_info[i].sub_layer_frame_only_constraint_flag  = bits.Read();
-				ReadBits( bits, 32); ReadBits( bits, 12); // sub_layer_reserved_zero_44bits
+				bits.Read( 32); bits.Read( 12); // sub_layer_reserved_zero_44bits
 			}
 			if (sub_layer_info[i].sub_layer_level_present_flag) {
-				sub_layer_info[i].sub_layer_level_idc = ReadBits( bits, 8);
+				sub_layer_info[i].sub_layer_level_idc = bits.Read( 8);
 			}
 		}
 	}
@@ -724,23 +736,23 @@ HevcVideoParameterSet {
 
 		bits.Skip( 16 ); // NAL Unit Header
 
-		vps_video_parameter_set_id     = ReadBits( bits, 4);
-		/* vps_reserved_three_2bits */   ReadBits( bits, 2);
-		vps_max_layers_minus1          = ReadBits( bits, 6);
-		vps_max_sub_layers_minus1      = ReadBits( bits, 3);
+		vps_video_parameter_set_id     = bits.Read( 4);
+		/* vps_reserved_three_2bits */   bits.Read( 2);
+		vps_max_layers_minus1          = bits.Read( 6);
+		vps_max_sub_layers_minus1      = bits.Read( 3);
 		vps_temporal_id_nesting_flag   = bits.Read();
-		/* vps_reserved_0xffff_16bits */ ReadBits( bits, 16);
+		/* vps_reserved_0xffff_16bits */ bits.Read( 16);
 		profile_tier_level.Parse(bits, vps_max_sub_layers_minus1);
 		vps_sub_layer_ordering_info_present_flag = bits.Read();
 		for (unsigned int i = (vps_sub_layer_ordering_info_present_flag ? 0 : vps_max_sub_layers_minus1);
 						  i <= vps_max_sub_layers_minus1;
 						  i++) {
-			vps_max_dec_pic_buffering_minus1[i] = ReadGolomb(bits);
-			vps_max_num_reorder_pics[i]         = ReadGolomb(bits);
-			vps_max_latency_increase_plus1[i]   = ReadGolomb(bits);
+			vps_max_dec_pic_buffering_minus1[i] = bits.ReadGolomb();
+			vps_max_num_reorder_pics[i]         = bits.ReadGolomb();
+			vps_max_latency_increase_plus1[i]   = bits.ReadGolomb();
 		}
-		vps_max_layer_id          = ReadBits( bits, 6);
-		vps_num_layer_sets_minus1 = ReadGolomb(bits);
+		vps_max_layer_id          = bits.Read( 6);
+		vps_num_layer_sets_minus1 = bits.ReadGolomb();
 		for (unsigned int i = 1; i <= vps_num_layer_sets_minus1; i++) {
 			for (unsigned int j = 0; j <= vps_max_layer_id; j++) {
 				bits.Read();
@@ -748,11 +760,11 @@ HevcVideoParameterSet {
 		}
 		vps_timing_info_present_flag = bits.Read();
 		if (vps_timing_info_present_flag) {
-			vps_num_units_in_tick               = ReadBits( bits, 32);
-			vps_time_scale                      = ReadBits( bits, 32);
+			vps_num_units_in_tick               = bits.Read( 32);
+			vps_time_scale                      = bits.Read( 32);
 			vps_poc_proportional_to_timing_flag = bits.Read();
 			if (vps_poc_proportional_to_timing_flag) {
-				vps_num_ticks_poc_diff_one_minus1 = ReadGolomb(bits);
+				vps_num_ticks_poc_diff_one_minus1 = bits.ReadGolomb();
 			}
 		}
 	}
@@ -808,23 +820,23 @@ HevcVuiParameters {
 		// vui_parameters
 		aspect_ratio_info_present_flag = bits.Read();
 		if (aspect_ratio_info_present_flag) {
-			aspect_ratio_idc = ReadBits( bits, 8);
+			aspect_ratio_idc = bits.Read( 8);
 			if (aspect_ratio_idc == 255) {
-				sar_width  = ReadBits( bits, 16);
-				sar_height = ReadBits( bits, 16);
+				sar_width  = bits.Read( 16);
+				sar_height = bits.Read( 16);
 			}
 		}
 		overscan_info_present_flag = bits.Read() ;
 		if (overscan_info_present_flag) overscan_appropriate_flag = bits.Read() ;
 		video_signal_type_present_flag = bits.Read() ;
 		if (video_signal_type_present_flag) {
-			video_format                    = ReadBits( bits, 3);
+			video_format                    = bits.Read( 3);
 			video_full_range_flag           = bits.Read() ;
 			colour_description_present_flag = bits.Read() ;
 			if (colour_description_present_flag) {
-				colour_primaries         = ReadBits( bits, 8);
-				transfer_characteristics = ReadBits( bits, 8);
-				matrix_coeffs            = ReadBits( bits, 8);
+				colour_primaries         = bits.Read( 8);
+				transfer_characteristics = bits.Read( 8);
+				matrix_coeffs            = bits.Read( 8);
 			}
 		}
 	}
@@ -848,17 +860,17 @@ scaling_list_data(BitReader& bits)
         for (unsigned int matrixId = 0; matrixId < (unsigned int)((sizeId == 3)?2:6); matrixId++) {
             unsigned int flag = bits.Read(); // scaling_list_pred_mode_flag[ sizeId ][ matrixId ]
             if (!flag) {
-                ReadGolomb(bits); // scaling_list_pred_matrix_id_delta[ sizeId ][ matrixId ]
+                bits.ReadGolomb(); // scaling_list_pred_matrix_id_delta[ sizeId ][ matrixId ]
             } else {
                 // nextCoef = 8;
                 unsigned int coefNum = (1 << (4+(sizeId << 1)));
                 if (coefNum > 64) coefNum = 64;
                 if (sizeId > 1) {
-                    ReadGolomb(bits); // scaling_list_dc_coef_minus8[ sizeId − 2 ][ matrixId ]
+                    bits.ReadGolomb(); // scaling_list_dc_coef_minus8[ sizeId − 2 ][ matrixId ]
                     // nextCoef = scaling_list_dc_coef_minus8[ sizeId − 2 ][ matrixId ] + 8
                 }
                 for (unsigned i = 0; i < coefNum; i++) {
-                    ReadGolomb(bits); // scaling_list_delta_coef
+                    bits.ReadGolomb(); // scaling_list_delta_coef
                     // nextCoef = ( nextCoef + scaling_list_delta_coef + 256 ) % 256
                     // ScalingList[ sizeId ][ matrixId ][ i ] = nextCoef
                 }
@@ -926,48 +938,48 @@ HevcSequenceParameterSet {
 
 		bits.Skip(16); // NAL Unit Header
 
-		sps_video_parameter_set_id   = ReadBits( bits, 4);
-		sps_max_sub_layers_minus1    = ReadBits( bits, 3);
+		sps_video_parameter_set_id   = bits.Read( 4);
+		sps_max_sub_layers_minus1    = bits.Read( 3);
 		sps_temporal_id_nesting_flag = bits.Read();
 		
 		profile_tier_level.Parse(bits, sps_max_sub_layers_minus1);
 		
-		sps_seq_parameter_set_id = ReadGolomb(bits);
+		sps_seq_parameter_set_id = bits.ReadGolomb();
 		A (sps_seq_parameter_set_id <= 15 );	//	AP4_HEVC_SPS_MAX_ID
 
-		chroma_format_idc = ReadGolomb(bits);
+		chroma_format_idc = bits.ReadGolomb();
 		if (chroma_format_idc == 3) {
 			separate_colour_plane_flag = bits.Read();
 		}
-		pic_width_in_luma_samples  = ReadGolomb(bits);
-		pic_height_in_luma_samples = ReadGolomb(bits);
+		pic_width_in_luma_samples  = bits.ReadGolomb();
+		pic_height_in_luma_samples = bits.ReadGolomb();
 		conformance_window_flag    = bits.Read();
 		
 		if (conformance_window_flag) {
-			conf_win_left_offset    = ReadGolomb(bits);
-			conf_win_right_offset   = ReadGolomb(bits);
-			conf_win_top_offset     = ReadGolomb(bits);
-			conf_win_bottom_offset  = ReadGolomb(bits);
+			conf_win_left_offset    = bits.ReadGolomb();
+			conf_win_right_offset   = bits.ReadGolomb();
+			conf_win_top_offset     = bits.ReadGolomb();
+			conf_win_bottom_offset  = bits.ReadGolomb();
 		}
-		bit_depth_luma_minus8                    = ReadGolomb(bits);
-		bit_depth_chroma_minus8                  = ReadGolomb(bits);
-		log2_max_pic_order_cnt_lsb_minus4        = ReadGolomb(bits);
+		bit_depth_luma_minus8                    = bits.ReadGolomb();
+		bit_depth_chroma_minus8                  = bits.ReadGolomb();
+		log2_max_pic_order_cnt_lsb_minus4        = bits.ReadGolomb();
 		A(log2_max_pic_order_cnt_lsb_minus4 <= 16);
 		
 		sps_sub_layer_ordering_info_present_flag = bits.Read();
 		for (unsigned int i = (sps_sub_layer_ordering_info_present_flag ? 0 : sps_max_sub_layers_minus1);
 						  i <= sps_max_sub_layers_minus1;
 						  i++) {
-			sps_max_dec_pic_buffering_minus1[i] = ReadGolomb(bits);
-			sps_max_num_reorder_pics[i]         = ReadGolomb(bits);
-			sps_max_latency_increase_plus1[i]   = ReadGolomb(bits);
+			sps_max_dec_pic_buffering_minus1[i] = bits.ReadGolomb();
+			sps_max_num_reorder_pics[i]         = bits.ReadGolomb();
+			sps_max_latency_increase_plus1[i]   = bits.ReadGolomb();
 		}
-		log2_min_luma_coding_block_size_minus3   = ReadGolomb(bits);
-		log2_diff_max_min_luma_coding_block_size = ReadGolomb(bits);
-		log2_min_transform_block_size_minus2     = ReadGolomb(bits);
-		log2_diff_max_min_transform_block_size   = ReadGolomb(bits);
-		max_transform_hierarchy_depth_inter      = ReadGolomb(bits);
-		max_transform_hierarchy_depth_intra      = ReadGolomb(bits);
+		log2_min_luma_coding_block_size_minus3   = bits.ReadGolomb();
+		log2_diff_max_min_luma_coding_block_size = bits.ReadGolomb();
+		log2_min_transform_block_size_minus2     = bits.ReadGolomb();
+		log2_diff_max_min_transform_block_size   = bits.ReadGolomb();
+		max_transform_hierarchy_depth_inter      = bits.ReadGolomb();
+		max_transform_hierarchy_depth_intra      = bits.ReadGolomb();
 		scaling_list_enabled_flag                = bits.Read();
 		if (scaling_list_enabled_flag) {
 			sps_scaling_list_data_present_flag = bits.Read();
@@ -979,13 +991,13 @@ HevcSequenceParameterSet {
 		sample_adaptive_offset_enabled_flag = bits.Read();
 		pcm_enabled_flag = bits.Read();
 		if (pcm_enabled_flag) {
-			pcm_sample_bit_depth_luma_minus1 = ReadBits( bits, 4);
-			pcm_sample_bit_depth_chroma_minus1 = ReadBits( bits, 4);
-			log2_min_pcm_luma_coding_block_size_minus3 = ReadGolomb(bits);
-			log2_diff_max_min_pcm_luma_coding_block_size = ReadGolomb(bits);
+			pcm_sample_bit_depth_luma_minus1 = bits.Read( 4);
+			pcm_sample_bit_depth_chroma_minus1 = bits.Read( 4);
+			log2_min_pcm_luma_coding_block_size_minus3 = bits.ReadGolomb();
+			log2_diff_max_min_pcm_luma_coding_block_size = bits.ReadGolomb();
 			pcm_loop_filter_disabled_flag = bits.Read();
 		}
-		num_short_term_ref_pic_sets = ReadGolomb(bits);
+		num_short_term_ref_pic_sets = bits.ReadGolomb();
 		A(num_short_term_ref_pic_sets <= 64 );	//	AP4_HEVC_SPS_MAX_RPS
 		for (unsigned int i=0; i<num_short_term_ref_pic_sets; i++) {
 //			parse_st_ref_pic_set(&short_term_ref_pic_sets[i], this, i, num_short_term_ref_pic_sets, bits);
@@ -1001,10 +1013,10 @@ HevcSequenceParameterSet {
 			if (inter_ref_pic_set_prediction_flag) {
 				unsigned int delta_idx_minus1 = 0;
 				if (stRpsIdx == num_short_term_ref_pic_sets) {
-					delta_idx_minus1 = ReadGolomb(bits);
+					delta_idx_minus1 = bits.ReadGolomb();
 				}
 				/* delta_rps_sign = */ bits.Read();
-				/* abs_delta_rps_minus1 = */ ReadGolomb(bits);
+				/* abs_delta_rps_minus1 = */ bits.ReadGolomb();
 				A (delta_idx_minus1+1 <= stRpsIdx);
 				unsigned int RefRpsIdx = stRpsIdx - (delta_idx_minus1 + 1);
 				unsigned int NumDeltaPocs = sps->short_term_ref_pic_sets[RefRpsIdx].num_delta_pocs;
@@ -1019,25 +1031,25 @@ HevcSequenceParameterSet {
 					}
 				}
 			} else {
-				rps->num_negative_pics = ReadGolomb(bits);
-				rps->num_positive_pics = ReadGolomb(bits);
+				rps->num_negative_pics = bits.ReadGolomb();
+				rps->num_positive_pics = bits.ReadGolomb();
 				A (rps->num_negative_pics <= 16 && rps->num_positive_pics <= 16);
 				rps->num_delta_pocs = rps->num_negative_pics + rps->num_positive_pics;
 				for (unsigned int i=0; i<rps->num_negative_pics; i++) {
-					rps->delta_poc_s0_minus1[i] = ReadGolomb(bits);
+					rps->delta_poc_s0_minus1[i] = bits.ReadGolomb();
 					rps->used_by_curr_pic_s0_flag[i] = bits.Read();
 				}
 				for (unsigned i=0; i<rps->num_positive_pics; i++) {
-					rps->delta_poc_s1_minus1[i] = ReadGolomb(bits);
+					rps->delta_poc_s1_minus1[i] = bits.ReadGolomb();
 					rps->used_by_curr_pic_s1_flag[i] = bits.Read();
 				}
 			}
 		}
 		long_term_ref_pics_present_flag = bits.Read();
 		if (long_term_ref_pics_present_flag) {
-			num_long_term_ref_pics_sps = ReadGolomb(bits);
+			num_long_term_ref_pics_sps = bits.ReadGolomb();
 			for (unsigned int i=0; i<num_long_term_ref_pics_sps; i++) {
-				/* lt_ref_pic_poc_lsb_sps[i] = */ ReadBits( bits, log2_max_pic_order_cnt_lsb_minus4 + 4);
+				/* lt_ref_pic_poc_lsb_sps[i] = */ bits.Read( log2_max_pic_order_cnt_lsb_minus4 + 4);
 				/* used_by_curr_pic_lt_sps_flag[i] = */ bits.Read();
 			}
 		} else {
@@ -1100,26 +1112,26 @@ HevcPictureParameterSet {
 
 		bits.Skip(16); // NAL Unit Header
 
-		pps_pic_parameter_set_id = ReadGolomb(bits);
+		pps_pic_parameter_set_id = bits.ReadGolomb();
 		A(pps_pic_parameter_set_id <= 63);	// AP4_HEVC_PPS_MAX_ID) {
-		pps_seq_parameter_set_id = ReadGolomb(bits);
+		pps_seq_parameter_set_id = bits.ReadGolomb();
 		A(pps_seq_parameter_set_id <= 15);	// AP4_HEVC_SPS_MAX_ID) {
 		dependent_slice_segments_enabled_flag    = bits.Read() ;
 		output_flag_present_flag                 = bits.Read() ;
-		num_extra_slice_header_bits              = ReadBits( bits,  3);
+		num_extra_slice_header_bits              = bits.Read(  3);
 		sign_data_hiding_enabled_flag            = bits.Read() ;
 		cabac_init_present_flag                  = bits.Read() ;
-		num_ref_idx_l0_default_active_minus1     = ReadGolomb(bits);
-		num_ref_idx_l1_default_active_minus1     = ReadGolomb(bits);
-		init_qp_minus26                          = SignedGolomb(ReadGolomb(bits));
+		num_ref_idx_l0_default_active_minus1     = bits.ReadGolomb();
+		num_ref_idx_l1_default_active_minus1     = bits.ReadGolomb();
+		init_qp_minus26                          = bits.ReadSignedGolomb();
 		constrained_intra_pred_flag              = bits.Read() ;
 		transform_skip_enabled_flag              = bits.Read() ;
 		cu_qp_delta_enabled_flag                 = bits.Read() ;
 		if (cu_qp_delta_enabled_flag) {
-			diff_cu_qp_delta_depth = ReadGolomb(bits);
+			diff_cu_qp_delta_depth = bits.ReadGolomb();
 		}
-		pps_cb_qp_offset                         = SignedGolomb(ReadGolomb(bits));
-		pps_cr_qp_offset                         = SignedGolomb(ReadGolomb(bits));
+		pps_cb_qp_offset                         = bits.ReadSignedGolomb();
+		pps_cr_qp_offset                         = bits.ReadSignedGolomb();
 		pps_slice_chroma_qp_offsets_present_flag = bits.Read() ;
 		weighted_pred_flag                       = bits.Read() ;
 		weighted_bipred_flag                     = bits.Read() ;
@@ -1127,15 +1139,15 @@ HevcPictureParameterSet {
 		tiles_enabled_flag                       = bits.Read() ;
 		entropy_coding_sync_enabled_flag         = bits.Read() ;
 		if (tiles_enabled_flag) {
-			num_tile_columns_minus1 = ReadGolomb(bits);
-			num_tile_rows_minus1    = ReadGolomb(bits);
+			num_tile_columns_minus1 = bits.ReadGolomb();
+			num_tile_rows_minus1    = bits.ReadGolomb();
 			uniform_spacing_flag    = bits.Read() ;
 			if (!uniform_spacing_flag) {
 				for (unsigned int i=0; i<num_tile_columns_minus1; i++) {
-					ReadGolomb(bits); // column_width_minus1[i]
+					bits.ReadGolomb(); // column_width_minus1[i]
 				}
 				for (unsigned int i = 0; i < num_tile_rows_minus1; i++) {
-					ReadGolomb(bits); // row_height_minus1[i]
+					bits.ReadGolomb(); // row_height_minus1[i]
 				}
 			}
 			loop_filter_across_tiles_enabled_flag = bits.Read() ;
@@ -1146,8 +1158,8 @@ HevcPictureParameterSet {
 			deblocking_filter_override_enabled_flag = bits.Read() ;
 			pps_deblocking_filter_disabled_flag     = bits.Read() ;
 			if (!pps_deblocking_filter_disabled_flag) {
-				pps_beta_offset_div2 = SignedGolomb(ReadGolomb(bits));
-				pps_tc_offset_div2   = SignedGolomb(ReadGolomb(bits));
+				pps_beta_offset_div2 = bits.ReadSignedGolomb();
+				pps_tc_offset_div2   = bits.ReadSignedGolomb();
 			}
 		}
 		pps_scaling_list_data_present_flag = bits.Read() ;
@@ -1155,7 +1167,7 @@ HevcPictureParameterSet {
 			scaling_list_data(bits);
 		}
 		lists_modification_present_flag = bits.Read() ;
-		log2_parallel_merge_level_minus2 = ReadGolomb(bits);
+		log2_parallel_merge_level_minus2 = bits.ReadGolomb();
 		slice_segment_header_extension_present_flag = bits.Read() ;
     }
 };
@@ -1188,10 +1200,10 @@ parse_st_ref_pic_set(
     if (inter_ref_pic_set_prediction_flag) {
         unsigned int delta_idx_minus1 = 0;
         if (stRpsIdx == num_short_term_ref_pic_sets) {
-            delta_idx_minus1 = ReadGolomb(bits);
+            delta_idx_minus1 = bits.ReadGolomb();
         }
         /* delta_rps_sign = */ bits.Read();
-        /* abs_delta_rps_minus1 = */ ReadGolomb(bits);
+        /* abs_delta_rps_minus1 = */ bits.ReadGolomb();
         if (delta_idx_minus1+1 > stRpsIdx) __builtin_trap(); // should not happen
         unsigned int RefRpsIdx = stRpsIdx - (delta_idx_minus1 + 1);
         unsigned int NumDeltaPocs = sps->short_term_ref_pic_sets[RefRpsIdx].num_delta_pocs;
@@ -1206,18 +1218,18 @@ parse_st_ref_pic_set(
             }
         }
     } else {
-        rps->num_negative_pics = ReadGolomb(bits);
-        rps->num_positive_pics = ReadGolomb(bits);
+        rps->num_negative_pics = bits.ReadGolomb();
+        rps->num_positive_pics = bits.ReadGolomb();
         if (rps->num_negative_pics > 16 || rps->num_positive_pics > 16) {
             __builtin_trap();
         }
         rps->num_delta_pocs = rps->num_negative_pics + rps->num_positive_pics;
         for (unsigned int i=0; i<rps->num_negative_pics; i++) {
-            rps->delta_poc_s0_minus1[i] = ReadGolomb(bits);
+            rps->delta_poc_s0_minus1[i] = bits.ReadGolomb();
             rps->used_by_curr_pic_s0_flag[i] = bits.Read();
         }
         for (unsigned i=0; i<rps->num_positive_pics; i++) {
-            rps->delta_poc_s1_minus1[i] = ReadGolomb(bits);
+            rps->delta_poc_s1_minus1[i] = bits.ReadGolomb();
             rps->used_by_curr_pic_s1_flag[i] = bits.Read();
         }
     }
@@ -1261,7 +1273,7 @@ HEVCNaluHeaderSize( UI1* ptr, int nal_unit_type, HevcSequenceParameterSet* SPSs,
     if (nal_unit_type >= AP4_HEVC_NALU_TYPE_BLA_W_LP && nal_unit_type <= AP4_HEVC_NALU_TYPE_RSV_IRAP_VCL) {
         no_output_of_prior_pics_flag = bits.Read();
     }
-    slice_pic_parameter_set_id = ReadGolomb(bits);
+    slice_pic_parameter_set_id = bits.ReadGolomb();
     A (slice_pic_parameter_set_id <= AP4_HEVC_PPS_MAX_ID);
     HevcPictureParameterSet* pps = &PPSs[slice_pic_parameter_set_id];
     A(pps);
@@ -1288,16 +1300,16 @@ HEVCNaluHeaderSize( UI1* ptr, int nal_unit_type, HevcSequenceParameterSet* SPSs,
         
         unsigned int bits_needed = BitsNeeded(PicSizeInCtbsY);
         if (bits_needed) {
-            slice_segment_address = ReadBits( bits, bits_needed);
+            slice_segment_address = bits.Read( bits_needed);
         }
     }
     
     if (!dependent_slice_segment_flag) {
         if (pps->num_extra_slice_header_bits) {
-            ReadBits( bits, pps->num_extra_slice_header_bits); // slice_reserved_flag[...]
+            bits.Read( pps->num_extra_slice_header_bits); // slice_reserved_flag[...]
         }
     
-        slice_type = ReadGolomb(bits);
+        slice_type = bits.ReadGolomb();
         if (slice_type != AP4_HEVC_SLICE_TYPE_B && slice_type != AP4_HEVC_SLICE_TYPE_P && slice_type != AP4_HEVC_SLICE_TYPE_I) {
 			__builtin_trap();
         }
@@ -1305,7 +1317,7 @@ HEVCNaluHeaderSize( UI1* ptr, int nal_unit_type, HevcSequenceParameterSet* SPSs,
             pic_output_flag = bits.Read();
         }
         if (sps->separate_colour_plane_flag) {
-            colour_plane_id = ReadBits( bits, 2);
+            colour_plane_id = bits.Read( 2);
         }
         unsigned int slice_sao_luma_flag = 0;
         unsigned int slice_sao_chroma_flag = 0;
@@ -1313,7 +1325,7 @@ HEVCNaluHeaderSize( UI1* ptr, int nal_unit_type, HevcSequenceParameterSet* SPSs,
         unsigned int slice_temporal_mvp_enabled_flag = 0;
         const HevcShortTermRefPicSet* rps = NULL;
         if (nal_unit_type != AP4_HEVC_NALU_TYPE_IDR_W_RADL && nal_unit_type != AP4_HEVC_NALU_TYPE_IDR_N_LP) {
-            slice_pic_order_cnt_lsb = ReadBits( bits, sps->log2_max_pic_order_cnt_lsb_minus4+4);
+            slice_pic_order_cnt_lsb = bits.Read( sps->log2_max_pic_order_cnt_lsb_minus4+4);
             short_term_ref_pic_set_sps_flag = bits.Read();
             if (!short_term_ref_pic_set_sps_flag) {
                 parse_st_ref_pic_set(&short_term_ref_pic_set,
@@ -1323,15 +1335,15 @@ HEVCNaluHeaderSize( UI1* ptr, int nal_unit_type, HevcSequenceParameterSet* SPSs,
                                                          bits);
                 rps = &short_term_ref_pic_set;
             } else if (sps->num_short_term_ref_pic_sets > 1) {
-                short_term_ref_pic_set_idx = ReadBits( bits, BitsNeeded(sps->num_short_term_ref_pic_sets));
+                short_term_ref_pic_set_idx = bits.Read( BitsNeeded(sps->num_short_term_ref_pic_sets));
                 rps = &sps->short_term_ref_pic_sets[short_term_ref_pic_set_idx];
             }
             
             if (sps->long_term_ref_pics_present_flag) {
                 if (sps->num_long_term_ref_pics_sps > 0) {
-                    num_long_term_sps = ReadGolomb(bits);
+                    num_long_term_sps = bits.ReadGolomb();
                 }
-                num_long_term_pics = ReadGolomb(bits);
+                num_long_term_pics = bits.ReadGolomb();
                 
                 if (num_long_term_sps > sps->num_long_term_ref_pics_sps) {
 					__builtin_trap();
@@ -1342,15 +1354,15 @@ HEVCNaluHeaderSize( UI1* ptr, int nal_unit_type, HevcSequenceParameterSet* SPSs,
                 for (unsigned int i=0; i<num_long_term_sps + num_long_term_pics; i++) {
                     if (i < num_long_term_sps) {
                         if (sps->num_long_term_ref_pics_sps > 1) {
-                            /* lt_idx_sps[i] = */ ReadBits( bits, BitsNeeded(sps->num_long_term_ref_pics_sps));
+                            /* lt_idx_sps[i] = */ bits.Read( BitsNeeded(sps->num_long_term_ref_pics_sps));
                         }
                     } else {
-                        /* poc_lsb_lt[i] = */ ReadBits( bits, sps->log2_max_pic_order_cnt_lsb_minus4+4);
+                        /* poc_lsb_lt[i] = */ bits.Read( sps->log2_max_pic_order_cnt_lsb_minus4+4);
                         used_by_curr_pic_lt_flag[i] = bits.Read();
                     }
                     unsigned int delta_poc_msb_present_flag /*[i]*/ = bits.Read();
                     if (delta_poc_msb_present_flag /*[i]*/) {
-                        /* delta_poc_msb_cycle_lt[i] = */ ReadGolomb(bits);
+                        /* delta_poc_msb_cycle_lt[i] = */ bits.ReadGolomb();
                     }
                 }
             }
@@ -1370,9 +1382,9 @@ HEVCNaluHeaderSize( UI1* ptr, int nal_unit_type, HevcSequenceParameterSet* SPSs,
             unsigned int num_ref_idx_l1_active_minus1 = pps->num_ref_idx_l1_default_active_minus1;
             unsigned int num_ref_idx_active_override_flag = bits.Read();
             if (num_ref_idx_active_override_flag) {
-                num_ref_idx_l0_active_minus1 = ReadGolomb(bits);
+                num_ref_idx_l0_active_minus1 = bits.ReadGolomb();
                 if (slice_type == AP4_HEVC_SLICE_TYPE_B) {
-                    num_ref_idx_l1_active_minus1 = ReadGolomb(bits);
+                    num_ref_idx_l1_active_minus1 = bits.ReadGolomb();
                 }
             }
             if (num_ref_idx_l0_active_minus1 > 14 || num_ref_idx_l1_active_minus1 > 14) {
@@ -1402,14 +1414,14 @@ HEVCNaluHeaderSize( UI1* ptr, int nal_unit_type, HevcSequenceParameterSet* SPSs,
                 unsigned int ref_pic_list_modification_flag_l0 = bits.Read();
                 if (ref_pic_list_modification_flag_l0) {
                     for (unsigned int i=0; i<=num_ref_idx_l0_active_minus1; i++) {
-                        /* list_entry_l0[i]; */ ReadBits( bits, BitsNeeded(nptc));
+                        /* list_entry_l0[i]; */ bits.Read( BitsNeeded(nptc));
                     }
                 }
                 if (slice_type == AP4_HEVC_SLICE_TYPE_B) {
                     unsigned int ref_pic_list_modification_flag_l1 = bits.Read();
                     if (ref_pic_list_modification_flag_l1) {
                         for (unsigned int i=0; i<=num_ref_idx_l1_active_minus1; i++) {
-                            /* list_entry_l1[i]; */ ReadBits( bits, BitsNeeded(nptc));
+                            /* list_entry_l1[i]; */ bits.Read( BitsNeeded(nptc));
                         }
                     }
                 }
@@ -1427,15 +1439,15 @@ HEVCNaluHeaderSize( UI1* ptr, int nal_unit_type, HevcSequenceParameterSet* SPSs,
                 }
                 if (( collocated_from_l0_flag && num_ref_idx_l0_active_minus1 > 0) ||
                     (!collocated_from_l0_flag && num_ref_idx_l1_active_minus1 > 0)) {
-                    /* collocated_ref_idx = */ ReadGolomb(bits);
+                    /* collocated_ref_idx = */ bits.ReadGolomb();
                 }
             }
             if ((pps->weighted_pred_flag   && slice_type == AP4_HEVC_SLICE_TYPE_P) ||
                 (pps->weighted_bipred_flag && slice_type == AP4_HEVC_SLICE_TYPE_B)) {
                 // +++ pred_weight_table()
-                /* luma_log2_weight_denom = */ ReadGolomb(bits);
+                /* luma_log2_weight_denom = */ bits.ReadGolomb();
                 if (sps->chroma_format_idc != 0) {
-                    /* delta_chroma_log2_weight_denom = */ /* SignedGolomb( */ ReadGolomb(bits) /*)*/;
+                    /* delta_chroma_log2_weight_denom = */ /* SignedGolomb( */ bits.ReadGolomb() /*)*/;
                 }
                 unsigned int luma_weight_l0_flag[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
                 for (unsigned int i=0; i<=num_ref_idx_l0_active_minus1; i++) {
@@ -1449,13 +1461,13 @@ HEVCNaluHeaderSize( UI1* ptr, int nal_unit_type, HevcSequenceParameterSet* SPSs,
                 }
                 for (unsigned int i=0; i<=num_ref_idx_l0_active_minus1; i++) {
                     if (luma_weight_l0_flag[i]) {
-                        /* delta_luma_weight_l0[i] = */ /*SignedGolomb(*/ ReadGolomb(bits) /*)*/;
-                        /* luma_offset_l0[i] = */ /*SignedGolomb(*/ ReadGolomb(bits) /*)*/;
+                        /* delta_luma_weight_l0[i] = */ /*SignedGolomb(*/ bits.ReadGolomb() /*)*/;
+                        /* luma_offset_l0[i] = */ /*SignedGolomb(*/ bits.ReadGolomb() /*)*/;
                     }
                     if (chroma_weight_l0_flag[i]) {
                         for (unsigned int j=0; j<2; j++) {
-                            /* delta_chroma_weight_l0[i][j] = */ /*SignedGolomb(*/ ReadGolomb(bits) /*)*/;
-                            /* delta_chroma_offset_l0[i][j] = */ /*SignedGolomb(*/ ReadGolomb(bits) /*)*/;
+                            /* delta_chroma_weight_l0[i][j] = */ /*SignedGolomb(*/ bits.ReadGolomb() /*)*/;
+                            /* delta_chroma_offset_l0[i][j] = */ /*SignedGolomb(*/ bits.ReadGolomb() /*)*/;
                         }
                     }
                 }
@@ -1472,25 +1484,25 @@ HEVCNaluHeaderSize( UI1* ptr, int nal_unit_type, HevcSequenceParameterSet* SPSs,
                     }
                     for (unsigned int i=0; i<=num_ref_idx_l1_active_minus1; i++) {
                         if (luma_weight_l1_flag[i]) {
-                            /* delta_luma_weight_l1[i] = */ /*SignedGolomb(*/ ReadGolomb(bits) /*)*/;
-                            /* luma_offset_l1[i] = */ /*SignedGolomb(*/ ReadGolomb(bits) /*)*/;
+                            /* delta_luma_weight_l1[i] = */ /*SignedGolomb(*/ bits.ReadGolomb() /*)*/;
+                            /* luma_offset_l1[i] = */ /*SignedGolomb(*/ bits.ReadGolomb() /*)*/;
                         }
                         if (chroma_weight_l1_flag[i]) {
                             for (unsigned int j=0; j<2; j++) {
-                                /* delta_chroma_weight_l1[i][j] = */ /*SignedGolomb(*/ ReadGolomb(bits) /*)*/;
-                                /* delta_chroma_offset_l1[i][j] = */ /*SignedGolomb(*/ ReadGolomb(bits) /*)*/;
+                                /* delta_chroma_weight_l1[i][j] = */ /*SignedGolomb(*/ bits.ReadGolomb() /*)*/;
+                                /* delta_chroma_offset_l1[i][j] = */ /*SignedGolomb(*/ bits.ReadGolomb() /*)*/;
                             }
                         }
                     }
                 }
                 // --- pred_weight_table()
             }
-            /* five_minus_max_num_merge_cand = */ ReadGolomb(bits);
+            /* five_minus_max_num_merge_cand = */ bits.ReadGolomb();
         }
-        /* slice_qp_delta = */ /*SignedGolomb(*/ ReadGolomb(bits) /*)*/;
+        /* slice_qp_delta = */ /*SignedGolomb(*/ bits.ReadGolomb() /*)*/;
         if (pps->pps_slice_chroma_qp_offsets_present_flag) {
-            /* slice_cb_qp_offset = */ /*SignedGolomb(*/ ReadGolomb(bits) /*)*/;
-            /* slice_cr_qp_offset = */ /*SignedGolomb(*/ ReadGolomb(bits) /*)*/;
+            /* slice_cb_qp_offset = */ /*SignedGolomb(*/ bits.ReadGolomb() /*)*/;
+            /* slice_cr_qp_offset = */ /*SignedGolomb(*/ bits.ReadGolomb() /*)*/;
         }
         unsigned int deblocking_filter_override_flag = 0;
         if (pps->deblocking_filter_override_enabled_flag) {
@@ -1499,8 +1511,8 @@ HEVCNaluHeaderSize( UI1* ptr, int nal_unit_type, HevcSequenceParameterSet* SPSs,
         if (deblocking_filter_override_flag) {
             slice_deblocking_filter_disabled_flag = bits.Read();
             if (!slice_deblocking_filter_disabled_flag) {
-                /* slice_beta_offset_div2 = */ /*SignedGolomb(*/ ReadGolomb(bits) /*)*/;
-                /* slice_tc_offset_div2   = */ /*SignedGolomb(*/ ReadGolomb(bits) /*)*/;
+                /* slice_beta_offset_div2 = */ /*SignedGolomb(*/ bits.ReadGolomb() /*)*/;
+                /* slice_tc_offset_div2   = */ /*SignedGolomb(*/ bits.ReadGolomb() /*)*/;
             }
         }
         if (pps->pps_loop_filter_across_slices_enabled_flag &&
@@ -1510,22 +1522,22 @@ HEVCNaluHeaderSize( UI1* ptr, int nal_unit_type, HevcSequenceParameterSet* SPSs,
     }
 
     if (pps->tiles_enabled_flag || pps->entropy_coding_sync_enabled_flag) {
-        num_entry_point_offsets = ReadGolomb(bits);
+        num_entry_point_offsets = bits.ReadGolomb();
         if (num_entry_point_offsets > 0 ) {
-            offset_len_minus1 = ReadGolomb(bits);
+            offset_len_minus1 = bits.ReadGolomb();
             if (offset_len_minus1 > 31) {
 				__builtin_trap();
             }
             for (unsigned int i=0; i<num_entry_point_offsets; i++) {
-                ReadBits( bits, offset_len_minus1+1);
+                bits.Read( offset_len_minus1+1);
             }
         }
     }
 
     if (pps->slice_segment_header_extension_present_flag) {
-        unsigned int slice_segment_header_extension_length = ReadGolomb(bits);
+        unsigned int slice_segment_header_extension_length = bits.ReadGolomb();
         for (unsigned int i=0; i<slice_segment_header_extension_length; i++) {
-            ReadBits( bits, 8); // slice_segment_header_extension_data_byte[i]
+            bits.Read( 8); // slice_segment_header_extension_data_byte[i]
         }
     }
 
@@ -1533,7 +1545,7 @@ HEVCNaluHeaderSize( UI1* ptr, int nal_unit_type, HevcSequenceParameterSet* SPSs,
 	bits.Read(); // alignment_bit_equal_to_one
 	auto bits_read = bits._;
 	if (bits_read % 8) {
-		ReadBits( bits, 8-(bits_read%8));
+		bits.Read( 8-(bits_read%8));
 	}
  
     return bits._ / 8;
