@@ -1,5 +1,5 @@
 #pragma once
-//	5/1/2021 Written by Satoru Ogura.
+//	Written by Satoru Ogura. (C)SliP LLC, Tokyo.
 
 #include	"JPVideo.h"
 

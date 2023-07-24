@@ -1,5 +1,5 @@
 #pragma once
-//	9/30/2021 Written by Satoru Ogura.
+//	Written by Satoru Ogura. (C)SliP LLC, Tokyo.
 
 #include	"JP.h"
 using namespace JP;

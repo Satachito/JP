@@ -1,4 +1,5 @@
 #pragma once
+//	Written by Satoru Ogura. (C)SliP LLC, Tokyo.
 
 #include	<unistd.h>
 #include	<sys/stat.h>
