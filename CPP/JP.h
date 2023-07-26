@@ -363,23 +363,23 @@ namespace JP {
 		const	UI1*	$;
 				UI8		_;
 
-#define NUM_BYTES	456
-UI8 bytes_left;
-UI8 bits_left;
+//#define NUM_BYTES	456
+//UI8 bytes_left;
+//UI8 bits_left;
 
 		BitReader( const UI1* $ )
 		:	$( $ )
 		,	_( 0 ) {
-bits_left = ( NUM_BYTES * 8 - _ ) % 32;
-bytes_left = NUM_BYTES - ( _ / 32 ) * 4;
+//bits_left = ( NUM_BYTES * 8 - _ ) % 32;
+//bytes_left = NUM_BYTES - ( _ / 32 ) * 4;
 
 		}
 		bool
 		Read() {
 			UI8 v = $[ _ / 8 ] & ( 0x80 >> ( _ % 8 ) );
 			_++;
-bits_left = ( NUM_BYTES * 8 - _ ) % 32;
-bytes_left = NUM_BYTES - ( _ / 32 ) * 4;
+//bits_left = ( NUM_BYTES * 8 - _ ) % 32;
+//bytes_left = NUM_BYTES - ( _ / 32 ) * 4;
 			return v ? true : false;
 		}
 		UI8
@@ -406,8 +406,14 @@ bytes_left = NUM_BYTES - ( _ / 32 ) * 4;
 		void
 		Skip( UI8 $ ) {
 			_ += $;
-bits_left = ( NUM_BYTES * 8 - _ ) % 32;
-bytes_left = NUM_BYTES - ( _ / 32 ) * 4;
+//bits_left = ( NUM_BYTES * 8 - _ ) % 32;
+//bytes_left = NUM_BYTES - ( _ / 32 ) * 4;
 		}
+		void
+		ByteAlign() {
+			UI8 $ = _ % 8;
+			if ( $ ) _ += 8 - $;
+		}
+
 	};
 }
