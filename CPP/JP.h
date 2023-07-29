@@ -404,4 +404,11 @@ namespace JP {
 			if ( $ ) _ += 8 - $;
 		}
 	};
+
+	template < typename T, typename F > auto
+	mapping( const vector< T >& _, F f ) -> vector< decltype( f( *_.begin() ) ) > {
+		vector< decltype( f( *_.begin() ) ) > $;
+		transform( _.begin(), _.end(), back_inserter( $ ), f );
+		return $;
+	}
 }
