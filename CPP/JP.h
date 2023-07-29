@@ -408,7 +408,7 @@ namespace JP {
 	template < typename T, typename F > auto
 	Apply( const vector< T >& _, F f ) -> vector< decltype( f( *_.begin() ) ) > {
 		vector< decltype( f( *_.begin() ) ) > $;
-		transform( _.begin(), _.end(), back_inserter( $ ), f );
+		for ( auto& _: _ ) $.emplace_back( f( _ ) );
 		return $;
 	}
 }
