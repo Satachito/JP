@@ -5,8 +5,8 @@
 //	https://developer.apple.com/library/archive/documentation/QuickTime/QTFF
 //	https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap3/qtff3.html
 
-#define	D( K, V ) cerr << K << ':' << V << endl
-//#define	D( K, V )
+//#define	D( K, V ) cerr << K << ':' << V << endl
+#define	D( K, V )
 #define	S( _ ) cerr << _
 
 #include "JPMP4.h"
