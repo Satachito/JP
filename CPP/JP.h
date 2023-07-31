@@ -406,7 +406,7 @@ namespace JP {
 	};
 
 	template < typename T, typename F > auto
-	Apply( const vector< T >& _, F f ) -> vector< decltype( f( *_.begin() ) ) > {
+	Apply( const vector< T >& _, F f ) {
 		vector< decltype( f( *_.begin() ) ) > $;
 		for ( auto& _: _ ) $.emplace_back( f( _ ) );
 		return $;
