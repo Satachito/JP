@@ -404,6 +404,7 @@ namespace JP {
 			if ( $ ) _ += 8 - $;
 		}
 	};
+
 	template < typename T, typename F > auto
 	Apply( const vector< T >& _, F f ) {
 		vector< decltype( f( *_.begin() ) ) > $;
