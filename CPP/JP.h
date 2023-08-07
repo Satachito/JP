@@ -25,7 +25,7 @@ using namespace filesystem;
 //	ASSERTION
 #ifdef	DEBUG
 inline void
-_A( bool $, const string& _, const string& file, int line ) {
+_A( bool $, string const& _, string const& file, int line ) {
 	if ( !$ ) {
 		cerr << file + ':' + to_string( line ) + ':' + _ << endl;
 		__builtin_trap();
@@ -38,7 +38,7 @@ _A( bool $, const string& _, const string& file, int line ) {
 
 //	UNIX UNDER ZERO ERROR
 template	< typename I >	I
-_X( I $, const string& _, const string& file, int line ) {
+_X( I $, string const& _, string const& file, int line ) {
 	if ( $ < 0 ) {
 		cerr << file + ':' + to_string( line ) + ':' + strerror( errno ) + ':' + _ << endl;
 		throw file + ':' + to_string( line ) + ':' + strerror( errno ) + ':' + _;
@@ -49,7 +49,7 @@ _X( I $, const string& _, const string& file, int line ) {
 
 //	NULL EXCEPTION
 template	< typename T >	T*
-_N( T* $, const string& _, const string& file, int line ) {
+_N( T* $, string const& _, string const& file, int line ) {
 	if ( !$ ) {
 		cerr << file + ':' + to_string( line ) + ':' + _ << endl;
 		throw file + ':' + to_string( line ) + ':' + _;
@@ -59,7 +59,7 @@ _N( T* $, const string& _, const string& file, int line ) {
 #define	N( $ ) _N( $, #$, __FILE__, __LINE__ )
 
 template < typename T, typename F > auto
-Apply( const vector< T >& _, F f ) {
+Apply( vector< T > const& _, F f ) {
 	vector< decltype( f( *_.begin() ) ) > $;
 	for ( auto& _: _ ) $.emplace_back( f( _ ) );
 	return $;
@@ -112,19 +112,24 @@ In() {
 }
 
 inline void
-Write( int fd, const vector< UI1 >& $ ) {
-	A( UI8( X( write( fd, $.data(), $.size() ) ) ) == $.size() );
+Write( int fd, vector< UI1 > const& $ ) {
+	auto	head = $.data();
+	auto	tail = head + $.size();
+	while ( head < tail ) {
+		head += X( write( fd, head, tail - head ) );
+		A( head == tail );
+	}
 }
 inline void
-Out( const vector< UI1 >& $ ) {
+Out( vector< UI1 > const& $ ) {
 	Write( 1, $ );
 }
 inline void
-Err( const vector< UI1 >& $ ) {
+Err( vector< UI1 > const& $ ) {
 	Write( 2, $ );
 }
 inline UI8
-FileSize( const string& path ) {
+FileSize( string const& path ) {
 	struct stat $;
 	X( stat( path.c_str(), &$ ) );
 	return $.st_size;
@@ -141,12 +146,12 @@ FileCloser {
 	}
 };
 inline vector< UI1 >
-GetFileContent( const string& path ) {
+GetFileContent( string const& path ) {
 	FileCloser _( open( path.c_str(), O_RDONLY ) );
 	return Read( _.$ );
 }
 inline void
-SetFileContent( const string& path, const vector< UI1 >& $ ) {
+SetFileContent( string const& path, vector< UI1 > const& $ ) {
 	FileCloser _( creat( path.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP ) );
 	Write( _.$, $ );
 }
@@ -163,12 +168,12 @@ GetLines( istream& stream = cin ) {
 }
 
 inline UI8
-Size1( const UI1* $ ) {
+Size1( UI1 const* $ ) {
 	return $[ 0 ];
 }
 
 inline UI8
-Size2( const UI1* $ ) {
+Size2( UI1 const* $ ) {
 	return
 		UI2( $[ 1 ] ) << 0
 	|	UI2( $[ 0 ] ) << 8
@@ -176,7 +181,7 @@ Size2( const UI1* $ ) {
 }
 
 inline UI8
-Size3( const UI1* $ ) {
+Size3( UI1 const* $ ) {
 	return
 		UI2( $[ 2 ] ) <<  0
 	|	UI2( $[ 1 ] ) <<  8
@@ -185,7 +190,7 @@ Size3( const UI1* $ ) {
 }
 
 inline UI8
-Size4( const UI1* $ ) {
+Size4( UI1 const* $ ) {
 	return
 		UI4( $[ 3 ] ) << 0
 	|	UI4( $[ 2 ] ) << 8
@@ -195,7 +200,7 @@ Size4( const UI1* $ ) {
 }
 
 inline UI8
-Size8( const UI1* $ ) {
+Size8( UI1 const* $ ) {
 	return
 		UI8( $[ 7 ] ) << 0
 	|	UI8( $[ 6 ] ) << 8
@@ -210,10 +215,10 @@ Size8( const UI1* $ ) {
 
 struct
 BitReader {
-	const	UI1*	$;
-			UI8		_;
+	UI1	const*	$;
+	UI8			_;
 
-	BitReader( const UI1* $ )
+	BitReader( UI1 const* $ )
 	:	$( $ )
 	,	_( 0 ) {
 	}
@@ -280,11 +285,25 @@ UTF8( UTF32 _ ) {
 	return string( $.begin(), $.end() );
 }
 
-inline	UTF32
-Unicode( istream& stream ) {
-	UI1	_ = stream.get();
-	A( !stream.eof() );
+struct
+UI1Stream {
+	vector< UI1 >	$;
+	UI8				_;
+	UI1Stream( string const& _ )
+	:	$( _.begin(), _.end() )
+	,	_( 0 ) {
+	}
+	UI1
+	Avail() { return _ < $.size(); }
+	UI1
+	Get() { return $[ _++ ]; }
+};
 
+inline	UTF32
+Unicode( UI1Stream& stream ) {
+	A( stream.Avail() );
+
+	UI1	_ = stream.Get();
 	if ( _ < 0x80 ) return _;
 
 	_ <<= 1;
@@ -296,8 +315,8 @@ Unicode( istream& stream ) {
 	UTF32	$ = _ >> ( wNumCont + 1 );
 
 	while ( wNumCont-- ) {
-		stream >> _;
-		A( !stream.eof() );
+		A( stream.Avail() );
+		UI1	_ = stream.Get();
 		$ = ( $ << 6 ) | ( _ & 0x3f );
 	}
 	return $;
@@ -306,15 +325,15 @@ struct
 UnicodeReader {
 	UTF32		buffer = 0;
 	bool		unread = false;
-	istream&	stream;
-	UnicodeReader( istream& stream )
-	:	stream( stream ) {
+	UI1Stream	$;
+	UnicodeReader( string const& _ )
+	:	$( _ ) {
 	}
 	bool
 	Avail() {
 		if ( unread ) return true;
 		try {
-			auto _ = Unicode( stream );
+			auto _ = Unicode( $ );
 			Unread( _ );
 		} catch( ... ) {
 			return false;
@@ -332,7 +351,7 @@ UnicodeReader {
 			unread = false;
 			return buffer;
 		}
-		return Unicode( stream );
+		return Unicode( $ );
 	}
 	UTF32
 	Read() {
@@ -374,7 +393,7 @@ HexNum( char $ ) {
 	}
 }
 inline vector< UI1 >
-DecodeHex( const string& string ) {
+DecodeHex( string const& string ) {
 	vector< UI1 >	$;
 	for ( auto _ = 0; _ < string.size(); _ += 2 ) $.emplace_back( HexNum( string[ _ ] ) << 4 | HexNum( string[ _ + 1 ] ) );
 	return $;
@@ -400,7 +419,7 @@ HexStr( UI1 $ ) {
 	return string( _ );
 }
 inline string
-EncodeHex( const vector< UI1 >& _ ) {
+EncodeHex( vector< UI1 > const& _ ) {
 	string	$;
 	for ( auto& _: _ ) $ += HexStr( _ );
 	return $;
