@@ -58,6 +58,8 @@ _N( T* $, string const& _, string const& file, int line ) {
 }
 #define	N( $ ) _N( $, #$, __FILE__, __LINE__ )
 
+#define	THROW	throw string( __FILE__ ) + ":" + to_string( __LINE__ )
+
 template < typename T, typename F > auto
 Apply( vector< T > const& _, F f ) {
 	vector< decltype( f( *_.begin() ) ) > $;
@@ -115,10 +117,7 @@ inline void
 Write( int fd, vector< UI1 > const& $ ) {
 	auto	head = $.data();
 	auto	tail = head + $.size();
-	while ( head < tail ) {
-		head += X( write( fd, head, tail - head ) );
-		A( head == tail );
-	}
+	while ( head < tail ) head += X( write( fd, head, tail - head ) );
 }
 inline void
 Out( vector< UI1 > const& $ ) {
@@ -280,6 +279,7 @@ UTF8( UTF32 _ ) {
 		$.emplace_back( ( 0x80 | (( _ >> 6) & 0x3F)));
 		$.emplace_back( ( 0x80 | ( _ & 0x3F)));
 	} else {
+		A( false );
 		throw "eh?";
 	}
 	return string( $.begin(), $.end() );
@@ -301,7 +301,7 @@ UI1Stream {
 
 inline	UTF32
 Unicode( UI1Stream& stream ) {
-	A( stream.Avail() );
+	if ( !stream.Avail() ) THROW;
 
 	UI1	_ = stream.Get();
 	if ( _ < 0x80 ) return _;
@@ -315,7 +315,7 @@ Unicode( UI1Stream& stream ) {
 	UTF32	$ = _ >> ( wNumCont + 1 );
 
 	while ( wNumCont-- ) {
-		A( stream.Avail() );
+		if ( !stream.Avail() ) THROW;
 		UI1	_ = stream.Get();
 		$ = ( $ << 6 ) | ( _ & 0x3f );
 	}
@@ -389,8 +389,8 @@ HexNum( char $ ) {
 	case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':	return $ - '0';
 	case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':											return $ - 'A' + 10;
 	case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':											return $ - 'a' + 10;
-	default:	throw "eh?";
 	}
+	THROW;
 }
 inline vector< UI1 >
 DecodeHex( string const& string ) {
@@ -406,8 +406,8 @@ HexChar( UI1 $ ) {
 		return $ + '0';
 	case 10: case 11: case 12: case 13: case 14: case 15:
 		return $ - 10 + 'a';
-	default:	throw "eh?";
 	}
+	THROW;
 }
 inline string
 HexStr( UI1 $ ) {
