@@ -24,7 +24,7 @@ using namespace filesystem;
 
 //	ASSERTION
 #ifdef	DEBUG
-inline void
+inline auto
 _A( bool $, string const& _, string const& file, int line ) {
 	if ( !$ ) {
 		cerr << file + ':' + to_string( line ) + ':' + _ << endl;
@@ -37,8 +37,8 @@ _A( bool $, string const& _, string const& file, int line ) {
 #endif
 
 //	UNIX UNDER ZERO ERROR
-template	< typename I >	I
-_X( I $, string const& _, string const& file, int line ) {
+template < typename T > inline auto	//	Functions such as read and write returns size_t value.
+_X( T $, string const& _, string const& file, int line ) {
 	if ( $ < 0 ) {
 		cerr << file + ':' + to_string( line ) + ':' + strerror( errno ) + ':' + _ << endl;
 		throw file + ':' + to_string( line ) + ':' + strerror( errno ) + ':' + _;
@@ -48,7 +48,7 @@ _X( I $, string const& _, string const& file, int line ) {
 #define X( $ ) _X( $, #$, __FILE__, __LINE__ )
 
 //	NULL EXCEPTION
-template	< typename T >	T*
+template < typename T > inline auto
 _N( T* $, string const& _, string const& file, int line ) {
 	if ( !$ ) {
 		cerr << file + ':' + to_string( line ) + ':' + _ << endl;
@@ -60,14 +60,14 @@ _N( T* $, string const& _, string const& file, int line ) {
 
 #define	THROW	throw string( __FILE__ ) + ":" + to_string( __LINE__ )
 
-template < typename T, typename F > auto
+template < typename T, typename F > inline auto
 Apply( vector< T > const& _, F f ) {
 	vector< decltype( f( *_.begin() ) ) > $;
 	for ( auto& _: _ ) $.emplace_back( f( _ ) );
 	return $;
 }
 
-template	< typename T >	bool
+template < typename T > inline auto
 Includes( vector< T > const& $, T const& _ ) {
 	return find( $.begin(), $.end(), _ ) != $.end();
 }
@@ -99,13 +99,13 @@ Swap8( UI8 $ ) {
 	;
 }
 
-template	< typename I >	I
+template < typename I > inline auto
 UniformRandomInt( I l = 0, I h = 1 ) {
 	static	mt19937_64 $( (std::random_device())() );
 	return	uniform_int_distribution< I >( l, h - 1 )( $ );
 }
 
-inline vector< UI1 >
+inline auto
 Read( int fd ) {
 	vector< UI1 >	$;
 	char	buffer[ 1024 * 1024 ];
@@ -113,22 +113,22 @@ Read( int fd ) {
 	while ( ( numRead = X( read( fd, buffer, sizeof( buffer ) ) ) ) ) $.insert( $.end(), buffer, buffer + numRead );
 	return $;
 }
-inline vector< UI1 >
+inline auto
 In() {
 	return Read( 0 );
 }
 
-inline void
+inline auto
 Write( int fd, vector< UI1 > const& $ ) {
 	auto	head = $.data();
 	auto	tail = head + $.size();
 	while ( head < tail ) head += X( write( fd, head, tail - head ) );
 }
-inline void
+inline auto
 Out( vector< UI1 > const& $ ) {
 	Write( 1, $ );
 }
-inline void
+inline auto
 Err( vector< UI1 > const& $ ) {
 	Write( 2, $ );
 }
@@ -149,18 +149,18 @@ FileCloser {
 		X( close( $ ) );
 	}
 };
-inline vector< UI1 >
+inline auto
 GetFileContent( string const& path ) {
 	FileCloser _( open( path.c_str(), O_RDONLY ) );
 	return Read( _.$ );
 }
-inline void
+inline auto
 SetFileContent( string const& path, vector< UI1 > const& $ ) {
 	FileCloser _( creat( path.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP ) );
 	Write( _.$, $ );
 }
 
-inline vector< string >
+inline auto
 GetLines( istream& stream = cin ) {
 	vector< string >	$;
 	string				s;
@@ -179,27 +179,27 @@ Size1( UI1 const* $ ) {
 inline UI8
 Size2( UI1 const* $ ) {
 	return
-		UI2( $[ 1 ] ) << 0
-	|	UI2( $[ 0 ] ) << 8
+		UI8( $[ 1 ] ) << 0
+	|	UI8( $[ 0 ] ) << 8
 	;
 }
 
 inline UI8
 Size3( UI1 const* $ ) {
 	return
-		UI2( $[ 2 ] ) <<  0
-	|	UI2( $[ 1 ] ) <<  8
-	|	UI2( $[ 0 ] ) << 16
+		UI8( $[ 2 ] ) <<  0
+	|	UI8( $[ 1 ] ) <<  8
+	|	UI8( $[ 0 ] ) << 16
 	;
 }
 
 inline UI8
 Size4( UI1 const* $ ) {
 	return
-		UI4( $[ 3 ] ) << 0
-	|	UI4( $[ 2 ] ) << 8
-	|	UI4( $[ 1 ] ) << 16
-	|	UI4( $[ 0 ] ) << 24
+		UI8( $[ 3 ] ) << 0
+	|	UI8( $[ 2 ] ) << 8
+	|	UI8( $[ 1 ] ) << 16
+	|	UI8( $[ 0 ] ) << 24
 	;
 }
 
@@ -226,25 +226,25 @@ BitReader {
 	:	$( $ )
 	,	_( 0 ) {
 	}
-	bool
+	auto
 	Read() {
 		UI8 v = $[ _ / 8 ] & ( 0x80 >> ( _ % 8 ) );
 		_++;
 		return v ? true : false;
 	}
-	UI8
+	auto
 	Read( UI8 $ ) {
 		UI8 v = 0;
 		while ( $-- ) v = ( v << 1 ) | ( Read() ? 1 : 0 );
 		return v;
 	}
-	UI8
+	auto
 	ReadGolomb() {
 		UI8 lz = 0;
 		while ( !Read() ) lz++;
 		return lz ? ( 1 << lz ) - 1 + Read( lz ) : 0;
 	}
-	UI8
+	auto
 	ReadSignedGolomb() {
 		auto $ = ReadGolomb();
 		if ( $ % 2 ) {
@@ -253,11 +253,11 @@ BitReader {
 			return - $ / 2;
 		}
 	}
-	void
+	auto
 	Skip( UI8 $ ) {
 		_ += $;
 	}
-	void
+	auto
 	ByteAlign() {
 		UI8 $ = _ % 8;
 		if ( $ ) _ += 8 - $;
@@ -266,7 +266,7 @@ BitReader {
 
 typedef	UI4	UTF32;
 
-inline bool
+inline auto
 IsSpace( UTF32 _ ) {
 	if ( _ <= ' ' ) return true;
 	switch ( _ ) {
@@ -279,7 +279,7 @@ IsSpace( UTF32 _ ) {
 	return false;
 }
 
-inline	string
+inline	auto
 UTF8( UTF32 _ ) {
 	vector< UI1 >	$;
 	if ( _ <= 0x7F) {
@@ -303,7 +303,7 @@ UTF8( UTF32 _ ) {
 	return string( $.begin(), $.end() );
 }
 
-inline	string
+inline	auto
 UTF8( vector< UTF32 > const& _ ) {
 	string $;
 	for ( auto& _: _ ) $ += UTF8( _ );
@@ -318,18 +318,18 @@ UI1Stream {
 	:	$( _.begin(), _.end() )
 	,	_( 0 ) {
 	}
-	UI1
+	auto
 	Avail() { return _ < $.size(); }
-	UI1
+	auto
 	Get() { return $[ _++ ]; }
 };
 
-inline	UTF32
+inline	auto
 Unicode( UI1Stream& stream ) {
 	if ( !stream.Avail() ) THROW;
 
 	UI1	_ = stream.Get();
-	if ( _ < 0x80 ) return _;
+	if ( _ < 0x80 ) return (UTF32)_;
 
 	_ <<= 1;
 	auto	wNumCont = 0;
@@ -358,7 +358,37 @@ UnicodeReader {
 	UnicodeReader( string const& _ )
 	:	$( _ ) {
 	}
-	bool
+	auto
+	UnGet( UTF32 _ ) {
+		this->_.pop_back();
+		index--;
+		unget = true;
+		ungot = _;
+	}
+	auto
+	_Get() {
+		if ( unget ) {
+			unget = false;
+			return ungot;
+		}
+		return Unicode( $ );
+	}
+	auto
+	Get() {
+		auto $ = _Get();
+		_.emplace_back( $ );
+		index++;
+		return $;
+	}
+	auto
+	Peek() {
+		if ( !unget ) {
+			ungot = Unicode( $ );
+			unget = true;
+		}
+		return ungot;
+	}
+	auto
 	Avail() {
 		if ( unget ) return true;
 		try {
@@ -368,43 +398,13 @@ UnicodeReader {
 		}
 		return true;
 	}
-	void
-	UnGet( UTF32 _ ) {
-		this->_.pop_back();
-		index--;
-		unget = true;
-		ungot = _;
-	}
-	UTF32
-	_Get() {
-		if ( unget ) {
-			unget = false;
-			return ungot;
-		}
-		return Unicode( $ );
-	}
-	UTF32
-	Get() {
-		auto $ = _Get();
-		_.emplace_back( $ );
-		index++;
-		return $;
-	}
-	UTF32
-	Peek() {
-		if ( !unget ) {
-			ungot = Unicode( $ );
-			unget = true;
-		}
-		return ungot;
-	}
 };
 struct
 PreProcessor : UnicodeReader {
 	PreProcessor( string const& _ )
 	:	UnicodeReader( _ ) {
 	}
-	UTF32
+	auto
 	Get() {
 	RESET:
 		auto v = UnicodeReader::Get();
@@ -422,7 +422,7 @@ PreProcessor : UnicodeReader {
 	}
 };
 
-inline string
+inline auto
 Unescape( string const& _ ) {
 	auto escaping = false;
 	string $;
@@ -447,7 +447,7 @@ Unescape( string const& _ ) {
 	}
 	return $;
 };
-inline string
+inline auto
 Shrink( string const& _ ) {
 	string $;
 	for ( auto& _: _ ) if ( !IsSpace( _ ) ) $ += _;
@@ -455,18 +455,26 @@ Shrink( string const& _ ) {
 };
 
 inline UI1
-HexNum( char $ ) {
-	switch ( $ ) {
-	case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':	return $ - '0';
-	case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':											return $ - 'A' + 10;
-	case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':											return $ - 'a' + 10;
+Digit( UTF32 _ ) {
+	switch ( _ ) {
+	case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+		return _ - '0';
+	case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+	case 'g': case 'h': case 'i': case 'j': case 'k': case 'l': case 'm': case 'n': case 'o': case 'p':
+	case 'q': case 'r': case 's': case 't': case 'u': case 'v': case 'w': case 'x': case 'y': case 'z':
+		return _ - 'a' + 10;
+	case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+	case 'G': case 'H': case 'I': case 'J': case 'K': case 'L': case 'M': case 'N': case 'O': case 'P':
+	case 'Q': case 'R': case 'S': case 'T': case 'U': case 'V': case 'W': case 'X': case 'Y': case 'Z':
+		return _ - 'A' + 10;
 	}
 	THROW;
-}
-inline vector< UI1 >
+};
+
+inline auto
 DecodeHex( string const& string ) {
 	vector< UI1 >	$;
-	for ( auto _ = 0; _ < string.size(); _ += 2 ) $.emplace_back( HexNum( string[ _ ] ) << 4 | HexNum( string[ _ + 1 ] ) );
+	for ( auto _ = 0; _ < string.size(); _ += 2 ) $.emplace_back( Digit( string[ _ ] ) << 4 | Digit( string[ _ + 1 ] ) );
 	return $;
 }
 
@@ -480,7 +488,7 @@ HexChar( UI1 $ ) {
 	}
 	THROW;
 }
-inline string
+inline auto
 HexStr( UI1 $ ) {
 	char	_[] = {
 		HexChar( ( $ >> 4 ) & 0x0f )
@@ -489,7 +497,7 @@ HexStr( UI1 $ ) {
 	};
 	return string( _ );
 }
-inline string
+inline auto
 EncodeHex( UI1* $, UI8 _ ) {
 	return accumulate(
 		$
@@ -498,37 +506,45 @@ EncodeHex( UI1* $, UI8 _ ) {
 	,	[]( string const& $, UI1 _ ) { return $ + HexStr( _ ); }
 	);
 }
-inline string
+inline auto
 EncodeHex( UI1 _ ) {
 	return EncodeHex( &_, 1 );
 }
-inline string
+inline auto
 EncodeHex( UI2 _ ) {
 	auto $ = Swap2( _ );
 	return EncodeHex( (UI1*)&$, 2 );
 }
-inline string
+inline auto
 EncodeHex( UI4 _ ) {
 	auto $ = Swap4( _ );
 	return EncodeHex( (UI1*)&$, 4 );
 }
-inline string
+inline auto
 EncodeHex( UI8 _ ) {
 	auto $ = Swap8( _ );
 	return EncodeHex( (UI1*)&$, 8 );
 }
 
-inline string
+inline auto
 EncodeDouble( double _ ) {
 	string $ = to_string( _ );
 	while ( $.size() > 3 && $[ $.size() - 1 ] == '0' ) $.pop_back();
 	return $;
 }
 
-inline int
-Sign( long _ ) {
+template < typename I > inline auto
+Sign( I _ ) {
 	return _ == 0
 	?	0
 	:	_ < 0 ? -1 : 1
+	;
+}
+
+template < typename I > inline auto
+GEL( I p, I q ) {
+	return p == q
+	?	0
+	:	p < q ? -1 : 1
 	;
 }
