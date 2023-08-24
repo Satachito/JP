@@ -67,10 +67,15 @@ Apply( vector< T > const& _, F f ) {
 	return $;
 }
 
-typedef	unsigned char	UI1;
-typedef	unsigned short	UI2;
-typedef	unsigned int	UI4;
-typedef	unsigned long	UI8;
+template	< typename T >	bool
+Includes( vector< T > const& $, T const& _ ) {
+	return find( $.begin(), $.end(), _ ) != $.end();
+}
+
+typedef	uint8_t		UI1;
+typedef	uint16_t	UI2;
+typedef	uint32_t	UI4;
+typedef	uint64_t	UI8;
 
 inline	UI2
 Swap2( UI2 $ ) {
@@ -261,6 +266,19 @@ BitReader {
 
 typedef	UI4	UTF32;
 
+inline bool
+IsSpace( UTF32 _ ) {
+	if ( _ <= ' ' ) return true;
+	switch ( _ ) {
+	case 0x1680: case 0x180e: case 0x2000:
+	case 0x2001: case 0x2002: case 0x2003: case 0x2004: case 0x2005: case 0x2006: case 0x2007: case 0x2008: case 0x2009: case 0x200a:
+	case 0x202f: case 0x205f: case 0x3000:
+	case 0x2028: case 0x2029: case 0xfeff:
+		return true;
+	}
+	return false;
+}
+
 inline	string
 UTF8( UTF32 _ ) {
 	vector< UI1 >	$;
@@ -283,6 +301,13 @@ UTF8( UTF32 _ ) {
 		throw "eh?";
 	}
 	return string( $.begin(), $.end() );
+}
+
+inline	string
+UTF8( vector< UTF32 > const& _ ) {
+	string $;
+	for ( auto& _: _ ) $ += UTF8( _ );
+	return $;
 }
 
 struct
@@ -323,64 +348,110 @@ Unicode( UI1Stream& stream ) {
 }
 struct
 UnicodeReader {
-	UTF32		buffer = 0;
-	bool		unread = false;
+
+	UI8	index = 0;
+	vector< UTF32 >	_;
+
+	UTF32		ungot = 0;
+	bool		unget = false;
 	UI1Stream	$;
 	UnicodeReader( string const& _ )
 	:	$( _ ) {
 	}
 	bool
 	Avail() {
-		if ( unread ) return true;
+		if ( unget ) return true;
 		try {
-			auto _ = Unicode( $ );
-			Unread( _ );
+			UnGet( Get() );
 		} catch( ... ) {
 			return false;
 		}
 		return true;
 	}
 	void
-	Unread( UTF32 p ) {
-		buffer = p;
-		unread = true;
+	UnGet( UTF32 _ ) {
+		this->_.pop_back();
+		index--;
+		unget = true;
+		ungot = _;
 	}
 	UTF32
-	_Read() {
-		if ( unread ) {
-			unread = false;
-			return buffer;
+	_Get() {
+		if ( unget ) {
+			unget = false;
+			return ungot;
 		}
 		return Unicode( $ );
 	}
 	UTF32
-	Read() {
-		auto $ = _Read();
+	Get() {
+		auto $ = _Get();
+		_.emplace_back( $ );
+		index++;
 		return $;
+	}
+	UTF32
+	Peek() {
+		if ( !unget ) {
+			ungot = Unicode( $ );
+			unget = true;
+		}
+		return ungot;
 	}
 };
 struct
-PreProcessor {
-	UnicodeReader&	$;
-	PreProcessor( UnicodeReader& $ )
-	:	$( $ ) {
+PreProcessor : UnicodeReader {
+	PreProcessor( string const& _ )
+	:	UnicodeReader( _ ) {
 	}
 	UTF32
-	Read() {
+	Get() {
 	RESET:
-		auto v = $.Read();
+		auto v = UnicodeReader::Get();
 		if ( v == '/' ) {
-			auto w = $.Read();
+			auto w = UnicodeReader::Get();
 			if ( w == '/' ) {
-				while ( $.Read() != '\n' ) {}
+				while ( UnicodeReader::Get() != '\n' ) {}
 				goto RESET;	//	return Read();
 			} else {
-				$.Unread( w );
+				UnicodeReader::UnGet( w );
 				return v;
 			}
 		}
 		return v;
 	}
+};
+
+inline string
+Unescape( string const& _ ) {
+	auto escaping = false;
+	string $;
+	for ( auto& _: _ ) {
+		if ( escaping ) {
+			escaping = false;
+			switch ( _ ) {
+			case '0': $ += '\0'	; break;
+			case 'f': $ += '\f'	; break;
+			case 'n': $ += '\n'	; break;
+			case 'r': $ += '\r'	; break;
+			case 't': $ += '\t'	; break;
+			case 'v': $ += '\v'	; break;
+			default	: $ += _	; break;
+			}
+		} else {
+			_ == '\\'
+			?	void( escaping = true )
+			:	void( $ += _ )
+			;
+		}
+	}
+	return $;
+};
+inline string
+Shrink( string const& _ ) {
+	string $;
+	for ( auto& _: _ ) if ( !IsSpace( _ ) ) $ += _;
+	return $;
 };
 
 inline UI1
@@ -419,8 +490,45 @@ HexStr( UI1 $ ) {
 	return string( _ );
 }
 inline string
-EncodeHex( vector< UI1 > const& _ ) {
-	string	$;
-	for ( auto& _: _ ) $ += HexStr( _ );
+EncodeHex( UI1* $, UI8 _ ) {
+	return accumulate(
+		$
+	,	$ + _
+	,	string()
+	,	[]( string const& $, UI1 _ ) { return $ + HexStr( _ ); }
+	);
+}
+inline string
+EncodeHex( UI1 _ ) {
+	return EncodeHex( &_, 1 );
+}
+inline string
+EncodeHex( UI2 _ ) {
+	auto $ = Swap2( _ );
+	return EncodeHex( (UI1*)&$, 2 );
+}
+inline string
+EncodeHex( UI4 _ ) {
+	auto $ = Swap4( _ );
+	return EncodeHex( (UI1*)&$, 4 );
+}
+inline string
+EncodeHex( UI8 _ ) {
+	auto $ = Swap8( _ );
+	return EncodeHex( (UI1*)&$, 8 );
+}
+
+inline string
+EncodeDouble( double _ ) {
+	string $ = to_string( _ );
+	while ( $.size() > 3 && $[ $.size() - 1 ] == '0' ) $.pop_back();
 	return $;
+}
+
+inline int
+Sign( long _ ) {
+	return _ == 0
+	?	0
+	:	_ < 0 ? -1 : 1
+	;
 }
