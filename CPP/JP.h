@@ -77,15 +77,31 @@ typedef	uint16_t	UI2;
 typedef	uint32_t	UI4;
 typedef	uint64_t	UI8;
 
-inline	UI2
+inline	auto
 Swap2( UI2 $ ) {
-	return $ >> 8 | $ << 8;
+	return UI2( $ >> 8 | $ << 8 );
 }
-inline	UI4
+static_assert(
+	is_same_v<
+		decltype( Swap2( declval< UI2 >() ) )
+	,	UI2
+	>
+,	"The return type of myFunction should be UI2"
+);
+
+inline	auto
 Swap4( UI4 $ ) {
 	return $ >> 24 | ( $ >> 8 & 0x0000ff00 ) | ( $ << 8 & 0x00ff0000 ) | $ << 24;
 }
-inline	UI8
+static_assert(
+	is_same_v<
+		decltype( Swap4( declval< UI4 >() ) )
+	,	UI4
+	>
+,	"The return type of myFunction should be UI4"
+);
+
+inline	auto
 Swap8( UI8 $ ) {
 	return
 		$ >> 56
@@ -98,6 +114,13 @@ Swap8( UI8 $ ) {
 	|	$ << 56
 	;
 }
+static_assert(
+	is_same_v<
+		decltype( Swap8( declval< UI8 >() ) )
+	,	UI8
+	>
+,	"The return type of myFunction should be UI8"
+);
 
 template < typename I > inline auto
 UniformRandomInt( I l = 0, I h = 1 ) {
@@ -132,11 +155,11 @@ inline auto
 Err( vector< UI1 > const& $ ) {
 	Write( 2, $ );
 }
-inline UI8
+inline auto
 FileSize( string const& path ) {
 	struct stat $;
 	X( stat( path.c_str(), &$ ) );
-	return $.st_size;
+	return UI8( $.st_size );
 }
 struct
 FileCloser {
@@ -171,12 +194,12 @@ GetLines( istream& stream = cin ) {
 	return $;
 }
 
-inline UI8
+inline auto
 Size1( UI1 const* $ ) {
-	return $[ 0 ];
+	return UI8( $[ 0 ] );
 }
 
-inline UI8
+inline auto
 Size2( UI1 const* $ ) {
 	return
 		UI8( $[ 1 ] ) << 0
@@ -184,7 +207,7 @@ Size2( UI1 const* $ ) {
 	;
 }
 
-inline UI8
+inline auto
 Size3( UI1 const* $ ) {
 	return
 		UI8( $[ 2 ] ) <<  0
@@ -193,7 +216,7 @@ Size3( UI1 const* $ ) {
 	;
 }
 
-inline UI8
+inline auto
 Size4( UI1 const* $ ) {
 	return
 		UI8( $[ 3 ] ) << 0
@@ -203,7 +226,7 @@ Size4( UI1 const* $ ) {
 	;
 }
 
-inline UI8
+inline auto
 Size8( UI1 const* $ ) {
 	return
 		UI8( $[ 7 ] ) << 0
@@ -454,19 +477,19 @@ Shrink( string const& _ ) {
 	return $;
 };
 
-inline UI1
+inline auto
 Digit( UTF32 _ ) {
 	switch ( _ ) {
 	case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
-		return _ - '0';
+		return UI1( _ - '0' );
 	case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
 	case 'g': case 'h': case 'i': case 'j': case 'k': case 'l': case 'm': case 'n': case 'o': case 'p':
 	case 'q': case 'r': case 's': case 't': case 'u': case 'v': case 'w': case 'x': case 'y': case 'z':
-		return _ - 'a' + 10;
+		return UI1( _ - 'a' + 10 );
 	case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
 	case 'G': case 'H': case 'I': case 'J': case 'K': case 'L': case 'M': case 'N': case 'O': case 'P':
 	case 'Q': case 'R': case 'S': case 'T': case 'U': case 'V': case 'W': case 'X': case 'Y': case 'Z':
-		return _ - 'A' + 10;
+		return UI1( _ - 'A' + 10 );
 	}
 	THROW;
 };
@@ -478,13 +501,13 @@ DecodeHex( string const& string ) {
 	return $;
 }
 
-inline char
+inline auto
 HexChar( UI1 $ ) {
 	switch ( $ ) {
 	case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7: case 8: case 9:
-		return $ + '0';
+		return char( $ + '0' );
 	case 10: case 11: case 12: case 13: case 14: case 15:
-		return $ - 10 + 'a';
+		return char( $ - 10 + 'a' );
 	}
 	THROW;
 }
@@ -543,6 +566,7 @@ Sign( I _ ) {
 
 template < typename I > inline auto
 GEL( I p, I q ) {
+	static_assert( is_unsigned< I >::value, "I must be an unsigned integral type!");
 	return p == q
 	?	0
 	:	p < q ? -1 : 1
