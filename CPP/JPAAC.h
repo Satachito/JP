@@ -14,7 +14,7 @@
 #include "Huffman.h"
 
 inline void
-ADTS( const vector< UI1 >& adts, UI8 offset = 0 ) {
+ADTS( vector< UI1 > const& adts, UI8 offset = 0 ) {
 	//	ADTS Header
 	while ( offset < adts.size() ) {
 		cout << offset << endl;
