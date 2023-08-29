@@ -1070,7 +1070,7 @@ D( "----------------------------------- frame #", frameCount++ );
 	}
 	
 	vector< UI1 >
-	ExtractAAC() {
+	ExtractAAC() const {
 		vector< UI1 >	$;
 		for ( auto& frameInfo: audioInfo->frameInfos ) {
 			auto _ = audioInfo->ADTSHeader( frameInfo.second + 7 );
