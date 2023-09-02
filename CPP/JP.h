@@ -502,11 +502,13 @@ DecodeHex( string const& string ) {
 }
 
 inline auto
-HexChar( UI1 $ ) {
+DigitCharacter( UI1 $ ) {
 	switch ( $ ) {
 	case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7: case 8: case 9:
 		return char( $ + '0' );
 	case 10: case 11: case 12: case 13: case 14: case 15:
+	case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23: case 24: case 25:
+	case 26: case 27: case 28: case 29: case 30: case 31: case 32: case 33: case 34: case 35:
 		return char( $ - 10 + 'a' );
 	}
 	THROW;
@@ -514,8 +516,8 @@ HexChar( UI1 $ ) {
 inline auto
 HexStr( UI1 $ ) {
 	char	_[] = {
-		HexChar( ( $ >> 4 ) & 0x0f )
-	,	HexChar( $ & 0x0f )
+		DigitCharacter( ( $ >> 4 ) & 0x0f )
+	,	DigitCharacter( $ & 0x0f )
 	,	0
 	};
 	return string( _ );
@@ -566,9 +568,28 @@ Sign( I _ ) {
 
 template < typename I > inline auto
 GEL( I p, I q ) {
-	static_assert( is_unsigned< I >::value, "I must be an unsigned integral type!");
+	static_assert( is_unsigned< I >::value, "eh?");
 	return p == q
 	?	0
 	:	p < q ? -1 : 1
 	;
 }
+
+template < typename I > inline auto
+NumLeadingZeroBits( I _ ) {
+	static_assert( is_unsigned< I >::value, "eh?");
+	constexpr UI8 N_BITS_PER_I = sizeof( I ) * 8;
+
+//#if defined(__GNUC__) || defined(__clang__)
+//	if constexpr ( sizeof( I ) == sizeof( UI4 ) ) return _ ? __builtin_clz( _ )		: N_BITS_PER_I;
+//	if constexpr ( sizeof( I ) == sizeof( UI8 ) ) return _ ? __builtin_clzll( _ )	: N_BITS_PER_I;
+//#endif
+
+	UI8 $ = 0;
+	while ( $ < N_BITS_PER_I ) {
+		if ( _ & ( I( 1 ) << ( N_BITS_PER_I - $ - 1 ) ) ) break;
+		$++;
+	}
+	return $;
+}
+
