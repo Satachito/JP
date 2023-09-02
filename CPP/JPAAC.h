@@ -14,7 +14,7 @@
 #include "Huffman.h"
 
 inline void
-ADTS( const vector< UI1 >& adts, UI8 offset = 0 ) {
+ADTS( vector< UI1 > const& adts, UI8 offset = 0 ) {
 	//	ADTS Header
 	while ( offset < adts.size() ) {
 		cout << offset << endl;
@@ -770,7 +770,7 @@ MP4 {
 		ics2.Supp( br, audioInfo );
 	}
 	void
-	SkipFIL( BitReader& br ) {
+	SkipFIL( BitReader& br ) const {
 		auto count = br.Read( 4 );
 		if ( count == 15 ) count += br.Read( 8 ) - 1;
 		auto type = br.Read( 4 );
@@ -834,7 +834,7 @@ MP4 {
 		}
 	}
 	void
-	SkipDSE( BitReader& br ) {
+	SkipDSE( BitReader& br ) const {
 	
 		br.Skip( 4 );	//	element_instance_tag
 		auto byteAligned = br.Read();
@@ -1070,7 +1070,7 @@ D( "----------------------------------- frame #", frameCount++ );
 	}
 	
 	vector< UI1 >
-	ExtractAAC() {
+	ExtractAAC() const {
 		vector< UI1 >	$;
 		for ( auto& frameInfo: audioInfo->frameInfos ) {
 			auto _ = audioInfo->ADTSHeader( frameInfo.second + 7 );
@@ -1081,7 +1081,7 @@ D( "----------------------------------- frame #", frameCount++ );
 	}
 	
 	UI8
-	SingleChannelGGO( BitReader& br ) {
+	SingleChannelGGO( BitReader& br ) const {
 		br.Read( 4 );	//	element ID
 		auto $ = br._;
 		auto globalGain = br.Read( 8 );
@@ -1091,7 +1091,7 @@ D( "----------------------------------- frame #", frameCount++ );
 		return $;
 	}
 	pair< UI8, UI8 >
-	ChannelPairGGO( BitReader& br ) {
+	ChannelPairGGO( BitReader& br ) const {
 		br.Read( 4 );	//	element ID
 		ICS ics1;
 		ICS ics2;
@@ -1124,7 +1124,7 @@ D( "----------------------------------- frame #", frameCount++ );
 		return $;
 	}
 	vector< UI8 >
-	GlobalGainOffsets( const pair< UI8, UI8 >& frameInfo ) {
+	GlobalGainOffsets( const pair< UI8, UI8 >& frameInfo ) const {
  		vector< UI8 > $;
 		BitReader	br( raw.data() + frameInfo.first );
 		while ( br._ < frameInfo.second * 8 ) {

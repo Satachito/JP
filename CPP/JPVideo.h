@@ -2,7 +2,6 @@
 //	2022- Written by Satoru Ogura. (C)SliP LLC, Tokyo.
 
 #include	"JP.h"
-using namespace JP;
 
 #define	AVC_NAL_UNIT_TYPE_UNSPECIFIED                       0
 #define	AVC_NAL_UNIT_TYPE_CODED_SLICE_OF_NON_IDR_PICTURE    1

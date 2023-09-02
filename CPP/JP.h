@@ -142,10 +142,16 @@ In() {
 }
 
 inline auto
+Write( int fd, UI1 const* $, UI1 const* _ ) {
+	while ( $ < _ ) $ += X( write( fd, $, _ - $ ) );
+}
+inline auto
+Write( int fd, UI1 const* $, UI8 _ ) {
+	Write( fd, $, $ + _ );
+}
+inline auto
 Write( int fd, vector< UI1 > const& $ ) {
-	auto	head = $.data();
-	auto	tail = head + $.size();
-	while ( head < tail ) head += X( write( fd, head, tail - head ) );
+	Write( fd, $.data(), $.size() );
 }
 inline auto
 Out( vector< UI1 > const& $ ) {
@@ -523,7 +529,7 @@ HexStr( UI1 $ ) {
 	return string( _ );
 }
 inline auto
-EncodeHex( UI1* $, UI8 _ ) {
+EncodeHex( UI1 const* $, UI8 _ ) {
 	return accumulate(
 		$
 	,	$ + _

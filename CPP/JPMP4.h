@@ -189,14 +189,14 @@ Atom {
 		UI8	size = Size();
 		if ( size < 4294967296 ) {
 			size = Swap4( (UI4)size );
-			::Write( fd, &size, 4 );
-			::Write( fd, &type, 4 );
+			::Write( fd, (UI1*)&size, 4 );
+			::Write( fd, (UI1*)&type, 4 );
 		} else {
 			UI4	one = Swap4( 1 );
-			::Write( fd, &one, 4 );
-			::Write( fd, &type, 4 );
+			::Write( fd, (UI1*)&one, 4 );
+			::Write( fd, (UI1*)&type, 4 );
 			size = Swap8( size );
-			::Write( fd, &size, 8 );
+			::Write( fd, (UI1*)&size, 8 );
 		}
 		::Write( fd, &$[ 0 ], $.size() );
 		for ( auto $: children ) $->Write( fd );
@@ -528,8 +528,20 @@ DumpSkelton( Atom* $, ostream& s, UI8 level ) {
 inline void		Dump( Atom* $, ostream& s, unsigned long& IV_Size, UI8 level );
 inline void		Dump( const vector< Atom* >& $, ostream& s, unsigned long& IV_Size, UI8 level = 0 ) { for ( auto $ : $ ) Dump( $, s, IV_Size, level ); }
 
-inline string	EncodeHex( Atom* $, UI8 start, UI8 size ) { return EncodeHex( &$->$[ start ], size ); }
-inline string	EncodeHexLF16( Atom* $, UI8 start, UI8 size ) { return EncodeHexLF16( &$->$[ start ], size ); }
+inline string
+EncodeHex( Atom* $, UI8 start, UI8 size ) { return EncodeHex( &$->$[ start ], size ); }
+
+inline string
+EncodeHexLF16( Atom* $, UI8 start, UI8 size ) {
+	auto v = string();
+	while ( size > 16 ) {
+		v += EncodeHex( $->$.data() + start, size ) + '\n';
+		start += 16;
+		size -= 16;
+	}
+	if ( size ) v += EncodeHex( $->$.data() + start, size ) + '\n';
+	return v;
+}
 
 inline void
 Dump( Atom* $, ostream& s, unsigned long& IV_Size, UI8 level ) {
@@ -1297,14 +1309,14 @@ Box {
 		UI8	size = Size();
 		if ( size < 4294967296 ) {
 			size = Swap4( (UI4)size );
-			::Write( fd, &size, 4 );
-			::Write( fd, &type, 4 );
+			::Write( fd, (UI1*)&size, 4 );
+			::Write( fd, (UI1*)&type, 4 );
 		} else {
 			UI4	one = Swap4( 1 );
-			::Write( fd, &one, 4 );
-			::Write( fd, &type, 4 );
+			::Write( fd, (UI1*)&one, 4 );
+			::Write( fd, (UI1*)&type, 4 );
 			size = Swap8( size );
-			::Write( fd, &size, 8 );
+			::Write( fd, (UI1*)&size, 8 );
 		}
 		::Write( fd, data );
 		for ( auto $: children ) $.Write( fd );
