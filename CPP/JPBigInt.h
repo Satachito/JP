@@ -73,24 +73,74 @@ AddOneInplace( vector< I >& $, UI8 _, I a ) {
 };
 
 template < typename I > inline vector< I >
-Add( vector< I > $, vector< I > const& _ ) {
+Not( vector< I > $ ) {
 	static_assert( is_unsigned< I >::value, "eh?");
 
-	if ( $.size() < _.size() ) return Add( _, $ );
-
-	bool carry = false;
-	UI8 _$ = 0;
-	while ( _$ < _.size() ) {
-		auto A = _[ _$ ] + ( carry ? 1 : 0 );
-		$[ _$ ] += A;
-		carry = $[ _$++ ] < A;
-	}
-	while ( carry && _$ < $.size() ) carry = ++$[ _$++ ] == 0;
-	if ( carry ) $.push_back( 1 );
+	auto _ = $.size();
+	$.resize( _ );
+	while ( _-- ) $[ _ ] = ~$[ _ ];
+	while ( !$.empty() && $.back() == 0 ) $.pop_back();
 	return $;
 }
 
-template < typename I > inline auto	//	p must be greater than q
+template < typename I > inline vector< I >
+And( vector< I > const& $, vector< I > const& _ ) {
+	static_assert( is_unsigned< I >::value, "eh?");
+
+	auto _And = []( vector< I > $, vector< I > const& _ ) {
+		auto _$ = _.size();
+		$.resize( _$ );
+		while ( _$-- ) $[ _$ ] &= _[ _$ ];
+		while ( !$.empty() && $.back() == 0 ) $.pop_back();
+		return $;
+	};
+	return GEL( $.size(), _.size() ) < 0 ? _And( _, $ ) : _And( $, _ );
+}
+
+template < typename I > inline vector< I >
+Or( vector< I > $, vector< I > const& _ ) {
+	static_assert( is_unsigned< I >::value, "eh?");
+
+	auto _Or = []( vector< I > $, vector< I > const& _ ) {
+		auto _$ = _.size();
+		while ( _$-- ) $[ _$ ] |= _[ _$ ];
+		return $;
+	};
+	return GEL( $.size(), _.size() ) < 0 ? _Or( _, $ ) : _Or( $, _ );
+}
+
+template < typename I > inline vector< I >
+Xor( vector< I > $, vector< I > const& _ ) {
+	static_assert( is_unsigned< I >::value, "eh?");
+
+	auto _Xor = []( vector< I > $, vector< I > const& _ ) {
+		auto _$ = _.size();
+		while ( _$-- ) $[ _$ ] ^= _[ _$ ];
+		return $;
+	};
+	return GEL( $.size(), _.size() ) < 0 ? _Xor( _, $ ) : _Xor( $, _ );
+}
+
+template < typename I > inline vector< I >
+Add( vector< I > $, vector< I > const& _ ) {
+	static_assert( is_unsigned< I >::value, "eh?");
+
+	auto _Add = []( vector< I > $, vector< I > const& _ ) {
+		bool carry = false;
+		UI8 _$ = 0;
+		while ( _$ < _.size() ) {
+			auto A = _[ _$ ] + ( carry ? 1 : 0 );
+			$[ _$ ] += A;
+			carry = $[ _$++ ] < A;
+		}
+		while ( carry && _$ < $.size() ) carry = ++$[ _$++ ] == 0;
+		if ( carry ) $.push_back( 1 );
+		return $;
+	};
+	return GEL( $.size(), _.size() ) < 0 ? _Add( _, $ ) : _Add( $, _ );
+}
+
+template < typename I > inline auto	//	$ must be greater than _
 Sub( vector< I > $, vector< I > const& _ ) {
 	static_assert( is_unsigned< I >::value, "eh?" );
 

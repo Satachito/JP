@@ -574,7 +574,6 @@ Sign( I _ ) {
 
 template < typename I > inline auto
 GEL( I p, I q ) {
-	static_assert( is_unsigned< I >::value, "eh?");
 	return p == q
 	?	0
 	:	p < q ? -1 : 1
@@ -597,5 +596,17 @@ NumLeadingZeroBits( I _ ) {
 		$++;
 	}
 	return $;
+}
+
+template < typename UI, typename F > void
+Combination( UI S, UI E, UI N, F f, vector< UI > $ ) {
+	switch ( N ) {
+	case 1	:
+		for ( UI _ = S; _ < E; _++ ) f( Append( $, _ ) );
+		break;
+	default	:
+		for ( UI _ = S; _ < E - N + 1; _++ ) Combination( _ + 1, E, N - 1, f, Append( $, _ ) );
+		break;
+	}
 }
 
