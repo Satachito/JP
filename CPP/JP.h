@@ -37,7 +37,7 @@ _A( bool $, string const& _, string const& file, int line ) {
 #endif
 
 //	UNIX UNDER ZERO ERROR
-template < typename T > inline auto	//	Functions such as read and write returns size_t value.
+template < typename T > auto	//	Functions such as read and write returns size_t value.
 _X( T $, string const& _, string const& file, int line ) {
 	if ( $ < 0 ) {
 		cerr << file + ':' + to_string( line ) + ':' + strerror( errno ) + ':' + _ << endl;
@@ -48,7 +48,7 @@ _X( T $, string const& _, string const& file, int line ) {
 #define X( $ ) _X( $, #$, __FILE__, __LINE__ )
 
 //	NULL EXCEPTION
-template < typename T > inline auto
+template < typename T > auto
 _N( T* $, string const& _, string const& file, int line ) {
 	if ( !$ ) {
 		cerr << file + ':' + to_string( line ) + ':' + _ << endl;
@@ -60,16 +60,22 @@ _N( T* $, string const& _, string const& file, int line ) {
 
 #define	THROW	throw string( __FILE__ ) + ":" + to_string( __LINE__ )
 
-template < typename T, typename F > inline auto
+template < typename T, typename F > auto
 Apply( vector< T > const& _, F f ) {
 	vector< decltype( f( *_.begin() ) ) > $;
 	for ( auto& _: _ ) $.emplace_back( f( _ ) );
 	return $;
 }
 
-template < typename T > inline auto
+template < typename T > auto
 Includes( vector< T > const& $, T const& _ ) {
 	return find( $.begin(), $.end(), _ ) != $.end();
+}
+
+template < typename T > vector< T >
+Append( vector< T > $, T const& _ ) {
+	$.push_back( _ );
+	return $;
 }
 
 typedef	uint8_t		UI1;
@@ -122,7 +128,7 @@ static_assert(
 ,	"The return type of myFunction should be UI8"
 );
 
-template < typename I > inline auto
+template < typename I > auto
 UniformRandomInt( I l = 0, I h = 1 ) {
 	static	mt19937_64 $( (std::random_device())() );
 	return	uniform_int_distribution< I >( l, h - 1 )( $ );
@@ -564,7 +570,7 @@ EncodeDouble( double _ ) {
 	return $;
 }
 
-template < typename I > inline auto
+template < typename I > auto
 Sign( I _ ) {
 	return _ == 0
 	?	0
@@ -572,7 +578,7 @@ Sign( I _ ) {
 	;
 }
 
-template < typename I > inline auto
+template < typename I > auto
 GEL( I p, I q ) {
 	return p == q
 	?	0
@@ -580,7 +586,7 @@ GEL( I p, I q ) {
 	;
 }
 
-template < typename I > inline auto
+template < typename I > auto
 NumLeadingZeroBits( I _ ) {
 	static_assert( is_unsigned< I >::value, "eh?");
 	constexpr UI8 N_BITS_PER_I = sizeof( I ) * 8;
