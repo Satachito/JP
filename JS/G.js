@@ -35,9 +35,6 @@ export const
 Norm			= _ => Math.sqrt( Dot( _, _ ) )
 
 export const
-Transpose		= _ => _[ 0 ].map( ( __, d ) => _.map( _ => _[ d ] ) )
-
-export const
 BBox			= ( _, ...$ ) => $.reduce(
 	( $$, $ ) => $.map(
 		( $, _ ) => (
