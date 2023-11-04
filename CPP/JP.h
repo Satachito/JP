@@ -604,14 +604,30 @@ NumLeadingZeroBits( I _ ) {
 	return $;
 }
 
+
+template < typename T > struct
+Chain {
+	T		_;
+	Chain*	$;
+	Chain( const T& _, Chain* $ ) : _( _ ), $( $ ) {}
+};
+
 template < typename UI, typename F > void
-Combination( UI S, UI E, UI N, F f, vector< UI > $ ) {
-	switch ( N ) {
+Combination( UI N, UI R, F f, UI S = 0, Chain< UI >* $ = 0 ) {
+	switch ( R ) {
+	case 0	:
+		throw "eh?";
 	case 1	:
-		for ( UI _ = S; _ < E; _++ ) f( Append( $, _ ) );
+		for ( UI _ = S; _ < N; _++ ) {
+			Chain< UI > chain( _, $ );
+			f( &chain );
+		}
 		break;
 	default	:
-		for ( UI _ = S; _ < E - N + 1; _++ ) Combination( _ + 1, E, N - 1, f, Append( $, _ ) );
+		for ( UI _ = S; _ < N - R + 1; _++ ) {
+			Chain< UI > chain( _, $ );
+			Combination( N, R - 1, f, _ + 1, &chain );
+		}
 		break;
 	}
 }
