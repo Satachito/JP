@@ -1,0 +1,153 @@
+<canvas id=CANVAS	width=820 height=820></canvas>
+
+<script type=module>
+
+import	{ Mul, Div, Add, Near, Sub, BezierPixels, LinePixels, PointsOfIntersectionByPixels } from './G.js'
+
+const
+b1 = [ [ 0, 0 ], [ 150, 0 ], [ 150, 200 ], [ 0, 200 ] ]
+const
+b2 = [ [ 200, 0 ], [ 50, 0 ], [ 50, 200 ], [ 200, 200 ] ]
+const
+l1 = [ [ 100, 0 ], [ 100, 200 ] ]
+const
+l2 = [ [ 0, 100 ], [ 200, 100 ] ]
+
+const
+target = []
+
+const
+c2D = CANVAS.getContext( '2d' )
+
+const
+FSD = $ => c2D.fillRect( Math.round( $[ 0 ] ) * 4 - 2, Math.round( $[ 1 ] ) * 4 - 2, 4, 4 )
+
+const
+DrawBezier = ( [ s, p, q, e ] ) => {
+	c2D.beginPath()
+	c2D.moveTo( ...s.map( $ => $ * 4 ) )
+	c2D.bezierCurveTo( ...p.map( $ => $ * 4 ), ...q.map( $ => $ * 4 ), ...e.map( $ => $ * 4 ) )
+	c2D.strokeStyle = 'yellow'
+	c2D.stroke()
+	c2D.strokeStyle = 'blue'
+	Grip( s )
+	Grip( p )
+	Grip( q )
+	Grip( e )
+}
+
+const
+DrawLine = ( [ s, e ] ) => {
+	c2D.beginPath()
+	c2D.moveTo( ...Mul( s, 4 ) )
+	c2D.moveTo( ...Mul( e, 4 ) )
+	c2D.strokeStyle = 'yellow'
+	c2D.stroke()
+	c2D.strokeStyle = 'blue'
+	Grip( s )
+	Grip( e )
+}
+
+const
+Grip = $ => c2D.strokeRect( Math.round( $[ 0 ] ) * 4 - 3, Math.round( $[ 1 ] ) * 4 - 3, 6, 6 )
+
+const
+ReducedCP = ( p, q ) => {
+	const	$ = PointsOfIntersectionByPixels( p, q )
+	if ( !$.length ) return $
+
+	const	dups = []
+	let		draft = [ $.length - 1, void 0 ]
+	let _ = $.length - 1
+	while ( _-- ) {
+		const absH = Math.abs( $[ _ + 1 ][ 0 ] - $[ _ ][ 0 ] )
+		const absV = Math.abs( $[ _ + 1 ][ 1 ] - $[ _ ][ 1 ] )
+	//	if ( absH === 0 && absV === 0 ) throw 'eh?'
+		absH <= 1 && absV <= 1 
+		?	draft[ 1 ] = _
+		:	(	draft[ 1 ] !== void 0 && dups.push( draft )
+			,	draft = [ _, void 0 ]
+			)
+	}
+	draft[ 1 ] !== void 0 && dups.push( draft )
+
+	if ( !dups.length ) return $
+
+	dups.forEach(	//	Reversed order
+		dup => $.splice(
+			dup[ 1 ]
+		,	dup[ 0 ] + 1
+		,	Div( $.slice( dup[ 1 ], dup[ 0 ] + 1 ).reduce( ( $, _ ) => Add( $, _ ), [ 0, 0 ] ), dup[ 0 ] + 1 - dup[ 1 ] )
+		)
+	)
+
+	return $
+}
+
+const
+Draw = () => {
+console.log( 'Draw' )
+	const b1D = BezierPixels( b1 )
+	const b2D = BezierPixels( b2 )
+	const l1D = LinePixels( l1 )
+	const l2D = LinePixels( l2 )
+
+//console.log( 'b1b2' )
+	const b1b2 = ReducedCP( b1D, b2D )
+//console.log( 'l1l2' )
+	const l1l2 = ReducedCP( l1D, l2D )
+//console.log( 'b1l1' )
+	const b1l1 = ReducedCP( b1D, l1D )
+//console.log( 'b1l2' )
+	const b1l2 = ReducedCP( b1D, l2D )
+//console.log( 'b2l1' )
+	const b2l1 = ReducedCP( b2D, l1D )
+//console.log( 'b2l2' )
+	const b2l2 = ReducedCP( b2D, l2D )
+
+	c2D.clearRect( 0, 0, CANVAS.width, CANVAS.height )
+	c2D.save()
+	c2D.translate( 10, 10 )
+
+	c2D.fillStyle = 'black'
+	b1D.forEach( $ => FSD( $ ) )
+	b2D.forEach( $ => FSD( $ ) )
+	l1D.forEach( $ => FSD( $ ) )
+	l2D.forEach( $ => FSD( $ ) )
+
+	DrawBezier( b1 )
+	DrawBezier( b2 )
+	DrawLine( l1 )
+	DrawLine( l2 )
+
+	c2D.fillStyle = 'red'
+	b1b2.forEach( $ => FSD( $ ) )
+	l1l2.forEach( $ => FSD( $ ) )
+	b1l1.forEach( $ => FSD( $ ) )
+	b1l2.forEach( $ => FSD( $ ) )
+	b2l1.forEach( $ => FSD( $ ) )
+	b2l2.forEach( $ => FSD( $ ) )
+
+	c2D.restore()
+}
+Draw()
+
+CANVAS.onmousedown = ev => {
+	const _ = [ ( ev.offsetX - 10 ) / 4, ( ev.offsetY - 10 ) / 4 ]
+
+	b1.forEach( $ => Near( $, _ ) && target.push( $ ) )
+	b2.forEach( $ => Near( $, _ ) && target.push( $ ) )
+	l1.forEach( $ => Near( $, _ ) && target.push( $ ) )
+	l2.forEach( $ => Near( $, _ ) && target.push( $ ) )
+}
+
+CANVAS.onmousemove = ev => {
+	target.forEach( $ => ( $[ 0 ] = Math.round( ( ev.offsetX - 10 ) / 4 ), $[ 1 ] = Math.round( ( ev.offsetY - 10 ) / 4 ) ) )
+	target.length && Draw()
+}
+
+CANVAS.onmouseup = ev => {
+	target.length = 0
+}
+
+</script>

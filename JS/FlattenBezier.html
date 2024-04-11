@@ -1,0 +1,43 @@
+<input	id=RANGE	type=range min=1 value=1 max=100>
+<br>
+<canvas id=CANVAS	width=420 height=420></canvas>
+
+<script type=module>
+
+import	{ FlattenBezier } from './G.js'
+
+const b = [ [ 0, 0 ], [ 400, 0 ], [ 400, 400 ], [ 0, 400 ] ]
+
+const c2D = CANVAS.getContext( '2d' )
+
+const
+DrawBezier = ( [ s, p, q, e ] ) => {
+	c2D.beginPath()
+	c2D.moveTo( ...s )
+	c2D.bezierCurveTo( ...p, ...q, ...e )
+	c2D.stroke()
+}
+
+const
+Draw = () => {
+	c2D.clearRect( 0, 0, CANVAS.width, CANVAS.height )
+	c2D.save()
+	c2D.translate( 10, 10 )
+//
+	c2D.strokeStyle = 'black'
+	DrawBezier( b )
+	const _ = FlattenBezier( b, RANGE.value * RANGE.value )
+	c2D.beginPath()
+	c2D.moveTo( ...b[ 0 ] )
+	_.forEach( $ => c2D.lineTo( ...$ ) )
+	c2D.strokeStyle = 'red'
+	c2D.stroke()
+//
+	c2D.restore()
+}
+
+Draw()
+
+RANGE.oninput = $ => Draw()
+
+</script>

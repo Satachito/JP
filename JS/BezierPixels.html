@@ -1,0 +1,67 @@
+<canvas id=CANVAS	width=420 height=420></canvas>
+
+<script type=module>
+
+import	{ EQ, Mul, BezierPixels } from './G.js'
+
+const b = [ [ 0, 50 ], [ 100, 0 ], [ 100, 100 ], [ 0, 50 ] ]
+
+const c2D = CANVAS.getContext( '2d' )
+
+const
+DrawBezier = ( [ s, p, q, e ] ) => {
+	c2D.beginPath()
+	c2D.moveTo( ...s )
+	c2D.bezierCurveTo( ...p, ...q, ...e )
+	c2D.stroke()
+}
+
+const
+FSD = $ => c2D.fillRect( Math.round( $[ 0 ] ) * 4 - 2, Math.round( $[ 1 ] ) * 4 - 2, 4, 4 )
+
+const
+Draw = () => {
+	c2D.clearRect( 0, 0, CANVAS.width, CANVAS.height )
+	c2D.save()
+	c2D.translate( 10, 10 )
+
+	FSD( b[ 0 ] )
+	FSD( b[ 3 ] )
+	const _ = BezierPixels( b )
+	_.forEach( $ => FSD( $ ) )
+for ( let i = 1; i < _.length; i++ ) if ( EQ( _[ i ], _[ i - 1 ] ) ) console.error( i, _[ i ], _[ i - 1 ] )
+
+	c2D.strokeStyle = 'yellow'
+	DrawBezier( b.map( $ => Mul( $, 4 ) ) )
+
+	c2D.restore()
+}
+
+const
+Test = () => {
+	const
+	Log = ( $, _ ) => {
+		console.log( 'BezierPixels( ' + JSON.stringify( $ ) + ' ):' + JSON.stringify( _ ) )
+		console.log( JSON.stringify( BezierPixels( $ ) ) )
+	}
+	//	A
+	Log( [ [ 0, 0 ], [ 0, 0 ], [ 0, 0 ], [ 0, 0 ] ], [] )
+	//	B
+	Log( [ [ 0, 0 ], [ 0, 0 ], [ 0, 0 ], [ 1, 1 ] ], [] )
+	//	C
+	Log( [ [ 0, 0 ], [ 1, 1 ], [ 1, 1 ], [ 1, 1 ] ], [] )
+	//	D
+	Log( [ [ 0, 0 ], [ 1, 1 ], [ 1, 1 ], [ 2, 2 ] ], [ [ 1, 1 ] ] )
+	//	E
+	Log( [ [ 0, 0 ], [ 1, 1 ], [ 1, 1 ], [ 3, 3 ] ], [ [ 1, 1 ], [ 2, 2 ] ] )
+	//	F
+	Log( [ [ 0, 0 ], [ 2, 2 ], [ 2, 2 ], [ 3, 3 ] ], [ [ 1, 1 ], [ 2, 2 ] ] )
+	//	G:1
+	Log( [ [ 0, 0 ], [ 2, 2 ], [ 2, 2 ], [ 4, 4 ] ], [ [ 1, 1 ], [ 2, 2 ], [ 3, 3 ] ] )
+	//	G:2
+	Log( [ [ 0, 0 ], [ 0, 0 ], [ 4, 4 ], [ 4, 4 ] ], [ [ 1, 1 ], [ 2, 2 ], [ 3, 3 ] ] )
+}
+CANVAS.onclick = () => Test()
+Draw()
+
+</script>

@@ -1,0 +1,50 @@
+<input	id=RANGE	type=range min=0 value=50 max=100>
+<canvas id=CANVAS	width=420 height=420></canvas>
+
+<script type=module>
+
+import	{ DivideBezier, FindBezierT } from './G.js'
+
+const b = [ [ 0, 200 ], [ 400, 0 ], [ 400, 400 ], [ 0, 200 ] ]
+
+const c2D = CANVAS.getContext( '2d' )
+
+const
+DrawBezier = ( [ s, p, q, e ] ) => {
+	c2D.beginPath()
+	c2D.moveTo( ...s )
+	c2D.lineTo( ...p )
+	c2D.moveTo( ...e )
+	c2D.lineTo( ...q )
+	c2D.moveTo( ...s )
+	c2D.bezierCurveTo( ...p, ...q, ...e )
+	c2D.stroke()
+}
+
+const
+Draw = () => {
+	c2D.clearRect( 0, 0, CANVAS.width, CANVAS.height )
+	c2D.save()
+	c2D.translate( 10, 10 )
+	const _ = DivideBezier( b, RANGE.value / 100 )
+	c2D.strokeStyle = 'red'
+	DrawBezier( [ b[ 0 ], ..._.slice( 0, 3 ) ] )
+	c2D.strokeStyle = 'blue'
+	DrawBezier( [ ..._.slice( 2, 5 ), b[ 3 ] ] )
+	c2D.restore()
+}
+
+Draw()
+
+RANGE.oninput = ev => Draw()
+
+CANVAS.onclick = ev => {
+	const _ = FindBezierT( [ ev.offsetX - 10, ev.offsetY - 10 ], b )
+	console.log( _ )
+	_ && (
+		RANGE.value = _ * 100
+	,	Draw()
+	)
+}
+
+</script>
