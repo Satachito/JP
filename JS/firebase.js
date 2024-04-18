@@ -50,8 +50,8 @@ let	analystics
 let	auth
 let	db
 let	storage
-let	ThenCB = ( tag, email ) => {}
-let	CatchCB = ( tag, er ) => console.log( tag, er )
+let	ThenCB
+let	CatchCB
 
 export const
 User							= ()	=> auth.currentUser
@@ -63,7 +63,7 @@ const
 TC = ( _, tag ) => _().then( _	=> ThenCB( tag, Email()	) ).catch( er => CatchCB( tag, er ) )
 
 export const
-InitializeApp = ( _, thenCB, catchCB ) => (
+InitializeApp = ( _, thenCB = ( tag, email ) => {}, catchCB = console.error ) => (
 	app			= initializeApp( _ )
 ,	analystics	= getAnalytics	( app )
 ,	auth		= getAuth		( app )
@@ -88,6 +88,8 @@ InitializeApp = ( _, thenCB, catchCB ) => (
 
 export const
 OnAuthStateChanged				= _ => onAuthStateChanged( auth, _ )
+export const
+GetIdToken						= () => getIdToken( User(), true )
 
 export const
 SignInWithGoogleRedirect		= () => signInWithRedirect( auth, new GoogleAuthProvider()		)	//	redirect されるのでここには来ない
@@ -102,10 +104,6 @@ export const
 SignInWithFacebookPopup			= () => TC( () => signInWithPopup( auth, new FacebookAuthProvider()		), 'signInWithPopup(Facebook)'	)
 export const
 SignInWithGitHubPopup			= () => TC( () => signInWithPopup( auth, new GitHubAuthProvider()		), 'signInWithPopup(GitHub)'		)
-
-export const
-GetIdToken						= () => TC( () => getIdToken( User(), true								), 'getIdToken'						)
-
 
 export const
 CreateUserWithEmailAndPassword	= ( email, password )	=> TC( () => createUserWithEmailAndPassword	( auth, email, password	), 'createUserWithEmailAndPassword'	)
