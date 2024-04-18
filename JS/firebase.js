@@ -99,11 +99,11 @@ export const
 SignInWithGitHubRedirect		= () => signInWithRedirect( auth, new GitHubAuthProvider()		)	//	redirect されるのでここには来ない
 
 export const
-SignInWithGooglePopup			= () => TC( () => signInWithPopup( auth, new GoogleAuthProvider()		), 'signInWithPopup(Google)'		)
+SignInWithGooglePopup			= () => TC( () => signInWithPopup( auth, new GoogleAuthProvider()	), 'signInWithPopup(Google)'	)
 export const
-SignInWithFacebookPopup			= () => TC( () => signInWithPopup( auth, new FacebookAuthProvider()		), 'signInWithPopup(Facebook)'	)
+SignInWithFacebookPopup			= () => TC( () => signInWithPopup( auth, new FacebookAuthProvider()	), 'signInWithPopup(Facebook)'	)
 export const
-SignInWithGitHubPopup			= () => TC( () => signInWithPopup( auth, new GitHubAuthProvider()		), 'signInWithPopup(GitHub)'		)
+SignInWithGitHubPopup			= () => TC( () => signInWithPopup( auth, new GitHubAuthProvider()	), 'signInWithPopup(GitHub)'	)
 
 export const
 CreateUserWithEmailAndPassword	= ( email, password )	=> TC( () => createUserWithEmailAndPassword	( auth, email, password	), 'createUserWithEmailAndPassword'	)
@@ -114,10 +114,11 @@ const
 TX = ( _, tag, email	) => _().then( ()	=> ThenCB( tag, email	) ).catch( er => CatchCB( tag, er ) )
 
 export const
-SendPasswordResetEmail			= email					=> TX( () => sendPasswordResetEmail	( auth, email					), 'sendPasswordResetEmail'			, email )
+SendPasswordResetEmail			= email					=> TX( () => sendPasswordResetEmail	( auth, email	), 'sendPasswordResetEmail'	, email )
 export const
-SendEmailVerification			= ( email = Email() )	=> TX( () => sendEmailVerification	( User()						), 'sendEmailVerification'			, email )
+SendEmailVerification			= ( email = Email() )	=> TX( () => sendEmailVerification	( User()		), 'sendEmailVerification'	, email )
 export const
-DeleteUser						= ( email = Email() )	=> TX( () => deleteUser				( User()						), 'deleteUser'						, email )
+DeleteUser						= ( email = Email() )	=> TX( () => deleteUser				( User()		), 'deleteUser'				, email )
 export const
-SignOut							= ( email = Email() )	=> TX( () => signOut				( auth							), 'signOut'						, email )
+SignOut							= ( email = Email() )	=> TX( () => signOut				( auth			), 'signOut'				, email )
+
