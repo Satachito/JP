@@ -9,7 +9,6 @@
 #include	<iostream>
 #include	<string>
 #include	<vector>
-#include	<map>
 #include	<stack>
 #include	<numeric>
 #include	<ctime>
@@ -67,16 +66,100 @@ Apply( vector< T > const& _, F f ) {
 	return $;
 }
 
-template < typename T > auto
-Includes( vector< T > const& $, T const& _ ) {
-	return find( $.begin(), $.end(), _ ) != $.end();
-}
-
-template < typename T > vector< T >
-Append( vector< T > $, T const& _ ) {
-	$.push_back( _ );
+template < typename T >	auto
+operator+( const vector< T >& l, const vector< T >& r ) {
+	vector<T> $;
+	$.reserve( l.size() + r.size() );
+	$.insert( $.end(), l.begin(), l.end() );
+	$.insert( $.end(), r.begin(), r.end() );
 	return $;
 }
+
+template < typename Range, typename T > auto
+contains( const Range& range, const T& value ) {
+	return ranges::find( range, value ) != ranges::end( range );
+}
+
+template < typename T, typename F > auto
+filter( const vector< T >& vec, F func ) {
+	vector< T > $;
+	$.reserve( vec.size() );
+	for( const auto& _ : vec ) if( func( _ ) ) $.push_back( _ );
+	return $;
+}
+
+template < typename T, typename F > auto
+map( const vector< T >& vec, F func ) {
+	vector< decltype( func( declval< T >() ) ) > $;
+	$.reserve( vec.size() );
+	for( const auto& _ : vec ) $.push_back( func( _ ) );
+	return $;
+}
+
+template < typename T, typename F > auto
+mapWithIndex( const vector< T >& vec, F func ) {
+	vector< invoke_result_t< F, T, decltype( vec.size() ) > > $;
+	$.reserve( vec.size() );
+	for( size_t _ = 0; _ < vec.size(); ++_ ) $.push_back( func( vec[ _ ], _ ) );
+	return $;
+}
+
+template < typename T > auto
+sliceFrom( const vector< T >& vec, size_t from ) {
+	vector< T > $;
+	$.reserve( vec.size() - from );
+	for( size_t _ = from; _ < vec.size(); ++_ ) $.push_back( vec[ _ ] );
+	return $;
+}
+
+template < typename T > auto
+sliceTo( const vector< T >& vec, size_t to ) {
+	vector< T > $;
+	$.reserve( to );
+	for( size_t _ = 0; _ < to; ++_ ) $.push_back( vec[ _ ] );
+	return $;
+}
+////////////////////////////////////////////////////////////////
+
+inline auto
+string_char32( char32_t _ ) {
+
+	string $;
+
+	if ( 0xd800 <= _ && _ <= 0xdfff ) {		//	Surrogate area
+		$ += '?';
+	} else if ( _ <= 0x7F ) {
+		$ += static_cast<char>( _ );
+	} else if ( _ <= 0x7FF ) {
+		$ += static_cast<char>( 0b11000000 | ( _ >> 6) );
+		$ += static_cast<char>( 0b10000000 | ( _ & 0b00111111 ) );
+	} else if ( _ <= 0xFFFF ) {
+		$ += static_cast<char>( 0b11100000 | ( _ >> 12 ) );
+		$ += static_cast<char>( 0b10000000 | ( ( _ >> 6 ) & 0b00111111 ) );
+		$ += static_cast<char>( 0b10000000 | ( _ & 0b00111111 ) );
+	} else if ( _ <= 0x10FFFF ) {
+		$ += static_cast<char>( 0b11110000 | ( _ >> 18 ) );
+		$ += static_cast<char>( 0b10000000 | ( ( _ >> 12 ) & 0b00111111 ) );
+		$ += static_cast<char>( 0b10000000 | ( ( _ >> 6 ) & 0b00111111 ) );
+		$ += static_cast<char>( 0b10000000 | ( _ & 0b00111111 ) );
+	} else {
+		$ += '?';
+	}
+	return $;
+}
+
+inline auto
+string_char32s( const vector< char32_t >& char32s ) {
+	string $;
+	for( char32_t _ : char32s ) $ += string_char32( _ );
+	return $;
+}
+
+inline auto
+IsDigit( char32_t _ ) {
+	return u'0' <= _ && _ <= u'9';
+}
+
 
 typedef	uint8_t		UI1;
 typedef	uint16_t	UI2;
@@ -130,7 +213,7 @@ static_assert(
 
 template < typename I > auto
 UniformRandomInt( I l = 0, I h = 1 ) {
-	static	mt19937_64 $( (std::random_device())() );
+	static	mt19937_64 $( (random_device())() );
 	return	uniform_int_distribution< I >( l, h - 1 )( $ );
 }
 
@@ -299,10 +382,8 @@ BitReader {
 	}
 };
 
-typedef	UI4	UTF32;
-
 inline auto
-IsSpace( UTF32 _ ) {
+IsSpace( char32_t _ ) {
 	if ( _ <= ' ' ) return true;
 	switch ( _ ) {
 	case 0x1680: case 0x180e: case 0x2000:
@@ -315,7 +396,7 @@ IsSpace( UTF32 _ ) {
 }
 
 inline	auto
-UTF8( UTF32 _ ) {
+UTF8( char32_t _ ) {
 	vector< UI1 >	$;
 	if ( _ <= 0x7F) {
 		$.emplace_back( _ );
@@ -339,7 +420,7 @@ UTF8( UTF32 _ ) {
 }
 
 inline	auto
-UTF8( vector< UTF32 > const& _ ) {
+UTF8( vector< char32_t > const& _ ) {
 	string $;
 	for ( auto& _: _ ) $ += UTF8( _ );
 	return $;
@@ -364,7 +445,7 @@ Unicode( UI1Stream& stream ) {
 	if ( !stream.Avail() ) THROW;
 
 	UI1	_ = stream.Get();
-	if ( _ < 0x80 ) return (UTF32)_;
+	if ( _ < 0x80 ) return (char32_t)_;
 
 	_ <<= 1;
 	auto	wNumCont = 0;
@@ -372,7 +453,7 @@ Unicode( UI1Stream& stream ) {
 		wNumCont++;
 		_ <<= 1;
 	}
-	UTF32	$ = _ >> ( wNumCont + 1 );
+	char32_t	$ = _ >> ( wNumCont + 1 );
 
 	while ( wNumCont-- ) {
 		if ( !stream.Avail() ) THROW;
@@ -385,16 +466,16 @@ struct
 UnicodeReader {
 
 	UI8	index = 0;
-	vector< UTF32 >	_;
+	vector< char32_t >	_;
 
-	UTF32		ungot = 0;
+	char32_t		ungot = 0;
 	bool		unget = false;
 	UI1Stream	$;
 	UnicodeReader( string const& _ )
 	:	$( _ ) {
 	}
 	auto
-	UnGet( UTF32 _ ) {
+	UnGet( char32_t _ ) {
 		this->_.pop_back();
 		index--;
 		unget = true;
@@ -490,7 +571,7 @@ Shrink( string const& _ ) {
 };
 
 inline auto
-Digit( UTF32 _ ) {
+Digit( char32_t _ ) {
 	switch ( _ ) {
 	case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
 		return UI1( _ - '0' );
