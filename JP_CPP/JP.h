@@ -16,6 +16,9 @@
 #include	<random>
 #include	<algorithm>
 
+#include	<unordered_set>
+#include	<unordered_map>
+
 using namespace std;
 
 #include	<filesystem>
@@ -89,7 +92,7 @@ filter( const vector< T >& vec, F func ) {
 }
 
 template < typename T, typename F > auto
-map( const vector< T >& vec, F func ) {
+transform( const vector< T >& vec, F func ) {
 	vector< decltype( func( declval< T >() ) ) > $;
 	$.reserve( vec.size() );
 	for( const auto& _ : vec ) $.push_back( func( _ ) );
@@ -97,7 +100,7 @@ map( const vector< T >& vec, F func ) {
 }
 
 template < typename T, typename F > auto
-mapWithIndex( const vector< T >& vec, F func ) {
+transformWithIndex( const vector< T >& vec, F func ) {
 	vector< invoke_result_t< F, T, decltype( vec.size() ) > > $;
 	$.reserve( vec.size() );
 	for( size_t _ = 0; _ < vec.size(); ++_ ) $.push_back( func( vec[ _ ], _ ) );
@@ -153,6 +156,36 @@ string_char32s( const vector< char32_t >& char32s ) {
 	string $;
 	for( char32_t _ : char32s ) $ += string_char32( _ );
 	return $;
+}
+
+inline char32_t
+char32_string( string::iterator start, const string::iterator& end ) {
+	A( start < end );
+	char32_t _0 = *start++;
+	if( ( _0 & 0x80 ) == 0 ) return _0;
+
+	A( start < end );
+	char32_t _1 = *start++;
+	if(	( _0 & 0xE0 ) == 0xC0 ) return ( ( _0 & 0x1F ) << 6 )
+	|	( _1 & 0x3F )
+	;
+
+	A( start < end );
+	char32_t _2 = *start++;
+	if(	( _0 & 0xF0 ) == 0xE0 ) return ( ( _0 & 0x0F ) << 12 )
+	|	( ( _1 & 0x3F ) << 6 )
+	|	( _2 & 0x3F )
+	;
+
+	A( start < end );
+	char32_t _3 = *start++;
+	if( ( _0 & 0xF8 ) == 0xF0 ) return ( ( _0 & 0x07 ) << 18 )
+	|	( ( _1 & 0x3F ) << 12 )
+	|	( ( _2 & 0x3F ) << 6 )
+	|	( _3 & 0x3F )
+	;
+
+	throw string( __FILE__ ) + ":" + to_string( __LINE__ );
 }
 
 inline auto
