@@ -15,9 +15,13 @@
 #include	<sstream>
 #include	<random>
 #include	<algorithm>
+#include	<ranges>
 
 #include	<unordered_set>
 #include	<unordered_map>
+
+#include	<mutex>
+#include	<functional>
 
 using namespace std;
 
@@ -62,13 +66,6 @@ _N( T* $, string const& _, string const& file, int line ) {
 
 #define	THROW	throw string( __FILE__ ) + ":" + to_string( __LINE__ )
 
-template < typename T, typename F > auto
-Apply( vector< T > const& _, F f ) {
-	vector< decltype( f( *_.begin() ) ) > $;
-	for ( auto& _: _ ) $.emplace_back( f( _ ) );
-	return $;
-}
-
 template < typename T >	auto
 operator+( const vector< T >& l, const vector< T >& r ) {
 	vector<T> $;
@@ -78,50 +75,131 @@ operator+( const vector< T >& l, const vector< T >& r ) {
 	return $;
 }
 
-template < typename Range, typename T > auto
-contains( const Range& range, const T& value ) {
-	return ranges::find( range, value ) != ranges::end( range );
+template < ranges::range R, typename T > auto
+contains( R&& _, const T& t ) {
+	return ranges::contains( _, t );
 }
 
-template < typename T, typename F > auto
-filter( const vector< T >& vec, F func ) {
-	vector< T > $;
-	$.reserve( vec.size() );
-	for( const auto& _ : vec ) if( func( _ ) ) $.push_back( _ );
+template < ranges::range R > auto
+zipIndex( R&& _ ) {
+	return views::zip( _, views::iota( static_cast< size_t >( 0 ), ranges::size( _ ) ) );
+}
+
+template < ranges::range R, typename F > auto
+filter( R&& _, F f ) {
+    return _ | views::filter( f );
+}
+
+template < ranges::range R, invocable< ranges::range_reference_t< R >, size_t > F > auto
+project( R&& _, F f ) {
+    size_t index = 0;
+    return _ | views::transform(
+		[ & ]( auto&& $ ) mutable {
+			return f( $, index++ ); // Call the user-provided function 'f'
+	   }
+	);
+}
+
+template < ranges::range R, invocable< ranges::range_reference_t< R > > F > auto
+project( R&& _, F f ) { 
+    return _ | views::transform( f );
+}
+
+template< ranges::range R, typename U, invocable< U, ranges::range_reference_t< R >, size_t > F > auto
+reduce( R&& _, F f, U $ ) {
+	size_t index = 0;
+    for ( auto&& _ : _ ) $ = f( move( $ ), _, index++ );
 	return $;
 }
 
-template < typename T, typename F > auto
-transform( const vector< T >& vec, F func ) {
-	vector< decltype( func( declval< T >() ) ) > $;
-	$.reserve( vec.size() );
-	for( const auto& _ : vec ) $.push_back( func( _ ) );
+template< ranges::range R, typename U, invocable< U, ranges::range_reference_t< R > > F > auto
+reduce( R&& _, F f, U $ ) {
+	for( auto&& _ : _ ) $ = f( $, _ );
 	return $;
 }
 
-template < typename T, typename F > auto
-transformWithIndex( const vector< T >& vec, F func ) {
-	vector< invoke_result_t< F, T, decltype( vec.size() ) > > $;
-	$.reserve( vec.size() );
-	for( size_t _ = 0; _ < vec.size(); ++_ ) $.push_back( func( vec[ _ ], _ ) );
-	return $;
+template < ranges::range R > auto
+drop( R&& _, size_t from ) {
+	return _ | views::drop( from );
 }
 
-template < typename T > auto
-sliceFrom( const vector< T >& vec, size_t from ) {
-	vector< T > $;
-	$.reserve( vec.size() - from );
-	for( size_t _ = from; _ < vec.size(); ++_ ) $.push_back( vec[ _ ] );
-	return $;
+template < ranges::range R > auto
+take( R&& _, size_t to ) {
+	return _ | views::take( to );
 }
 
-template < typename T > auto
-sliceTo( const vector< T >& vec, size_t to ) {
-	vector< T > $;
-	$.reserve( to );
-	for( size_t _ = 0; _ < to; ++_ ) $.push_back( vec[ _ ] );
-	return $;
+template < ranges::range R, typename F > auto
+some( R&& _, F f ) {
+	return ranges::any_of( _, f );
 }
+
+template < ranges::range R, typename F > auto
+every( R&& _, F f ) {
+	return ranges::all_of( _, f );
+}
+
+template< typename T > struct
+Vector {
+	vector< T >	$;
+	Vector() = default;
+	Vector( initializer_list< T > $ ) : $( $ ) {}
+
+	auto
+	begin()	const { return $.begin(); }
+	auto
+	end()	const { return $.end()	; }
+	size_t
+	size()	const { return $.size()	; }
+	const T&
+	operator[]( size_t _ ) const { return $[ _ ]; }
+	T&
+	operator[]( size_t i ) { return $[ i ]; }
+
+	template < typename F > auto
+	filter( F f ) const {
+		return Vector< T >( $ | views::filter( f ) );
+	}
+
+	template< typename U, invocable< T, size_t > F > auto
+	project( F f ) const {
+		return Vector< U >( ::project( $, f ) );
+	}
+
+	template< typename U, invocable< T > F > auto
+	project( F f ) const {
+		return Vector< U >( ::project( $, f ) );
+	}
+
+	template< typename U, invocable< T, size_t > F > auto
+	reduce( F f, U $ ) {
+		return ::reduce( $, f );
+	}
+
+	template< typename U, invocable< T > F > auto
+	reduce( F f, U $ ) {
+		return ::reduce( $, f );
+	}
+	
+	auto
+	drop( size_t from ) {
+		return Vector< T >( $ | views::drop( from ) );
+	}
+
+	auto
+	take( size_t to ) {
+		return Vector< T >( $ | views::take( to ) );
+	}
+
+	template< invocable< T > F > auto
+	some( F f ) {
+		return ranges::any_of( $, f );
+	}
+
+	template< invocable< T > F > auto
+	every( F f ) {
+		return ranges::all_of( $, f );
+	}
+};
 ////////////////////////////////////////////////////////////////
 
 inline auto
@@ -158,27 +236,28 @@ string_char32s( const vector< char32_t >& char32s ) {
 	return $;
 }
 
-inline char32_t
-char32_string( string::iterator start, const string::iterator& end ) {
-	A( start < end );
-	char32_t _0 = *start++;
+template< typename IT > char32_t
+char32_string( IT& it, const IT& end ) {
+
+	A( it < end );
+	char32_t _0 = static_cast< unsigned char >( *it++ );
 	if( ( _0 & 0x80 ) == 0 ) return _0;
 
-	A( start < end );
-	char32_t _1 = *start++;
+	A( it < end );
+	char32_t _1 = static_cast< unsigned char >( *it++ );
 	if(	( _0 & 0xE0 ) == 0xC0 ) return ( ( _0 & 0x1F ) << 6 )
 	|	( _1 & 0x3F )
 	;
 
-	A( start < end );
-	char32_t _2 = *start++;
+	A( it < end );
+	char32_t _2 = static_cast< unsigned char >( *it++ );
 	if(	( _0 & 0xF0 ) == 0xE0 ) return ( ( _0 & 0x0F ) << 12 )
 	|	( ( _1 & 0x3F ) << 6 )
 	|	( _2 & 0x3F )
 	;
 
-	A( start < end );
-	char32_t _3 = *start++;
+	A( it < end );
+	char32_t _3 = static_cast< unsigned char >( *it++ );
 	if( ( _0 & 0xF8 ) == 0xF0 ) return ( ( _0 & 0x07 ) << 18 )
 	|	( ( _1 & 0x3F ) << 12 )
 	|	( ( _2 & 0x3F ) << 6 )
@@ -186,6 +265,76 @@ char32_string( string::iterator start, const string::iterator& end ) {
 	;
 
 	throw string( __FILE__ ) + ":" + to_string( __LINE__ );
+}
+
+template < typename IT > vector<char32_t>
+char32s_string( IT begin, IT end ) {
+	vector< char32_t > $;
+	while ( begin < end ) {
+		$.push_back( char32_string( begin, end ) );
+	}
+	return $;
+}
+inline vector< char32_t >
+char32s_string( const string& _ ) {
+	return char32s_string( _.begin(), _.end() );
+}
+
+inline vector< string >
+Split( const string& _ ) {
+
+	size_t start = 0;
+	size_t end = _.find( '\n' );
+
+	vector< string >	$;
+	while ( end != string::npos ) {
+		auto line = _.substr( start, end - start );
+		if ( !line.empty() ) $.push_back( line );
+		start = end + 1;
+		end = _.find( '\n', start );
+	}
+	auto line = _.substr( start );
+	if ( !line.empty() ) $.push_back( line );
+	return $;
+}
+
+inline bool	//	Excluding NO-BREAK SPACE i.e. a0, feff
+IsBreakingWhite( char32_t _ ) {
+	if( _ <= 0x20 ) return true;
+	if( 0x7f <= _ && _ < 0xA0 ) return true;
+	switch ( _ ) {
+	case 0x1680:
+	case 0x2000:
+	case 0x2001:
+	case 0x2002:
+	case 0x2003:
+	case 0x2004:
+	case 0x2005:
+	case 0x2006:
+	case 0x2007:
+	case 0x2008:
+	case 0x2009:
+	case 0x200A:
+	case 0x2028:
+	case 0x2029:
+	case 0x202F:
+	case 0x205F:
+	case 0x3000:
+		return true;
+	default:
+		return false;
+	}
+}
+
+inline bool
+IsAllBreakingWhite( const string& _ ) {
+	return all_of(
+		_.begin()
+	,	_.end()
+	,	[]( auto c ) {
+			return IsBreakingWhite( c );
+		}
+	);
 }
 
 inline auto
@@ -758,9 +907,9 @@ using namespace chrono;
 struct
 StopWatch {
 
-    using Clock		= high_resolution_clock;
-    using TimePoint	= time_point< Clock >;
-    using Duration	= duration< double >;
+	using Clock		= high_resolution_clock;
+	using TimePoint	= time_point< Clock >;
+	using Duration	= duration< double >;
 
 	string		title;
 	TimePoint	_;
