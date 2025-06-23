@@ -138,11 +138,18 @@ every( R&& _, F f ) {
 	return ranges::all_of( _, f );
 }
 
+template < ranges::range R, typename F > void
+apply( R&& _, F f ) {
+	for( const auto& _: _ ) f( _ );
+}
+
+
 template< typename T > struct
 Vector {
 	vector< T >	$;
 	Vector() = default;
 	Vector( initializer_list< T > $ ) : $( $ ) {}
+	Vector( const vector< T >& $ ) : $( $ ) {}
 
 	auto
 	begin()	const { return $.begin(); }
@@ -157,7 +164,7 @@ Vector {
 
 	template < typename F > auto
 	filter( F f ) const {
-		return Vector< T >( $ | views::filter( f ) );
+		return Vector< T >( ::filter( $, f ) );
 	}
 
 	template< typename U, invocable< T, size_t > F > auto
@@ -182,28 +189,33 @@ Vector {
 	
 	auto
 	drop( size_t from ) {
-		return Vector< T >( $ | views::drop( from ) );
+		return Vector< T >( ::drop( $, from ) );
 	}
 
 	auto
 	take( size_t to ) {
-		return Vector< T >( $ | views::take( to ) );
+		return Vector< T >( ::take( $, to ) );
 	}
 
 	template< invocable< T > F > auto
 	some( F f ) {
-		return ranges::any_of( $, f );
+		return ::some( $, f );
 	}
 
 	template< invocable< T > F > auto
 	every( F f ) {
-		return ranges::all_of( $, f );
+		return ::every( $, f );
+	}
+
+	template< invocable< T > F > void
+	apply( F f ) {
+		return ::apply( $, f );
 	}
 };
 ////////////////////////////////////////////////////////////////
 
 inline auto
-string_char32( char32_t _ ) {
+string_U( char32_t _ ) {
 
 	string $;
 
@@ -230,14 +242,14 @@ string_char32( char32_t _ ) {
 }
 
 inline auto
-string_char32s( const vector< char32_t >& char32s ) {
+string_Us( const vector< char32_t >& char32s ) {
 	string $;
-	for( char32_t _ : char32s ) $ += string_char32( _ );
+	for( char32_t _ : char32s ) $ += string_U( _ );
 	return $;
 }
 
 template< typename IT > char32_t
-char32_string( IT& it, const IT& end ) {
+U_string( IT& it, const IT& end ) {
 
 	A( it < end );
 	char32_t _0 = static_cast< unsigned char >( *it++ );
@@ -271,7 +283,7 @@ template < typename IT > vector<char32_t>
 char32s_string( IT begin, IT end ) {
 	vector< char32_t > $;
 	while ( begin < end ) {
-		$.push_back( char32_string( begin, end ) );
+		$.push_back( U_string( begin, end ) );
 	}
 	return $;
 }
@@ -339,7 +351,7 @@ IsAllBreakingWhite( const string& _ ) {
 
 inline auto
 IsDigit( char32_t _ ) {
-	return u'0' <= _ && _ <= u'9';
+	return U'0' <= _ && _ <= U'9';
 }
 
 
