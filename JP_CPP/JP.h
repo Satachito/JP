@@ -67,7 +67,7 @@ _N( T* $, string const& _, string const& file, int line ) {
 #define	THROW	throw string( __FILE__ ) + ":" + to_string( __LINE__ )
 
 template < typename T >	auto
-operator+( const vector< T >& l, const vector< T >& r ) {
+operator+( vector< T > const& l, vector< T > const& r ) {
 	vector<T> $;
 	$.reserve( l.size() + r.size() );
 	$.insert( $.end(), l.begin(), l.end() );
@@ -76,7 +76,7 @@ operator+( const vector< T >& l, const vector< T >& r ) {
 }
 
 template < ranges::range R, typename T > auto
-contains( R&& _, const T& t ) {
+contains( R&& _, T const& t ) {
 	return ranges::contains( _, t );
 }
 
@@ -140,7 +140,7 @@ every( R&& _, F f ) {
 
 template < ranges::range R, typename F > void
 apply( R&& _, F f ) {
-	for( const auto& _: _ ) f( _ );
+	for( auto const& _: _ ) f( _ );
 }
 
 
@@ -149,7 +149,7 @@ Vector {
 	vector< T >	$;
 	Vector() = default;
 	Vector( initializer_list< T > $ ) : $( $ ) {}
-	Vector( const vector< T >& $ ) : $( $ ) {}
+	Vector( vector< T > const& $ ) : $( $ ) {}
 
 	auto
 	begin()	const { return $.begin(); }
@@ -157,7 +157,7 @@ Vector {
 	end()	const { return $.end()	; }
 	size_t
 	size()	const { return $.size()	; }
-	const T&
+	T const&
 	operator[]( size_t _ ) const { return $[ _ ]; }
 	T&
 	operator[]( size_t i ) { return $[ i ]; }
@@ -242,14 +242,14 @@ string_U( char32_t _ ) {
 }
 
 inline auto
-string_Us( const vector< char32_t >& char32s ) {
+string_Us( vector< char32_t > const& char32s ) {
 	string $;
 	for( char32_t _ : char32s ) $ += string_U( _ );
 	return $;
 }
 
 template< typename IT > char32_t
-U_string( IT& it, const IT& end ) {
+U_string( IT& it, IT end ) {
 
 	A( it < end );
 	char32_t _0 = static_cast< unsigned char >( *it++ );
@@ -280,20 +280,22 @@ U_string( IT& it, const IT& end ) {
 }
 
 template < typename IT > vector<char32_t>
-char32s_string( IT begin, IT end ) {
+Us_string( IT begin, IT end ) {
 	vector< char32_t > $;
 	while ( begin < end ) {
 		$.push_back( U_string( begin, end ) );
 	}
 	return $;
 }
+
 inline vector< char32_t >
-char32s_string( const string& _ ) {
-	return char32s_string( _.begin(), _.end() );
+Us_string( string_view _ ) {
+	auto begin = _.begin();
+	return Us_string( begin, _.end() );
 }
 
 inline vector< string >
-Split( const string& _ ) {
+Split( string const& _ ) {
 
 	size_t start = 0;
 	size_t end = _.find( '\n' );
@@ -339,7 +341,7 @@ IsBreakingWhite( char32_t _ ) {
 }
 
 inline bool
-IsAllBreakingWhite( const string& _ ) {
+IsAllBreakingWhite( string const& _ ) {
 	return all_of(
 		_.begin()
 	,	_.end()
@@ -369,7 +371,7 @@ static_assert(
 		decltype( Swap2( declval< UI2 >() ) )
 	,	UI2
 	>
-,	"The return type of myFunction should be UI2"
+,	"The return type should be UI2"
 );
 
 inline	auto
@@ -381,7 +383,7 @@ static_assert(
 		decltype( Swap4( declval< UI4 >() ) )
 	,	UI4
 	>
-,	"The return type of myFunction should be UI4"
+,	"The return type should be UI4"
 );
 
 inline	auto
@@ -402,7 +404,7 @@ static_assert(
 		decltype( Swap8( declval< UI8 >() ) )
 	,	UI8
 	>
-,	"The return type of myFunction should be UI8"
+,	"The return type should be UI8"
 );
 
 template < typename I > auto
@@ -884,7 +886,7 @@ template < typename T > struct
 Chain {
 	T		_;
 	Chain*	$;
-	Chain( const T& _, Chain* $ ) : _( _ ), $( $ ) {}
+	Chain( T const& _, Chain* $ ) : _( _ ), $( $ ) {}
 	T&
 	Last() {
 		return $
