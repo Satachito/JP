@@ -251,7 +251,7 @@ V() {
 }
 
 template	< typename T >	vector< T >
-Sigmoid( const vector< T >& p ) {
+Sigmoid( vector< T > const& p ) {
 	vector< T >	v( p.size() );
 	for ( auto i = 0; i < p.size(); i++ ) {
 		auto w = exp( p[ i ] );
@@ -261,7 +261,7 @@ Sigmoid( const vector< T >& p ) {
 }
 
 template	< typename T >	Vector< T >
-Sigmoid( const vVector< T >& p ) {
+Sigmoid( vVector< T > const& p ) {
 	Vector< T >	v( p.n );
 	for ( auto i = 0; i < p.n; i++ ) {
 		auto w = exp( p[ i ] );
