@@ -80,14 +80,12 @@ contains( R&& _, T const& t ) {
 	return ranges::contains( _, t );
 }
 
-template < ranges::range R > auto
+template < ranges::input_range R > auto
 zipIndex( R&& _ ) {
-	return views::zip( _, views::iota( static_cast< size_t >( 0 ), ranges::size( _ ) ) );
-}
-
-template < ranges::range R, typename F > auto
-filter( R&& _, F f ) {
-    return _ | views::filter( f );
+	return views::zip(
+		forward< R >( _ )
+	,	views::iota( size_t( 0 ) )
+	);
 }
 
 template < ranges::range R, invocable< ranges::range_reference_t< R >, size_t > F > auto
@@ -114,18 +112,8 @@ reduce( R&& _, F f, U $ ) {
 
 template< ranges::range R, typename U, invocable< U, ranges::range_reference_t< R > > F > auto
 reduce( R&& _, F f, U $ ) {
-	for( auto&& _ : _ ) $ = f( $, _ );
+	for( auto&& _ : _ ) $ = f( move( $ ), _ );
 	return $;
-}
-
-template < ranges::range R > auto
-drop( R&& _, size_t from ) {
-	return _ | views::drop( from );
-}
-
-template < ranges::range R > auto
-take( R&& _, size_t to ) {
-	return _ | views::take( to );
 }
 
 template < ranges::range R, typename F > auto
@@ -143,75 +131,6 @@ apply( R&& _, F f ) {
 	for( auto const& _: _ ) f( _ );
 }
 
-
-template< typename T > struct
-Vector {
-	vector< T >	$;
-	Vector() = default;
-	Vector( initializer_list< T > $ ) : $( $ ) {}
-	Vector( vector< T > const& $ ) : $( $ ) {}
-
-	auto
-	begin()	const { return $.begin(); }
-	auto
-	end()	const { return $.end()	; }
-	size_t
-	size()	const { return $.size()	; }
-	T const&
-	operator[]( size_t _ ) const { return $[ _ ]; }
-	T&
-	operator[]( size_t i ) { return $[ i ]; }
-
-	template < typename F > auto
-	filter( F f ) const {
-		return Vector< T >( ::filter( $, f ) );
-	}
-
-	template< typename U, invocable< T, size_t > F > auto
-	project( F f ) const {
-		return Vector< U >( ::project( $, f ) );
-	}
-
-	template< typename U, invocable< T > F > auto
-	project( F f ) const {
-		return Vector< U >( ::project( $, f ) );
-	}
-
-	template< typename U, invocable< T, size_t > F > auto
-	reduce( F f, U $ ) {
-		return ::reduce( $, f );
-	}
-
-	template< typename U, invocable< T > F > auto
-	reduce( F f, U $ ) {
-		return ::reduce( $, f );
-	}
-	
-	auto
-	drop( size_t from ) {
-		return Vector< T >( ::drop( $, from ) );
-	}
-
-	auto
-	take( size_t to ) {
-		return Vector< T >( ::take( $, to ) );
-	}
-
-	template< invocable< T > F > auto
-	some( F f ) {
-		return ::some( $, f );
-	}
-
-	template< invocable< T > F > auto
-	every( F f ) {
-		return ::every( $, f );
-	}
-
-	template< invocable< T > F > void
-	apply( F f ) {
-		return ::apply( $, f );
-	}
-};
 ////////////////////////////////////////////////////////////////
 
 inline auto
