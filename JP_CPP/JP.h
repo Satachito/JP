@@ -80,12 +80,9 @@ contains( R&& _, T const& t ) {
 	return ranges::contains( _, t );
 }
 
-template < ranges::input_range R > auto
+template < ranges::range R > auto
 zipIndex( R&& _ ) {
-	return views::zip(
-		forward< R >( _ )
-	,	views::iota( size_t( 0 ) )
-	);
+    return views::zip( _, views::iota( static_cast< size_t >( 0 ), ranges::size( _ ) ) );
 }
 
 template < ranges::range R, invocable< ranges::range_reference_t< R >, size_t > F > auto
@@ -126,9 +123,24 @@ every( R&& _, F f ) {
 	return ranges::all_of( _, f );
 }
 
-template < ranges::range R, typename F > void
+template < ranges::range R, typename F > auto
 apply( R&& _, F f ) {
 	for( auto const& _: _ ) f( _ );
+}
+
+template < ranges::range R > auto
+drop( R&& _, size_t from ) {
+    return _ | views::drop( from );
+}
+
+template < ranges::range R > auto
+take( R&& _, size_t to ) {
+    return _ | views::take( to );
+}
+
+template < ranges::range R, typename F > auto
+filter( R&& _, F f ) {
+    return _ | views::filter( f );
 }
 
 ////////////////////////////////////////////////////////////////
