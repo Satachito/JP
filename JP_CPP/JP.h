@@ -24,9 +24,19 @@
 #include	<functional>
 
 using namespace std;
+using namespace std::views;
+using namespace std::ranges;
 
 #include	<filesystem>
 using namespace filesystem;
+
+#define	_Z( $ )	throw runtime_error( $ )
+template< typename T > auto
+Z( string const& _, T $ ) {
+	if ( !$ ) _Z( _ );
+	return $;
+}
+
 
 //	ASSERTION
 #ifdef	DEBUG
@@ -42,8 +52,9 @@ _A( bool $, string const& _, string const& file, int line ) {
 #define A( $ )
 #endif
 
-//	UNIX UNDER ZERO ERROR
-template < typename T > auto	//	Functions such as read and write returns size_t value.
+
+//	POSIX SYSTEM CALL (UNDER ZERO)
+template < typename T > auto	//	T: int, ssize_t, off_t
 _X( T $, string const& _, string const& file, int line ) {
 	if ( $ < 0 ) {
 		cerr << file + ':' + to_string( line ) + ':' + strerror( errno ) + ':' + _ << endl;
@@ -53,9 +64,9 @@ _X( T $, string const& _, string const& file, int line ) {
 }
 #define X( $ ) _X( $, #$, __FILE__, __LINE__ )
 
-//	NULL EXCEPTION
+//	NULL EXCEPTION	map,
 template < typename T > auto
-_N( T* $, string const& _, string const& file, int line ) {
+_N( T $, string const& _, string const& file, int line ) {
 	if ( !$ ) {
 		cerr << file + ':' + to_string( line ) + ':' + _ << endl;
 		throw file + ':' + to_string( line ) + ':' + _;
@@ -75,17 +86,17 @@ operator+( vector< T > const& l, vector< T > const& r ) {
 	return $;
 }
 
-template < ranges::range R, typename T > auto
-contains( R&& _, T const& t ) {
-	return ranges::contains( _, t );
+template < range R, typename T > auto
+includes( R&& _, T const& t ) {
+	return contains( _, t );
 }
 
-template < ranges::range R > auto
+template < range R > auto
 zipIndex( R&& _ ) {
-    return views::zip( _, views::iota( static_cast< size_t >( 0 ), ranges::size( _ ) ) );
+    return zip( _, views::iota( static_cast< size_t >( 0 ), ranges::size( _ ) ) );
 }
 
-template < ranges::range R, invocable< ranges::range_reference_t< R >, size_t > F > auto
+template < range R, invocable< range_reference_t< R >, size_t > F > auto
 project( R&& _, F f ) {
     size_t index = 0;
     return _ | views::transform(
@@ -95,51 +106,51 @@ project( R&& _, F f ) {
 	);
 }
 
-template < ranges::range R, invocable< ranges::range_reference_t< R > > F > auto
+template < range R, invocable< range_reference_t< R > > F > auto
 project( R&& _, F f ) { 
     return _ | views::transform( f );
 }
 
-template< ranges::range R, typename U, invocable< U, ranges::range_reference_t< R >, size_t > F > auto
+template< range R, typename U, invocable< U, range_reference_t< R >, size_t > F > auto
 reduce( R&& _, F f, U $ ) {
 	size_t index = 0;
-    for ( auto&& _ : _ ) $ = f( move( $ ), _, index++ );
+    for ( auto&& _ : _ ) $ = f( std::move( $ ), _, index++ );
 	return $;
 }
 
-template< ranges::range R, typename U, invocable< U, ranges::range_reference_t< R > > F > auto
+template< range R, typename U, invocable< U, range_reference_t< R > > F > auto
 reduce( R&& _, F f, U $ ) {
-	for( auto&& _ : _ ) $ = f( move( $ ), _ );
+	for( auto&& _ : _ ) $ = f( std::move( $ ), _ );
 	return $;
 }
 
-template < ranges::range R, typename F > auto
+template < range R, typename F > auto
 some( R&& _, F f ) {
 	return ranges::any_of( _, f );
 }
 
-template < ranges::range R, typename F > auto
+template < range R, typename F > auto
 every( R&& _, F f ) {
 	return ranges::all_of( _, f );
 }
 
-template < ranges::range R, typename F > auto
+template < range R, typename F > auto
 apply( R&& _, F f ) {
 	for( auto const& _: _ ) f( _ );
 }
 
-template < ranges::range R > auto
+template < range R > auto
 drop( R&& _, size_t from ) {
     return _ | views::drop( from );
 }
 
-template < ranges::range R > auto
+template < range R > auto
 take( R&& _, size_t to ) {
     return _ | views::take( to );
 }
 
-template < ranges::range R, typename F > auto
-filter( R&& _, F f ) {
+template < range R, typename F > auto
+select( R&& _, F f ) {
     return _ | views::filter( f );
 }
 
@@ -273,9 +284,8 @@ IsBreakingWhite( char32_t _ ) {
 
 inline bool
 IsAllBreakingWhite( string const& _ ) {
-	return all_of(
-		_.begin()
-	,	_.end()
+	return every(
+		_
 	,	[]( auto c ) {
 			return IsBreakingWhite( c );
 		}
@@ -406,7 +416,7 @@ SetFileContent( string const& path, vector< UI1 > const& $ ) {
 }
 
 inline auto
-GetLines( istream& stream = cin ) {
+GetLines( std::istream& stream = cin ) {
 	vector< string >	$;
 	string				s;
 	while ( !stream.eof() ) {
