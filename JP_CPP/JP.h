@@ -87,7 +87,7 @@ operator+( vector< T > const& l, vector< T > const& r ) {
 }
 
 template < range R, typename T > auto
-includes( R&& _, T const& t ) {
+has( R&& _, T const& t ) {
 	return contains( _, t );
 }
 
@@ -147,11 +147,6 @@ drop( R&& _, size_t from ) {
 template < range R > auto
 take( R&& _, size_t to ) {
     return _ | views::take( to );
-}
-
-template < range R, typename F > auto
-select( R&& _, F f ) {
-    return _ | views::filter( f );
 }
 
 ////////////////////////////////////////////////////////////////
