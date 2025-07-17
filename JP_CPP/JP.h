@@ -22,6 +22,29 @@
 
 #include	<mutex>
 #include	<functional>
+////////////////////////////////////////////////////////////////
+#include	<numbers>
+////////////////////////////////////////////////////////////////
+#ifdef DEBUG
+template< typename T > bool
+ckd_add( T* $, T l, T r ) {
+	*$ = l + r;
+	return false;
+}
+template< typename T > bool
+ckd_sub( T* $, T l, T r ) {
+	*$ = l - r;
+	return false;
+}
+template< typename T > bool
+ckd_mul( T* $, T l, T r ) {
+	*$ = l * r;
+	return false;
+}
+#else
+#include <stdckdint.h>
+#endif
+////////////////////////////////////////////////////////////////
 
 using namespace std;
 using namespace std::views;
