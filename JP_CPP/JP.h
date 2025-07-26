@@ -25,22 +25,33 @@
 ////////////////////////////////////////////////////////////////
 #include	<numbers>
 ////////////////////////////////////////////////////////////////
-#ifdef DEBUG
-template< typename T > bool
-ckd_add( T* $, T l, T r ) {
-	*$ = l + r;
-	return false;
+#ifdef __APPLE__
+#include <type_traits> // for std::is_integral
+#include <limits>      // for std::numeric_limits
+#include <iostream>    // for example usage
+#include <string>      // for REPR in example
+
+template <typename T>
+bool ckd_add( T* res ,T a, T b) {
+    static_assert(std::is_integral<T>::value, "ckd_add only supports integral types.");
+    // __builtin_add_overflow returns true if overflow occurs
+    return __builtin_add_overflow(a, b, res);
 }
-template< typename T > bool
-ckd_sub( T* $, T l, T r ) {
-	*$ = l - r;
-	return false;
+
+template <typename T>
+bool ckd_sub( T* res ,T a, T b) {
+    static_assert(std::is_integral<T>::value, "ckd_sub only supports integral types.");
+    // __builtin_sub_overflow returns true if overflow occurs
+    return __builtin_sub_overflow(a, b, res);
 }
-template< typename T > bool
-ckd_mul( T* $, T l, T r ) {
-	*$ = l * r;
-	return false;
+
+template <typename T>
+bool ckd_mul( T* res ,T a, T b) {
+    static_assert(std::is_integral<T>::value, "ckd_mul only supports integral types.");
+    // __builtin_mul_overflow returns true if overflow occurs
+    return __builtin_mul_overflow(a, b, res);
 }
+
 #else
 #include <stdckdint.h>
 #endif
