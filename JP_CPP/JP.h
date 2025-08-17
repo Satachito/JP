@@ -26,30 +26,30 @@
 #include	<numbers>
 ////////////////////////////////////////////////////////////////
 #ifdef __APPLE__
-#include <type_traits> // for std::is_integral
-#include <limits>      // for std::numeric_limits
-#include <iostream>    // for example usage
-#include <string>      // for REPR in example
+#include <type_traits>	// for std::is_integral
+#include <limits>		// for std::numeric_limits
+#include <iostream>		// for example usage
+#include <string>		// for REPR in example
 
 template <typename T>
 bool ckd_add( T* res ,T a, T b) {
-    static_assert(std::is_integral<T>::value, "ckd_add only supports integral types.");
-    // __builtin_add_overflow returns true if overflow occurs
-    return __builtin_add_overflow(a, b, res);
+	static_assert(std::is_integral<T>::value, "ckd_add only supports integral types.");
+	// __builtin_add_overflow returns true if overflow occurs
+	return __builtin_add_overflow(a, b, res);
 }
 
 template <typename T>
 bool ckd_sub( T* res ,T a, T b) {
-    static_assert(std::is_integral<T>::value, "ckd_sub only supports integral types.");
-    // __builtin_sub_overflow returns true if overflow occurs
-    return __builtin_sub_overflow(a, b, res);
+	static_assert(std::is_integral<T>::value, "ckd_sub only supports integral types.");
+	// __builtin_sub_overflow returns true if overflow occurs
+	return __builtin_sub_overflow(a, b, res);
 }
 
 template <typename T>
 bool ckd_mul( T* res ,T a, T b) {
-    static_assert(std::is_integral<T>::value, "ckd_mul only supports integral types.");
-    // __builtin_mul_overflow returns true if overflow occurs
-    return __builtin_mul_overflow(a, b, res);
+	static_assert(std::is_integral<T>::value, "ckd_mul only supports integral types.");
+	// __builtin_mul_overflow returns true if overflow occurs
+	return __builtin_mul_overflow(a, b, res);
 }
 
 #else
@@ -127,28 +127,28 @@ has( R&& _, T const& t ) {
 
 template < range R > auto
 zipIndex( R&& _ ) {
-    return zip( _, views::iota( static_cast< size_t >( 0 ), ranges::size( _ ) ) );
+	return zip( _, views::iota( static_cast< size_t >( 0 ), ranges::size( _ ) ) );
 }
 
 template < range R, invocable< range_reference_t< R >, size_t > F > auto
 project( R&& _, F f ) {
-    size_t index = 0;
-    return _ | views::transform(
+	size_t index = 0;
+	return _ | views::transform(
 		[ & ]( auto&& $ ) mutable {
 			return f( $, index++ ); // Call the user-provided function 'f'
-	   }
+		}
 	);
 }
 
 template < range R, invocable< range_reference_t< R > > F > auto
 project( R&& _, F f ) { 
-    return _ | views::transform( f );
+	return _ | views::transform( f );
 }
 
 template< range R, typename U, invocable< U, range_reference_t< R >, size_t > F > auto
 reduce( R&& _, F f, U $ ) {
 	size_t index = 0;
-    for ( auto&& _ : _ ) $ = f( std::move( $ ), _, index++ );
+	for ( auto&& _ : _ ) $ = f( std::move( $ ), _, index++ );
 	return $;
 }
 
@@ -175,12 +175,12 @@ apply( R&& _, F f ) {
 
 template < range R > auto
 drop( R&& _, size_t from ) {
-    return _ | views::drop( from );
+	return _ | views::drop( from );
 }
 
 template < range R > auto
 take( R&& _, size_t to ) {
-    return _ | views::take( to );
+	return _ | views::take( to );
 }
 
 ////////////////////////////////////////////////////////////////
@@ -903,3 +903,18 @@ StopWatch {
 		cerr << duration_cast< Duration >( Clock::now() - _ ).count() << endl;
 	}
 };
+
+inline string
+double_to_string( double d, int prec = 6 ) {
+	ostringstream oss;
+	oss << fixed << setprecision(prec) << d;
+	string s = oss.str();
+	// 後ろの不要な0を削除
+	s.erase(s.find_last_not_of('0') + 1, string::npos);
+	if (s.back() == '.') s.pop_back();
+	return s;
+//	ostringstream oss;
+//	oss << defaultfloat << d;
+//	return oss.str();
+}
+
